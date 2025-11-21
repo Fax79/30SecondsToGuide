@@ -246,7 +246,7 @@ if st.button("Genera Guida"):
                 st.markdown(markdown_content)
                 
                 # Crea PDF
-                pdf_bytes = create_pdf(markdown_content)
+                pdf_bytes = create_pdf(markdown_content, city_name)
                 
                 st.success("✅ Guida completata!")
                 st.download_button(
@@ -258,5 +258,6 @@ if st.button("Genera Guida"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
 
