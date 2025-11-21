@@ -134,14 +134,16 @@ def create_pdf(text, city):
     lines = text.split('\n')
     
     for line in lines:
-        # Pulizia encoding
+        # Encoding sicuro
         clean_line = line.encode('latin-1', 'replace').decode('latin-1')
         
+        # --- GESTIONE TITOLI ---
         if line.startswith('# '): # H1
             pdf.ln(10)
             pdf.set_font("Helvetica", 'B', 22)
             pdf.set_text_color(44, 62, 80)
-            content = clean_line.replace('# ', '').upper().strip()
+            # Rimuove cancelletti E qualsiasi asterisco nel titolo
+            content = clean_line.replace('# ', '').replace('*', '').upper().strip()
             pdf.multi_cell(0, 10, content)
             y = pdf.get_y()
             pdf.set_draw_color(230, 126, 34)
@@ -153,7 +155,7 @@ def create_pdf(text, city):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 16)
             pdf.set_text_color(230, 126, 34)
-            content = clean_line.replace('## ', '').strip()
+            content = clean_line.replace('## ', '').replace('*', '').strip()
             pdf.cell(0, 10, content, ln=True)
             pdf.ln(2)
             
@@ -161,34 +163,38 @@ def create_pdf(text, city):
             pdf.ln(3)
             pdf.set_font("Helvetica", 'B', 13)
             pdf.set_text_color(52, 73, 94)
-            content = clean_line.replace('### ', '').strip()
+            content = clean_line.replace('### ', '').replace('*', '').strip()
             pdf.cell(0, 10, content, ln=True)
             
-        elif line.startswith('* '): # ELENCHI (FIX AVANZATO)
+        # --- GESTIONE ELENCHI PUNTATI (IL PUNTO CRITICO) ---
+        elif line.strip().startswith('* ') or line.strip().startswith('- '):
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(0, 0, 0)
             
-            content = clean_line.replace('* ', '').replace('**', '')
+            # 1. Rimuoviamo il marcatore dell'elenco (* o -) dall'inizio
+            if line.strip().startswith('* '):
+                content_raw = line.strip()[2:] # Toglie i primi 2 caratteri "* "
+            else:
+                content_raw = line.strip()[2:] # Toglie "- "
             
-            # Salva la posizione Y corrente
+            # 2. PULIZIA TOTALE: Rimuove QUALSIASI altro asterisco rimasto nel testo
+            content = content_raw.replace('*', '')
+            
+            # 3. Disegna pallino e testo allineato
             current_y = pdf.get_y()
-            
-            # Disegna il pallino a sinistra
             pdf.set_x(15) 
-            pdf.cell(5, 5, chr(149), 0, 0) # Pallino (bullet point)
-            
-            # Sposta il cursore per il testo e stampa il blocco allineato
+            pdf.cell(5, 5, chr(149), 0, 0) 
             pdf.set_x(22) 
             pdf.multi_cell(0, 6, content)
-            
-            # Piccolo spazio dopo ogni punto elenco
             pdf.ln(1)
             
-        else: # Testo normale
+        # --- TESTO NORMALE ---
+        else: 
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                content = clean_line.replace('**', '')
+                # PULIZIA TOTALE anche qui
+                content = clean_line.replace('*', '')
                 pdf.multi_cell(0, 6, content)
                 pdf.ln(2)
 
@@ -242,6 +248,7 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
 
 
