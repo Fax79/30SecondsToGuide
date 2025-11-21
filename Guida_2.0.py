@@ -55,17 +55,17 @@ TESTO_MODELLO = """
 * **Clima:** [Info sui migliori periodi per visitare la città]
 * **Visti e requisiti per l'ingresso nel paese:** [Info]
 * **Fuso orario:** [Info]
-* **Consigli utili:* [Info su valuta locale e prese elettriche, non usare mai simboli delle valute ma i loro codici, es. EUR, USD, GBP, ecc]
+* **Consigli utili:** [Info su valuta locale e prese elettriche, non usare mai simboli delle valute ma i loro codici, es. EUR, USD, GBP, ecc]
 
 ## 8. Itinerario 3 Giorni
-* **Giorno 1:** [Mattina/Pomeriggio/Sera]
-* **Giorno 2:** [Mattina/Pomeriggio/Sera]
-* **Giorno 3:** [Mattina/Pomeriggio/Sera]
+* **Giorno 1:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
+* **Giorno 2:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
+* **Giorno 3:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
 
 ## 9. Itinerario 5 Giorni
 * **Giorni 1-3:** Come sopra.
-* **Giorno 4:** [Mattina/Pomeriggio/Sera]
-* **Giorno 5:** [Mattina/Pomeriggio/Sera]
+* **Giorno 4:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
+* **Giorno 5:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
 
 ## 10. Se hai più tempo
 * **Fuori dai sentieri battuti:** [Un quartiere meno turistico].
@@ -242,6 +242,7 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
 
 
