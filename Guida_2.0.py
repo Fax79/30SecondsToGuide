@@ -14,28 +14,129 @@ except:
 genai.configure(api_key=API_KEY)
 
 # --- FUNZIONE PDF (Versione "Bulletproof" con FPDF2) ---
-def create_pdf(text):
-    class PDF(FPDF):
+def create_pdf(text, city):
+    class ModernPDF(FPDF):
         def header(self):
-            self.set_font('Helvetica', 'B', 16)
-            self.cell(0, 10, 'Guida Turistica - 30SecondsToGuide', 0, 1, 'C')
-            self.ln(5)
+            # Se siamo a pagina 1 (Copertina), non mettere l'intestazione
+            if self.page_no() == 1:
+                return
+            
+            # Barra colorata in alto (Blu Notte)
+            self.set_fill_color(44, 62, 80) 
+            self.rect(0, 0, 210, 20, 'F')
+            
+            # Testo Header bianco
+            self.set_font('Helvetica', 'B', 10)
+            self.set_text_color(255, 255, 255)
+            self.set_y(8)
+            self.cell(0, 0, f'GUIDA ESCLUSIVA: {city.upper()}', 0, 0, 'R')
+            self.ln(20) 
             
         def footer(self):
+            # Riga grigia in basso
+            self.set_draw_color(200, 200, 200)
+            self.line(10, 285, 200, 285)
+            
             self.set_y(-15)
             self.set_font('Helvetica', 'I', 8)
-            self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
+            self.set_text_color(128, 128, 128)
+            self.cell(0, 10, f'30SecondsToGuide - {city} - Pagina {self.page_no()}', 0, 0, 'C')
 
-    pdf = PDF()
+        def make_cover(self, city_name):
+            self.add_page()
+            
+            # Colonna decorativa laterale (Grigio chiaro)
+            self.set_fill_color(236, 240, 241) 
+            self.rect(0, 0, 60, 297, 'F') 
+            
+            self.set_y(80)
+            self.set_x(70) # Sposta il cursore a destra della colonna
+            
+            # Titolo Città Gigante
+            self.set_font('Helvetica', 'B', 40)
+            self.set_text_color(44, 62, 80) # Blu Scuro
+            self.multi_cell(0, 20, city_name.upper())
+            
+            self.ln(10)
+            self.set_x(70)
+            
+            # Sottotitolo
+            self.set_font('Helvetica', '', 16)
+            self.set_text_color(127, 140, 141) # Grigio
+            self.multi_cell(0, 10, "Guida turistica completa\nItinerari, Storia e Cultura")
+            
+            # Linea decorativa arancione
+            self.ln(20)
+            self.set_fill_color(230, 126, 34) 
+            self.rect(70, self.get_y(), 100, 2, 'F')
+            
+            # Firma in basso
+            self.set_y(250)
+            self.set_x(70)
+            self.set_font('Helvetica', 'B', 10)
+            self.set_text_color(44, 62, 80)
+            self.cell(0, 10, "GENERATO DA 30SecondsToGuide")
+
+    pdf = ModernPDF()
+    pdf.set_auto_page_break(auto=True, margin=25)
+    
+    # 1. Crea la Copertina
+    pdf.make_cover(city)
+    
+    # 2. Aggiungi pagina per il testo
     pdf.add_page()
-    pdf.set_font("Helvetica", size=12)
     
-    # FPDF2 gestisce il testo in modo semplice. 
-    # Nota: Rimuove alcuni caratteri speciali non supportati dal font base
-    safe_text = text.encode('latin-1', 'replace').decode('latin-1')
-    pdf.multi_cell(0, 8, safe_text)
+    lines = text.split('\n')
     
-    # Ritorna i byte del PDF
+    for line in lines:
+        # Pulizia caratteri speciali (per evitare crash su server Linux)
+        clean_line = line.encode('latin-1', 'replace').decode('latin-1')
+        
+        if line.startswith('# '): # H1 - Titolo Capitolo
+            pdf.ln(10)
+            pdf.set_font("Helvetica", 'B', 22)
+            pdf.set_text_color(44, 62, 80) # Blu Scuro
+            content = clean_line.replace('# ', '').upper().strip()
+            pdf.multi_cell(0, 10, content)
+            
+            # Linea arancione sotto il titolo
+            y = pdf.get_y()
+            pdf.set_draw_color(230, 126, 34)
+            pdf.set_line_width(1)
+            pdf.line(10, y+2, 50, y+2) 
+            pdf.ln(10)
+            
+        elif line.startswith('## '): # H2 - Sottotitolo
+            pdf.ln(5)
+            pdf.set_font("Helvetica", 'B', 16)
+            pdf.set_text_color(230, 126, 34) # Arancione
+            content = clean_line.replace('## ', '').strip()
+            pdf.cell(0, 10, content, ln=True)
+            pdf.ln(2)
+            
+        elif line.startswith('### '): # H3 - Paragrafo
+            pdf.ln(3)
+            pdf.set_font("Helvetica", 'B', 13)
+            pdf.set_text_color(52, 73, 94) 
+            content = clean_line.replace('### ', '').strip()
+            pdf.cell(0, 10, content, ln=True)
+            
+        elif line.startswith('* '): # Elenchi puntati
+            pdf.set_font("Helvetica", '', 11)
+            pdf.set_text_color(0, 0, 0)
+            # Trasforma asterisco in freccetta
+            content = clean_line.replace('* ', '   > ').replace('**', '')
+            pdf.multi_cell(0, 6, content)
+            pdf.ln(1)
+            
+        else: # Testo normale
+            if line.strip():
+                pdf.set_font("Helvetica", '', 11)
+                pdf.set_text_color(40, 40, 40) # Grigio scuro elegante
+                content = clean_line.replace('**', '') # Via i grassetti markdown
+                pdf.multi_cell(0, 6, content)
+                pdf.ln(2)
+
     return bytes(pdf.output(dest='S'))
 
 # --- IL MODELLO "MAXI" (Basato sulla struttura profonda di Astana) ---
@@ -157,4 +258,5 @@ if st.button("Genera Guida"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
