@@ -1,47 +1,42 @@
 import streamlit as st
 import google.generativeai as genai
-import markdown
-from xhtml2pdf import pisa
-from io import BytesIO
+from fpdf import FPDF
 
 # --- CONFIGURAZIONE ---
-# INSERISCI QUI LA TUA CHIAVE API
-API_KEY = st.secrets["GOOGLE_API_KEY"]
+# Recupera la chiave dai segreti di Streamlit
+# Se non trova la chiave nei segreti, non crasha ma avvisa l'utente
+try:
+    API_KEY = st.secrets["GOOGLE_API_KEY"]
+except:
+    st.error("⚠️ Chiave API mancante! Inseriscila nei 'Secrets' della dashboard di Streamlit.")
+    st.stop()
 
 genai.configure(api_key=API_KEY)
 
-# --- FUNZIONE PDF (Invariata) ---
-def create_pdf(markdown_text):
-    html_text = markdown.markdown(markdown_text, extensions=['tables'])
+# --- FUNZIONE PDF (Versione "Bulletproof" con FPDF2) ---
+def create_pdf(text):
+    class PDF(FPDF):
+        def header(self):
+            self.set_font('Helvetica', 'B', 16)
+            self.cell(0, 10, 'Guida Turistica - 30SecondsToGuide', 0, 1, 'C')
+            self.ln(5)
+            
+        def footer(self):
+            self.set_y(-15)
+            self.set_font('Helvetica', 'I', 8)
+            self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
+
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", size=12)
     
-    # CSS Migliorato per gestire testi lunghi e impaginazione
-    styled_html = f"""
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            body {{ font-family: Helvetica, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; }}
-            h1 {{ color: #8e44ad; font-size: 26pt; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 3px solid #8e44ad; }}
-            h2 {{ color: #2980b9; font-size: 18pt; margin-top: 25px; margin-bottom: 15px; border-left: 5px solid #2980b9; padding-left: 10px; }}
-            h3 {{ color: #c0392b; font-size: 14pt; margin-top: 20px; font-weight: bold; }}
-            p {{ margin-bottom: 15px; text-align: justify; }}
-            li {{ margin-bottom: 8px; }}
-            table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
-            th {{ background-color: #ecf0f1; border: 1px solid #bdc3c7; padding: 10px; font-weight: bold; color: #2c3e50; }}
-            td {{ border: 1px solid #bdc3c7; padding: 10px; vertical-align: top; }}
-            strong {{ color: #2c3e50; font-weight: bold; }}
-        </style>
-    </head>
-    <body>
-        {html_text}
-    </body>
-    </html>
-    """
+    # FPDF2 gestisce il testo in modo semplice. 
+    # Nota: Rimuove alcuni caratteri speciali non supportati dal font base
+    safe_text = text.encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 8, safe_text)
     
-    pdf_buffer = BytesIO()
-    pisa_status = pisa.CreatePDF(styled_html, dest=pdf_buffer)
-    if pisa_status.err: return None
-    return pdf_buffer.getvalue()
+    # Ritorna i byte del PDF
+    return pdf.output(dest='S').encode('latin-1')
 
 # --- IL MODELLO "MAXI" (Basato sulla struttura profonda di Astana) ---
 TESTO_MODELLO = """
@@ -119,69 +114,46 @@ TESTO_MODELLO = """
 [Riflessione finale filosofica sul viaggio in questa città].
 """
 
-# --- INTERFACCIA SITO ---
-st.set_page_config(
-    page_title="30SecondsToGuide", 
-    page_icon="⏱️",
-    layout="centered"
-)
+# --- INTERFACCIA ---
+st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️")
 
-# Header con il nuovo Brand
 st.title("⏱️ 30SecondsToGuide")
-st.markdown("### *From zero to local expert in half a minute.*")
-st.caption("Inserisci la tua destinazione e ottieni una guida PDF professionale istantanea.")
+st.markdown("### *Da zero a local in mezzo minuto.*")
 
-# Modello (qui ho lasciato quello veloce per restare nei 30 secondi, 
-# ma se usi il prompt "Cattivo/Lungo" l'utente aspetterà volentieri qualche secondo in più!)
-model_name = "gemini-2.5-pro" 
+city_name = st.text_input("Inserisci la destinazione:", placeholder="Es. Tokyo, Roma, Parigi...")
 
-city_name = st.text_input("Di quale città vuoi la guida?", placeholder="Es. Tokyo, New York, Roma...")
-
-if st.button("Start 30s Timer & Generate"):
-
+if st.button("Genera Guida"):
     if not city_name:
         st.warning("Inserisci una città.")
     else:
-        with st.spinner(f"Sto scrivendo una guida DETTAGLIATA per {city_name}. Richiederà circa 20-30 secondi..."):
+        with st.spinner("Scrivo la guida... (richiede circa 30 secondi)"):
             try:
-                model = genai.GenerativeModel(model_name)
+                model = genai.GenerativeModel("gemini-2.5-pro")
                 
-                # --- PROMPT "TURBO" PER FORZARE LA LUNGHEZZA ---
                 full_prompt = f"""
-                Sei uno scrittore di viaggi professionista per riviste come National Geographic o Lonely Planet.
-                Devi scrivere una guida turistica MOLTO DETTAGLIATA per: {city_name}.
-
-                REGOLE FONDAMENTALI:
-                1. NON essere sintetico. Voglio descrizioni lunghe, ricche di aggettivi e dettagli storici.
-                2. Segui RIGOROSAMENTE la struttura del modello sottostante.
-                3. Non fare elenchi puntati brevi. Usa frasi complete e discorsive.
-                4. Nella sezione cibo, descrivi i sapori, non fare solo la lista.
-                5. L'output deve essere lungo e approfondito.
-
-                MODELLO DA RIEMPIRE:
+                Sei una guida turistica. Scrivi una guida per: {city_name}.
+                Usa questa struttura. NON usare tabelle complesse o grassetti eccessivi, usa elenchi semplici.
+                
                 {TESTO_MODELLO}
                 """
                 
                 response = model.generate_content(full_prompt)
                 markdown_content = response.text
                 
-                # Anteprima
-                with st.expander("Vedi anteprima testo"):
-                    st.markdown(markdown_content)
+                # Mostra a video
+                st.markdown("---")
+                st.markdown(markdown_content)
                 
-                # PDF
+                # Crea PDF
                 pdf_bytes = create_pdf(markdown_content)
                 
-                if pdf_bytes:
-                    st.success("✅ Guida generata con successo!")
-                    st.download_button(
-                        label="📄 SCARICA GUIDA PDF COMPLETA",
-                        data=pdf_bytes,
-                        file_name=f"Guida_{city_name}_Full.pdf",
-                        mime="application/pdf"
-                    )
-                else:
-                    st.error("Errore PDF.")
+                st.success("✅ Guida completata!")
+                st.download_button(
+                    label="📄 SCARICA PDF",
+                    data=pdf_bytes,
+                    file_name=f"Guida_{city_name}.pdf",
+                    mime="application/pdf"
+                )
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
