@@ -36,7 +36,7 @@ def create_pdf(text):
     pdf.multi_cell(0, 8, safe_text)
     
     # Ritorna i byte del PDF
-    return pdf.output(dest='S').encode('latin-1')
+    return bytes(pdf.output(dest='S'))
 
 # --- IL MODELLO "MAXI" (Basato sulla struttura profonda di Astana) ---
 TESTO_MODELLO = """
@@ -157,3 +157,4 @@ if st.button("Genera Guida"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
