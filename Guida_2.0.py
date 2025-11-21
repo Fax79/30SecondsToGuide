@@ -204,7 +204,7 @@ def create_pdf(text, city):
 st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️")
 
 st.title("⏱️ 30SecondsToGuide")
-st.markdown("### Crea la tua guida di viaggio professionale.")
+st.markdown("### Da Zero a Local in mezzo minuto.")
 
 city_name = st.text_input("Inserisci la destinazione:", placeholder="Es. Parigi, Tokyo, New York...")
 
@@ -248,6 +248,7 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
 
 
