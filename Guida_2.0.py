@@ -33,6 +33,7 @@ TESTO_MODELLO = """
 * **[Piatto 1]:** [Descrizione e ingredienti]
 * **[Piatto 2]:** [Descrizione e ingredienti]
 * **[il cibo tradizionale]:** [i migliori ristoranti, i più caratteristici, consigli per risparmiare]
+* **[bevande tradizionali]:** [i migliori locali, i più caratteristici, consigli per risparmiare]
 
 ## 4. Attrazioni
 * **[Monumento 1]:** [Descrizione]
@@ -41,28 +42,36 @@ TESTO_MODELLO = """
 * **[Monumento 4]:** [Descrizione]
 * **[Monumento 5]:** [Descrizione]
 
-## 5. Info Pratiche
+## 5. I mercati
+* **[Mercato 1]:** [Descrizione]
+* **[Mercato 2]:** [Descrizione]
+
+## 6. Calendario Culturale
+[I principali festival, fiere, ricorrenze e feste della città].
+
+## 7. Info Pratiche
 * **Trasporti:** [Info]
 * **Sicurezza:** [Info]
+* **Clima:** [Info sui migliori periodi per visitare la città]
 * **Visti e requisiti per l'ingresso nel paese:** [Info]
 * **Fuso orario:** [Info]
 * **Consigli utili:** [Info su valuta locale e prese elettriche]
 
-## 6. Itinerario 3 Giorni
+## 8. Itinerario 3 Giorni
 * **Giorno 1:** [Mattina/Pomeriggio/Sera]
 * **Giorno 2:** [Mattina/Pomeriggio/Sera]
 * **Giorno 3:** [Mattina/Pomeriggio/Sera]
 
-## 7. Itinerario 5 Giorni
+## 9. Itinerario 5 Giorni
 * **Giorni 1-3:** Come sopra.
 * **Giorno 4:** [Mattina/Pomeriggio/Sera]
 * **Giorno 5:** [Mattina/Pomeriggio/Sera]
 
-## 8. Se hai più tempo
+## 10. Se hai più tempo
 * **Fuori dai sentieri battuti:** [Un quartiere meno turistico].
 * **Gite fuori porta:** [Una o più gita di mezza giornata o di un giorno nei dintorni].
 
-## 9. Conclusione
+## 11. Conclusione
 [Riflessione finale filosofica sul viaggio in questa città, descrivi l'essenza del viaggio].
 """
 
@@ -233,4 +242,5 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
