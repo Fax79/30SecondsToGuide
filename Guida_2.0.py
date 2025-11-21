@@ -16,35 +16,54 @@ TESTO_MODELLO = """
 # [NOME CITTÀ]: Guida Esclusiva
 
 ## 1. L'Anima della Città
-[Intro evocativa di 150 parole].
+[Intro evocativa di 150 parole, comprensione profonda dell'anima dei luoghi].
 
 ## 2. Quartieri e Atmosfere
-[Descrizione zone].
+[Descrizione zone, individua il contrasto principale antico vs moderno, popolare vs esclusivo, riva destra vs riva sinistra, ecc].
 
-### Confronto Zone (Stile Scheda)
-* **Centro Storico:** [Descrizione atmosfera]
-* **Città Moderna:** [Descrizione atmosfera]
+### Confronto Zone
+* **[zona 1 di cui sopra]:** [Descrizione atmosfera]
+* **[zona 2 di cui sopra]:** [Descrizione atmosfera]
 * **Chi ci va:** [Target turisti]
 
 ## 3. Gastronomia
-[Intro cibo].
+[Cosa mangiare e dove, la tradizione gastronomica].
 
 ### Piatti Imperdibili
 * **[Piatto 1]:** [Descrizione e ingredienti]
 * **[Piatto 2]:** [Descrizione e ingredienti]
+* **[il cibo tradizionale]:** [i migliori ristoranti, i più caratteristici, consigli per risparmiare]
 
 ## 4. Attrazioni
 * **[Monumento 1]:** [Descrizione]
 * **[Monumento 2]:** [Descrizione]
+* **[Monumento 3]:** [Descrizione]
+* **[Monumento 4]:** [Descrizione]
+* **[Monumento 5]:** [Descrizione]
 
 ## 5. Info Pratiche
 * **Trasporti:** [Info]
 * **Sicurezza:** [Info]
+* **Visti e requisiti per l'ingresso nel paese:** [Info]
+* **Fuso orario:** [Info]
+* **Consigli utili:** [Info su valuta locale e prese elettriche]
 
 ## 6. Itinerario 3 Giorni
 * **Giorno 1:** [Mattina/Pomeriggio/Sera]
 * **Giorno 2:** [Mattina/Pomeriggio/Sera]
 * **Giorno 3:** [Mattina/Pomeriggio/Sera]
+
+## 7. Itinerario 5 Giorni
+* **Giorni 1-3:** Come sopra.
+* **Giorno 4:** [Mattina/Pomeriggio/Sera]
+* **Giorno 5:** [Mattina/Pomeriggio/Sera]
+
+## 8. Se hai più tempo
+* **Fuori dai sentieri battuti:** [Un quartiere meno turistico].
+* **Gite fuori porta:** [Una o più gita di mezza giornata o di un giorno nei dintorni].
+
+## 9. Conclusione
+[Riflessione finale filosofica sul viaggio in questa città, descrivi l'essenza del viaggio].
 """
 
 # --- FUNZIONE PDF "DESIGNER" (Con elenchi fixati) ---
@@ -214,3 +233,4 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
