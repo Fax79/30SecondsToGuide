@@ -1,6 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 from fpdf import FPDF
+import os
 
 # --- CONFIGURAZIONE ---
 try:
@@ -11,7 +12,6 @@ except:
 
 genai.configure(api_key=API_KEY)
 
-# --- IL MODELLO "MAXI" ---
 TESTO_MODELLO = """
 # [NOME CITTÀ]: Guida Esclusiva
 
@@ -75,7 +75,7 @@ TESTO_MODELLO = """
 [Riflessione finale filosofica sul viaggio in questa città, descrivi l'essenza del viaggio].
 """
 
-# --- FUNZIONE PDF "DESIGNER" (Con elenchi fixati) ---
+# --- FUNZIONE PDF "BRANDED" ---
 def create_pdf(text, city):
     class ModernPDF(FPDF):
         def header(self):
@@ -101,10 +101,21 @@ def create_pdf(text, city):
 
         def make_cover(self, city_name):
             self.add_page()
+            
+            # Colonna laterale
             self.set_fill_color(236, 240, 241) 
             self.rect(0, 0, 60, 297, 'F') 
             
-            self.set_y(80)
+            # --- LOGO SULLA COPERTINA ---
+            # Verifica se il logo esiste per evitare crash
+            if os.path.exists("logo.png"):
+                # Inserisce il logo (x, y, larghezza)
+                self.image("logo.png", x=70, y=20, w=50)
+                y_start = 80 # Se c'è il logo, iniziamo a scrivere più in basso
+            else:
+                y_start = 50
+
+            self.set_y(y_start)
             self.set_x(70)
             self.set_font('Helvetica', 'B', 40)
             self.set_text_color(44, 62, 80)
@@ -134,15 +145,12 @@ def create_pdf(text, city):
     lines = text.split('\n')
     
     for line in lines:
-        # Encoding sicuro
         clean_line = line.encode('latin-1', 'replace').decode('latin-1')
         
-        # --- GESTIONE TITOLI ---
-        if line.startswith('# '): # H1
+        if line.startswith('# '): 
             pdf.ln(10)
             pdf.set_font("Helvetica", 'B', 22)
             pdf.set_text_color(44, 62, 80)
-            # Rimuove cancelletti E qualsiasi asterisco nel titolo
             content = clean_line.replace('# ', '').replace('*', '').upper().strip()
             pdf.multi_cell(0, 10, content)
             y = pdf.get_y()
@@ -151,7 +159,7 @@ def create_pdf(text, city):
             pdf.line(10, y+2, 50, y+2) 
             pdf.ln(8)
             
-        elif line.startswith('## '): # H2
+        elif line.startswith('## '): 
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 16)
             pdf.set_text_color(230, 126, 34)
@@ -159,41 +167,33 @@ def create_pdf(text, city):
             pdf.cell(0, 10, content, ln=True)
             pdf.ln(2)
             
-        elif line.startswith('### '): # H3
+        elif line.startswith('### '): 
             pdf.ln(3)
             pdf.set_font("Helvetica", 'B', 13)
             pdf.set_text_color(52, 73, 94)
             content = clean_line.replace('### ', '').replace('*', '').strip()
             pdf.cell(0, 10, content, ln=True)
             
-        # --- GESTIONE ELENCHI PUNTATI (IL PUNTO CRITICO) ---
         elif line.strip().startswith('* ') or line.strip().startswith('- '):
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(0, 0, 0)
-            
-            # 1. Rimuoviamo il marcatore dell'elenco (* o -) dall'inizio
             if line.strip().startswith('* '):
-                content_raw = line.strip()[2:] # Toglie i primi 2 caratteri "* "
+                content_raw = line.strip()[2:] 
             else:
-                content_raw = line.strip()[2:] # Toglie "- "
+                content_raw = line.strip()[2:]
             
-            # 2. PULIZIA TOTALE: Rimuove QUALSIASI altro asterisco rimasto nel testo
             content = content_raw.replace('*', '')
             
-            # 3. Disegna pallino e testo allineato
-            current_y = pdf.get_y()
             pdf.set_x(15) 
             pdf.cell(5, 5, chr(149), 0, 0) 
             pdf.set_x(22) 
             pdf.multi_cell(0, 6, content)
             pdf.ln(1)
             
-        # --- TESTO NORMALE ---
         else: 
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                # PULIZIA TOTALE anche qui
                 content = clean_line.replace('*', '')
                 pdf.multi_cell(0, 6, content)
                 pdf.ln(2)
@@ -201,10 +201,30 @@ def create_pdf(text, city):
     return bytes(pdf.output(dest='S'))
 
 # --- INTERFACCIA ---
-st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️")
+# Configurazione pagina con FAVICON (Logo nella scheda browser)
+if os.path.exists("logo.png"):
+    st.set_page_config(page_title="30SecondsToGuide", page_icon="logo.png", layout="centered")
+else:
+    st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
 
-st.title("⏱️ 30SecondsToGuide")
-st.markdown("### Da Zero a Local in mezzo minuto.")
+# --- SIDEBAR CON LOGO ---
+with st.sidebar:
+    if os.path.exists("logo.png"):
+        st.image("logo.png", width=200) # Mostra il logo grande
+    else:
+        st.title("⏱️")
+    
+    st.markdown("---")
+    st.header("🧳 Organizza il viaggio")
+    st.info("🏨 **Cerchi dove dormire?**")
+    st.link_button("Cerca Hotel su Booking", "https://www.booking.com")
+    st.divider()
+    st.info("🎟️ **Biglietti e Tour**")
+    st.link_button("Attività su GetYourGuide", "https://www.getyourguide.com")
+
+# --- CORPO PRINCIPALE ---
+st.title("Generatore Guide Turistiche")
+st.markdown("### Da zero a local in mezzo minuto.")
 
 city_name = st.text_input("Inserisci la destinazione:", placeholder="Es. Parigi, Tokyo, New York...")
 
@@ -216,7 +236,6 @@ if st.button("Genera Guida PDF"):
             try:
                 model = genai.GenerativeModel("gemini-2.5-pro")
                 
-                # Prompt modificato per EVITARE TABELLE
                 full_prompt = f"""
                 Sei uno scrittore di viaggi esperto. Scrivi una guida DETTAGLIATA per: {city_name}.
                 
@@ -225,6 +244,7 @@ if st.button("Genera Guida PDF"):
                 2. Se devi fare un confronto, usa elenchi puntati descrittivi.
                 3. Usa ESATTAMENTE la struttura seguente.
                 4. Scrivi paragrafi ricchi e lunghi.
+		5. NON USARE MAI CARATTERI SPECIALI
                 
                 MODELLO:
                 {TESTO_MODELLO}
@@ -248,9 +268,3 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
-
-
-
-
-
-
