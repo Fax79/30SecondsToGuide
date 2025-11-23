@@ -38,21 +38,21 @@ TESTO_MODELLO = """
 * **[il cibo tradizionale]:** [i migliori ristoranti, i più caratteristici, consigli per risparmiare, link tripadvisor]
 * **[bevande tradizionali]:** [i migliori locali, i più caratteristici, consigli per risparmiare, link tripadvisor]
 
-## 4. Attrazioni
+## 5. Attrazioni
 * **[Monumento 1]:** [Descrizione]
 * **[Monumento 2]:** [Descrizione]
 * **[Monumento 3]:** [Descrizione]
 * **[Monumento 4]:** [Descrizione]
 * **[Monumento 5]:** [Descrizione]
 
-## 5. I mercati
+## 6. I mercati
 * **[Mercato 1]:** [Descrizione]
 * **[Mercato 2]:** [Descrizione]
 
-## 6. Calendario Culturale
+## 7. Calendario Culturale
 [I principali festival, fiere, ricorrenze e feste della città].
 
-## 7. Info Pratiche
+## 8. Info Pratiche
 * **Trasporti:** [Info]
 * **Sicurezza:** [Info]
 * **Clima:** [Info sui migliori periodi per visitare la città]
@@ -60,21 +60,21 @@ TESTO_MODELLO = """
 * **Fuso orario:** [Info]
 * **Consigli utili:** [Info su valuta locale e prese elettriche, non usare mai simboli delle valute ma i loro codici, es. EUR, USD, GBP, ecc]
 
-## 8. Itinerario 3 Giorni
+## 9. Itinerario 3 Giorni
 * **Giorno 1:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
 * **Giorno 2:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
 * **Giorno 3:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
 
-## 9. Itinerario 5 Giorni
+## 10. Itinerario 5 Giorni
 * **Giorni 1-3:** Come sopra.
 * **Giorno 4:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
 * **Giorno 5:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
 
-## 10. Se hai più tempo
+## 11. Se hai più tempo
 * **Fuori dai sentieri battuti:** [Un quartiere meno turistico].
 * **Gite fuori porta:** [Una o più gita di mezza giornata o di un giorno nei dintorni, link get your guide].
 
-## 11. Conclusione
+## 12. Conclusione
 [Riflessione finale filosofica sul viaggio in questa città, descrivi l'essenza del viaggio].
 """
 
@@ -279,6 +279,7 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
 
 
