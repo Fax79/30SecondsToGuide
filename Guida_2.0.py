@@ -213,7 +213,7 @@ with st.sidebar:
         st.image("logo.png", width=200) # Mostra il logo grande
     else:
         st.title("⏱️")
-    
+		
     st.markdown("---")
     st.header("🧳 Organizza il viaggio")
     st.info("🏨 **Cerchi dove dormire?**")
@@ -222,6 +222,13 @@ with st.sidebar:
     st.info("🎟️ **Biglietti e Tour**")
     st.link_button("Attività su GetYourGuide", "https://www.getyourguide.com")
 
+# 3. PRIVACY & COPYRIGHT (In fondo - Discreto)
+    st.markdown("---")
+    st.caption("© 2025 30SecondsToGuide")
+    
+    # Questo crea il link alla pagina che hai appena creato
+    st.page_link("pages/privacy.py", label="Privacy Policy & Cookie", icon="🔒")
+	
 # --- CORPO PRINCIPALE ---
 st.title("Generatore Guide Turistiche")
 st.markdown("### Da zero a local in mezzo minuto.")
@@ -268,3 +275,4 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
