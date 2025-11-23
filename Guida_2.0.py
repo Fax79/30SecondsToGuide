@@ -26,14 +26,17 @@ TESTO_MODELLO = """
 * **[zona 2 di cui sopra]:** [Descrizione atmosfera]
 * **Chi ci va:** [Target turisti]
 
-## 3. Gastronomia
+## 3. Dove dormire
+[Migliori quartieri dove alloggiare per tipologia di turista/vacanza: in famiglia, in coppia, con un gruppo di amici, viaggiatori anziani (senior). Aggiungi qualche link booking].
+
+## 4. Gastronomia
 [Cosa mangiare e dove, la tradizione gastronomica].
 
 ### Piatti Imperdibili
 * **[Piatto 1]:** [Descrizione e ingredienti]
 * **[Piatto 2]:** [Descrizione e ingredienti]
-* **[il cibo tradizionale]:** [i migliori ristoranti, i più caratteristici, consigli per risparmiare]
-* **[bevande tradizionali]:** [i migliori locali, i più caratteristici, consigli per risparmiare]
+* **[il cibo tradizionale]:** [i migliori ristoranti, i più caratteristici, consigli per risparmiare, link tripadvisor]
+* **[bevande tradizionali]:** [i migliori locali, i più caratteristici, consigli per risparmiare, link tripadvisor]
 
 ## 4. Attrazioni
 * **[Monumento 1]:** [Descrizione]
@@ -69,7 +72,7 @@ TESTO_MODELLO = """
 
 ## 10. Se hai più tempo
 * **Fuori dai sentieri battuti:** [Un quartiere meno turistico].
-* **Gite fuori porta:** [Una o più gita di mezza giornata o di un giorno nei dintorni].
+* **Gite fuori porta:** [Una o più gita di mezza giornata o di un giorno nei dintorni, link get your guide].
 
 ## 11. Conclusione
 [Riflessione finale filosofica sul viaggio in questa città, descrivi l'essenza del viaggio].
@@ -276,5 +279,6 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
 
