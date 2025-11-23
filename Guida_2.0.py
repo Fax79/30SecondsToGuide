@@ -12,6 +12,28 @@ except:
 
 genai.configure(api_key=API_KEY)
 
+# ==========================================
+# 💰 AREA MONETIZZAZIONE (MODIFICA QUI)
+# ==========================================
+# Appena ricevi i codici da CJ/Booking/GYG, incollali tra le virgolette qui sotto.
+# Esempio: BOOKING_AID = "1234567"
+
+BOOKING_AID = "000000"  # <--- Incolla qui il tuo AID di Booking quando arriva
+GYG_PARTNER_ID = "000000" # <--- Incolla qui il tuo ID di GetYourGuide
+
+# Link base (Questi si aggiornano automaticamente con i codici sopra)
+def get_booking_link(city):
+    # Se non hai ancora il codice, manda alla home generica, altrimenti traccia
+    if BOOKING_AID == "000000":
+        return "https://www.booking.com"
+    return f"https://www.booking.com/searchresults.html?ss={city}&aid={BOOKING_AID}"
+
+def get_gyg_link(city):
+    if GYG_PARTNER_ID == "000000":
+        return "https://www.getyourguide.com"
+    return f"https://www.getyourguide.com/s?q={city}&partner_id={GYG_PARTNER_ID}"
+# ==========================================
+
 TESTO_MODELLO = """
 # [NOME CITTÀ]: Guida Esclusiva
 
@@ -279,6 +301,7 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
 
 
