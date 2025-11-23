@@ -1,4 +1,3 @@
-import streamlit.components.v1 as components
 import streamlit as st
 import google.generativeai as genai
 from fpdf import FPDF
@@ -233,19 +232,6 @@ if os.path.exists("logo.png"):
 else:
     st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
 
-# --- INIEZIONE SCRIPT TRAVELPAYOUTS (Verifica) ---
-components.html("""
-<script>
-  (function () {
-      // Trucco per uscire dall'iframe di Streamlit e farsi vedere da Travelpayouts
-      var script = window.parent.document.createElement("script");
-      script.async = 1;
-      script.src = 'https://emrldco.com/NDc2MjQ0.js?t=476244';
-      window.parent.document.head.appendChild(script);
-  })();
-</script>
-""", height=0, width=0)
-
 # --- SIDEBAR CON LOGO ---
 with st.sidebar:
     if os.path.exists("logo.png"):
@@ -326,10 +312,6 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
-
-
-
-
 
 
 
