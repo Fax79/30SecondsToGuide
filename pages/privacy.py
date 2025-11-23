@@ -32,4 +32,4 @@ In conformità con il GDPR, hai il diritto di chiedere informazioni sui dati tra
 
 # --- BOTTONE PER TORNARE INDIETRO ---
 if st.button("⬅️ Torna alla Home"):
-    st.switch_page("app.py")
+    st.switch_page("Guida_2.0.py")
