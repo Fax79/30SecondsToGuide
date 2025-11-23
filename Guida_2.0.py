@@ -1,3 +1,4 @@
+import streamlit.components.v1 as components
 import streamlit as st
 import google.generativeai as genai
 from fpdf import FPDF
@@ -312,6 +313,7 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
 
 
