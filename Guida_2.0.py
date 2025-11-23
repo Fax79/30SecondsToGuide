@@ -241,7 +241,7 @@ if st.button("Genera Guida PDF"):
     else:
         with st.spinner("Sto scrivendo e impaginando la guida..."):
             try:
-                model = genai.GenerativeModel("gemini-2.5-pro")
+                model = genai.GenerativeModel("gemini-2.5-flash")
                 
                 full_prompt = f"""
                 Sei uno scrittore di viaggi esperto. Scrivi una guida DETTAGLIATA per: {city_name}.
@@ -252,6 +252,7 @@ if st.button("Genera Guida PDF"):
                 3. Usa ESATTAMENTE la struttura seguente.
                 4. Scrivi paragrafi ricchi e lunghi.
 		5. NON USARE MAI CARATTERI SPECIALI
+		6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso
                 
                 MODELLO:
                 {TESTO_MODELLO}
@@ -275,4 +276,5 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
