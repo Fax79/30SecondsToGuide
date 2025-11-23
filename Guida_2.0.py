@@ -299,6 +299,17 @@ if st.button("Genera Guida PDF"):
                     mime="application/pdf"
                 )
                 
+# Banner sotto il download
+                st.markdown("---")
+                st.subheader(f"✈️ Pronto a partire per {city_name}?")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown(f"🏠 **Trova alloggio a {city_name}**")
+                    st.link_button(f"Vedi Hotel a {city_name}", get_booking_link(city_name))
+                with col2:
+                    st.markdown(f"🗺️ **Tour guidati a {city_name}**")
+                    st.link_button(f"Attività a {city_name}", get_gyg_link(city_name))
+                
             except Exception as e:
                 st.error(f"Errore: {e}")
 
