@@ -240,7 +240,7 @@ else:
           script.src = 'https://emrldco.com/NDc2MjQ0.js?t=476244';
           document.head.appendChild(script);
       })();
-    </script>
+</script>
 
 # --- SIDEBAR CON LOGO ---
 with st.sidebar:
@@ -322,6 +322,7 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
 
 
