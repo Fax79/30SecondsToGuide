@@ -1,4 +1,3 @@
-import streamlit.components.v1 as components
 import streamlit as st
 import google.generativeai as genai
 from fpdf import FPDF
@@ -233,17 +232,6 @@ if os.path.exists("logo.png"):
 else:
     st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
 
-st.html("""
-    <script data-noptimize="1" data-cfasync="false" data-wpfc-render="false">
-      (function () {
-          var script = document.createElement("script");
-          script.async = 1;
-          script.src = 'https://emrldco.com/NDc2MjQ0.js?t=476244';
-          document.head.appendChild(script);
-      })();
-    </script>
-""")
-
 # --- SIDEBAR CON LOGO ---
 with st.sidebar:
     if os.path.exists("logo.png"):
@@ -324,13 +312,6 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
-
-
-
-
-
-
-
 
 
 
