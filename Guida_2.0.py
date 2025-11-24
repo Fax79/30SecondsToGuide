@@ -307,7 +307,7 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
         with st.spinner("Sto scrivendo e impaginando la guida... non chiudere la pagina"):
             try:
                 # USARE GEMINI 1.5 FLASH (2.5 non esiste ancora pubblicamente)
-                model = genai.GenerativeModel("gemini-1.5-flash")
+                model = genai.GenerativeModel("gemini-2.5-flash")
                 
                 full_prompt = f"""
                 Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
@@ -364,3 +364,4 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
