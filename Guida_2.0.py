@@ -234,7 +234,7 @@ def create_pdf(text, city):
         pdf.set_x(15)
         pdf.set_font("Helvetica", '', 10)
         pdf.set_text_color(0, 102, 204) # Blu Link
-        pdf.cell(0, 8, subtitle, link=link, 0, 1)
+        pdf.cell(0, 8, subtitle, 0, 1, link=link)
         pdf.ln(15) # Spazio dopo il box
 
     # 1. HOTEL
@@ -359,6 +359,7 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
 
 
