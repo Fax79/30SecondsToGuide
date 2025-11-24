@@ -15,18 +15,22 @@ genai.configure(api_key=API_KEY)
 # ==========================================
 # 💰 AREA MONETIZZAZIONE
 # ==========================================
-# 1. BOOKING (Codice Numerico)
+# 1. CODICI NUMERICI (Booking / GYG)
 BOOKING_AID = "000000"  
-
-# 2. GETYOURGUIDE (Codice Numerico o Link Generico)
 GYG_PARTNER_ID = "000000" 
 
-# 3. LINK COMPLETI DA CJ / TRAVELPAYOUTS
-# Incolla qui i link interi che ottieni dalle piattaforme
-ALOSIM_LINK = "https://www.alosim.com" 
-AURAS_LINK = "https://www.aurasinsure.com"
-KIWI_LINK = "https://kiwi.tpx.lt/k6iWGXOK" # <--- Incolla qui il link di Travelpayouts per Kiwi
+# 2. LINK TRACCIATI (Travelpayouts / CJ)
+KIWI_LINK = "https://kiwi.tpx.lt/k6iWGXOK"            # Voli
+LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW" # Bagagli
+AIRHELP_LINK = "https://airhelp.tpx.lt/YS9ciIsW"      # Rimborsi
+SAILY_LINK = "https://saily.tpx.lt/Myxhqmox"          # eSim (NUOVO!)
 
+# 3. LINK GENERICI (In attesa di approvazione)
+AURAS_LINK = "https://www.aurasinsure.com"
+OMIO_LINK = "https://www.omio.com"             
+RENTAL_LINK = "https://www.discovercars.com"   
+
+# --- Funzioni Link ---
 def get_booking_link(city):
     if BOOKING_AID == "000000": return "https://www.booking.com"
     return f"https://www.booking.com/searchresults.html?ss={city}&aid={BOOKING_AID}"
@@ -37,7 +41,7 @@ def get_gyg_link(city):
 # ==========================================
 
 
-# --- IL MODELLO STANDARD ---
+# --- MODELLO TESTO ---
 TESTO_MODELLO = """
 # [NOME CITTÀ]: Guida Esclusiva
 
@@ -215,7 +219,7 @@ def create_pdf(text, city):
                 pdf.multi_cell(0, 6, content)
                 pdf.ln(2)
 
-    # --- PAGINA SPONSOR (LINK UTILI) ---
+    # --- PAGINA SPONSOR (PDF) ---
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 16)
     pdf.set_text_color(44, 62, 80)
@@ -240,11 +244,11 @@ def create_pdf(text, city):
         pdf.cell(0, 8, subtitle, 0, 1, link=link)
         pdf.ln(15)
 
+    # I 4 TOP Sponsor per il PDF
     make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", KIWI_LINK)
     make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
     make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", get_gyg_link(city))
-    make_sponsor_box("Connettività (eSim)", "Naviga subito all'estero senza roaming costoso con AloSIM", ALOSIM_LINK)
-    make_sponsor_box("Assicurazione Viaggio", "Parti senza pensieri con la protezione di Auras", AURAS_LINK)
+    make_sponsor_box("Internet (eSim)", f"Naviga a {city} senza roaming con Saily", SAILY_LINK)
 
     return bytes(pdf.output(dest='S'))
 
@@ -262,26 +266,12 @@ with st.sidebar:
         st.title("⏱️")
     
     st.markdown("---")
-    st.header("🧳 Organizza")
+    st.header("🧳 I Tuoi Partner")
     
-    st.info("✈️ **Voli**")
-    st.link_button("Cerca Voli su Kiwi", KIWI_LINK)
-    
-    st.info("🏨 **Hotel**")
-    st.link_button("Offerte su Booking", get_booking_link(""))
-    
-    st.info("🎟️ **Tour**")
-    st.link_button("Attività (GetYourGuide)", get_gyg_link(""))
-    
-    st.divider()
-    st.markdown("### 🛠️ Utilità")
-    col_sb1, col_sb2 = st.columns(2)
-    with col_sb1:
-        st.caption("📲 **eSim**")
-        st.link_button("AloSIM", ALOSIM_LINK)
-    with col_sb2:
-        st.caption("🛡️ **Polizza**")
-        st.link_button("Auras", AURAS_LINK)
+    st.link_button("✈️ Cerca Voli (Kiwi)", KIWI_LINK)
+    st.link_button("🏨 Hotel (Booking)", get_booking_link(""))
+    st.link_button("🎟️ Tour (GYG)", get_gyg_link(""))
+    st.link_button("🚆 Treni (Omio)", OMIO_LINK)
     
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
@@ -348,32 +338,49 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                     use_container_width=True
                 )
                 
+                # --- GRIGLIA FINALE (Hub di Viaggio) ---
                 st.markdown("---")
-                st.subheader(f"✈️ Pronto a partire per {city_name}?")
+                st.subheader(f"✈️ Organizza il viaggio a {city_name}")
                 
-                # Griglia 3 pulsanti sopra, 2 sotto
-                c_flight, c_hotel, c_tour = st.columns(3)
-                
-                with c_flight:
+                # GRIGLIA 1: Trasporti & Alloggio
+                c1, c2, c3 = st.columns(3)
+                with c1:
                     st.markdown(f"✈️ **Voli**")
-                    st.link_button("Kiwi.com", KIWI_LINK)
-                with c_hotel:
+                    st.link_button("Voli Kiwi", KIWI_LINK)
+                with c2:
                     st.markdown(f"🏨 **Hotel**")
                     st.link_button("Booking", get_booking_link(city_name))
-                with c_tour:
+                with c3:
+                    st.markdown(f"🚆 **Treni**")
+                    st.link_button("Omio", OMIO_LINK)
+
+                st.write("") 
+
+                # GRIGLIA 2: Esperienze & Servizi
+                c4, c5, c6 = st.columns(3)
+                with c4:
                     st.markdown(f"🎟️ **Tour**")
                     st.link_button("Attività", get_gyg_link(city_name))
-                
-                st.write("")
-                
-                c_sim, c_ins = st.columns(2)
-                with c_sim:
-                    st.markdown(f"📲 **eSim Dati**")
-                    st.link_button("AloSIM", ALOSIM_LINK)
-                with c_ins:
-                    st.markdown(f"🛡️ **Assicurazione**")
-                    st.link_button("Auras", AURAS_LINK)
+                with c5:
+                    st.markdown(f"🚗 **Auto**")
+                    st.link_button("Noleggio", RENTAL_LINK)
+                with c6:
+                    st.markdown(f"🎒 **Bagagli**")
+                    st.link_button("Deposito", LUGGAGE_LINK)
+
+                st.write("") 
+
+                # GRIGLIA 3: Sicurezza
+                c7, c8, c9 = st.columns(3)
+                with c7:
+                    st.markdown(f"📲 **Dati**")
+                    st.link_button("eSim Saily", SAILY_LINK)
+                with c8:
+                    st.markdown(f"🛡️ **Polizza**")
+                    st.link_button("Assicuraz.", AURAS_LINK)
+                with c9:
+                    st.markdown(f"💸 **Risarcim.**")
+                    st.link_button("AirHelp", AIRHELP_LINK)
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
-
