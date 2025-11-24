@@ -15,17 +15,17 @@ genai.configure(api_key=API_KEY)
 # ==========================================
 # 💰 AREA MONETIZZAZIONE
 # ==========================================
-# 1. CODICI NUMERICI (Booking / GYG)
+# 1. CODICI NUMERICI
 BOOKING_AID = "000000"  
 GYG_PARTNER_ID = "000000" 
 
-# 2. LINK TRACCIATI (Travelpayouts / CJ)
+# 2. LINK TRACCIATI (I tuoi link attivi)
 KIWI_LINK = "https://kiwi.tpx.lt/k6iWGXOK"            # Voli
 LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW" # Bagagli
 AIRHELP_LINK = "https://airhelp.tpx.lt/YS9ciIsW"      # Rimborsi
-SAILY_LINK = "https://saily.tpx.lt/Myxhqmox"          # eSim (NUOVO!)
+SAILY_LINK = "https://saily.tpx.lt/Myxhqmox"          # eSim
 
-# 3. LINK GENERICI (In attesa di approvazione)
+# 3. LINK GENERICI (In attesa)
 AURAS_LINK = "https://www.aurasinsure.com"
 OMIO_LINK = "https://www.omio.com"             
 RENTAL_LINK = "https://www.discovercars.com"   
@@ -244,7 +244,6 @@ def create_pdf(text, city):
         pdf.cell(0, 8, subtitle, 0, 1, link=link)
         pdf.ln(15)
 
-    # I 4 TOP Sponsor per il PDF
     make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", KIWI_LINK)
     make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
     make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", get_gyg_link(city))
@@ -258,7 +257,7 @@ if os.path.exists("logo.png"):
 else:
     st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
 
-# --- SIDEBAR ---
+# --- SIDEBAR (COMPLETA) ---
 with st.sidebar:
     if os.path.exists("logo.png"):
         st.image("logo.png", width=200)
@@ -266,12 +265,28 @@ with st.sidebar:
         st.title("⏱️")
     
     st.markdown("---")
-    st.header("🧳 I Tuoi Partner")
     
-    st.link_button("✈️ Cerca Voli (Kiwi)", KIWI_LINK)
-    st.link_button("🏨 Hotel (Booking)", get_booking_link(""))
-    st.link_button("🎟️ Tour (GYG)", get_gyg_link(""))
-    st.link_button("🚆 Treni (Omio)", OMIO_LINK)
+    # 1. TRASPORTI & HOTEL
+    st.caption("✈️ PRENOTAZIONI")
+    st.link_button("Voli (Kiwi)", KIWI_LINK)
+    st.link_button("Hotel (Booking)", get_booking_link(""))
+    st.link_button("Treni (Omio)", OMIO_LINK)
+    st.link_button("Auto (Discover)", RENTAL_LINK)
+    
+    # 2. ATTIVITÀ
+    st.caption("🎟️ ESPERIENZE")
+    st.link_button("Tour (GetYourGuide)", get_gyg_link(""))
+    
+    # 3. UTILITÀ
+    st.caption("🛠️ SERVIZI UTILI")
+    # Usiamo colonne per risparmiare spazio verticale
+    c_sb1, c_sb2 = st.columns(2)
+    with c_sb1:
+        st.link_button("eSim", SAILY_LINK)
+        st.link_button("Bagagli", LUGGAGE_LINK)
+    with c_sb2:
+        st.link_button("Polizza", AURAS_LINK)
+        st.link_button("Rimborsi", AIRHELP_LINK)
     
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
