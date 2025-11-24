@@ -15,22 +15,23 @@ genai.configure(api_key=API_KEY)
 # ==========================================
 # 💰 AREA MONETIZZAZIONE (MODIFICA QUI)
 # ==========================================
-# Appena ricevi i codici da CJ/Booking/GYG, incollali tra le virgolette qui sotto.
-# Esempio: BOOKING_AID = "1234567"
+# 1. BOOKING & GETYOURGUIDE (Codici numerici/ID)
+BOOKING_AID = "000000"  
+GYG_PARTNER_ID = "000000" 
 
-BOOKING_AID = "000000"  # <--- Incolla qui il tuo AID di Booking quando arriva
-GYG_PARTNER_ID = "000000" # <--- Incolla qui il tuo ID di GetYourGuide
+# 2. ALOSIM & AURAS (Link CJ Completi)
+# Quando CJ ti approva, vai su "Get Links", copia il link "Click URL" intero e incollalo qui sotto tra le virgolette.
+# Per ora mettiamo i siti ufficiali come placeholder.
+ALOSIM_LINK = "https://www.alosim.com" 
+AURAS_LINK = "https://www.aurasinsure.com"
 
-# Link base (Questi si aggiornano automaticamente con i codici sopra)
+# --- Funzioni Generazione Link ---
 def get_booking_link(city):
-    # Se non hai ancora il codice, manda alla home generica, altrimenti traccia
-    if BOOKING_AID == "000000":
-        return "https://www.booking.com"
+    if BOOKING_AID == "000000": return "https://www.booking.com"
     return f"https://www.booking.com/searchresults.html?ss={city}&aid={BOOKING_AID}"
 
 def get_gyg_link(city):
-    if GYG_PARTNER_ID == "000000":
-        return "https://www.getyourguide.com"
+    if GYG_PARTNER_ID == "000000": return "https://www.getyourguide.com"
     return f"https://www.getyourguide.com/s?q={city}&partner_id={GYG_PARTNER_ID}"
 # ==========================================
 
@@ -100,16 +101,13 @@ TESTO_MODELLO = """
 [Riflessione finale filosofica sul viaggio in questa città, descrivi l'essenza del viaggio].
 """
 
-# --- FUNZIONE PDF "BRANDED" ---
+# --- FUNZIONE PDF ---
 def create_pdf(text, city):
     class ModernPDF(FPDF):
         def header(self):
             if self.page_no() == 1: return
-            
-            # Barra Blu
             self.set_fill_color(44, 62, 80) 
             self.rect(0, 0, 210, 20, 'F')
-            
             self.set_font('Helvetica', 'B', 10)
             self.set_text_color(255, 255, 255)
             self.set_y(8)
@@ -126,17 +124,12 @@ def create_pdf(text, city):
 
         def make_cover(self, city_name):
             self.add_page()
-            
-            # Colonna laterale
             self.set_fill_color(236, 240, 241) 
             self.rect(0, 0, 60, 297, 'F') 
             
-            # --- LOGO SULLA COPERTINA ---
-            # Verifica se il logo esiste per evitare crash
             if os.path.exists("logo.png"):
-                # Inserisce il logo (x, y, larghezza)
                 self.image("logo.png", x=70, y=20, w=50)
-                y_start = 80 # Se c'è il logo, iniziamo a scrivere più in basso
+                y_start = 80 
             else:
                 y_start = 50
 
@@ -202,13 +195,9 @@ def create_pdf(text, city):
         elif line.strip().startswith('* ') or line.strip().startswith('- '):
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(0, 0, 0)
-            if line.strip().startswith('* '):
-                content_raw = line.strip()[2:] 
-            else:
-                content_raw = line.strip()[2:]
-            
+            if line.strip().startswith('* '): content_raw = line.strip()[2:] 
+            else: content_raw = line.strip()[2:]
             content = content_raw.replace('*', '')
-            
             pdf.set_x(15) 
             pdf.cell(5, 5, chr(149), 0, 0) 
             pdf.set_x(22) 
@@ -223,35 +212,83 @@ def create_pdf(text, city):
                 pdf.multi_cell(0, 6, content)
                 pdf.ln(2)
 
+    # --- PAGINA SPONSOR (LINK UTILI) ---
+    pdf.add_page()
+    pdf.set_font("Helvetica", 'B', 16)
+    pdf.set_text_color(44, 62, 80)
+    pdf.cell(0, 10, "LINK UTILI PER IL VIAGGIO", 0, 1, 'C')
+    pdf.ln(5)
+    
+    # Funzione per creare box sponsor
+    def make_sponsor_box(title, subtitle, link):
+        pdf.set_fill_color(245, 245, 245) # Grigio molto chiaro
+        start_y = pdf.get_y()
+        pdf.rect(10, start_y, 190, 30, 'F') # Box di sfondo
+        
+        pdf.set_y(start_y + 5)
+        pdf.set_x(15)
+        pdf.set_font("Helvetica", 'B', 12)
+        pdf.set_text_color(44, 62, 80)
+        pdf.cell(0, 5, title, 0, 1)
+        
+        pdf.set_x(15)
+        pdf.set_font("Helvetica", '', 10)
+        pdf.set_text_color(0, 102, 204) # Blu Link
+        pdf.cell(0, 8, subtitle, link=link, 0, 1)
+        pdf.ln(15) # Spazio dopo il box
+
+    # 1. HOTEL
+    make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
+    
+    # 2. TOUR
+    make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", get_gyg_link(city))
+    
+    # 3. ESIM (ALOSIM)
+    make_sponsor_box("Connettività (eSim)", "Naviga subito all'estero senza roaming costoso con AloSIM", ALOSIM_LINK)
+    
+    # 4. ASSICURAZIONE (AURAS)
+    make_sponsor_box("Assicurazione Viaggio", "Parti senza pensieri con la protezione di Auras", AURAS_LINK)
+
     return bytes(pdf.output(dest='S'))
 
 # --- INTERFACCIA ---
-# Configurazione pagina con FAVICON (Logo nella scheda browser)
 if os.path.exists("logo.png"):
     st.set_page_config(page_title="30SecondsToGuide", page_icon="logo.png", layout="centered")
 else:
     st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
 
-# --- SIDEBAR CON LOGO ---
+# --- SIDEBAR ---
 with st.sidebar:
     if os.path.exists("logo.png"):
-        st.image("logo.png", width=200) # Mostra il logo grande
+        st.image("logo.png", width=200)
     else:
         st.title("⏱️")
-		
+    
     st.markdown("---")
-    st.header("🧳 Organizza il viaggio")
-    st.info("🏨 **Cerchi dove dormire?**")
-    st.link_button("Cerca Hotel su Booking", "https://www.booking.com")
+    st.header("🧳 Organizza")
+    
+    # Sezione 1: Fondamentali
+    st.info("🏨 **Hotel & Alloggi**")
+    st.link_button("Vedi offerte su Booking", get_booking_link(""))
+    
+    st.info("🎟️ **Tour & Biglietti**")
+    st.link_button("Prenota su GetYourGuide", get_gyg_link(""))
+    
     st.divider()
-    st.info("🎟️ **Biglietti e Tour**")
-    st.link_button("Attività su GetYourGuide", "https://www.getyourguide.com")
-
-# 3. PRIVACY & COPYRIGHT (In fondo - Discreto)
+    
+    # Sezione 2: Utilità (Nuovi Partner)
+    st.markdown("### 🛠️ Utilità di Viaggio")
+    
+    col_sidebar1, col_sidebar2 = st.columns(2)
+    with col_sidebar1:
+        st.caption("📲 **Internet**")
+        st.link_button("eSim Dati", ALOSIM_LINK)
+    with col_sidebar2:
+        st.caption("🛡️ **Polizza**")
+        st.link_button("Auras Ins.", AURAS_LINK)
+    
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
-    
-    # Questo crea il link alla pagina che hai appena creato
     st.page_link("pages/privacy.py", label="Privacy Policy & Cookie", icon="🔒")
 	
 # --- CORPO PRINCIPALE ---
@@ -264,20 +301,20 @@ if st.button("Genera Guida PDF"):
     if not city_name:
         st.warning("Inserisci una città.")
     else:
-        with st.spinner("Sto scrivendo e impaginando la guida..."):
+        with st.spinner("Sto scrivendo e impaginando la guida... non chiudere la pagina"):
             try:
                 model = genai.GenerativeModel("gemini-2.5-flash")
                 
                 full_prompt = f"""
-                Sei uno scrittore di viaggi esperto. Scrivi una guida DETTAGLIATA per: {city_name}.
+                Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
                 
                 REGOLE FONDAMENTALI:
                 1. NON USARE MAI TABELLE MARKDOWN (niente righe con | |).
                 2. Se devi fare un confronto, usa elenchi puntati descrittivi.
                 3. Usa ESATTAMENTE la struttura seguente.
                 4. Scrivi paragrafi ricchi e lunghi.
-		5. NON USARE MAI CARATTERI SPECIALI
-		6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso
+				5. NON USARE MAI CARATTERI SPECIALI
+				6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso
                 
                 MODELLO:
                 {TESTO_MODELLO}
@@ -302,16 +339,27 @@ if st.button("Genera Guida PDF"):
 # Banner sotto il download
                 st.markdown("---")
                 st.subheader(f"✈️ Pronto a partire per {city_name}?")
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown(f"🏠 **Trova alloggio a {city_name}**")
-                    st.link_button(f"Vedi Hotel a {city_name}", get_booking_link(city_name))
-                with col2:
-                    st.markdown(f"🗺️ **Tour guidati a {city_name}**")
-                    st.link_button(f"Attività a {city_name}", get_gyg_link(city_name))
+                
+                # Griglia pulsanti 2x2
+                c1, c2 = st.columns(2)
+                c3, c4 = st.columns(2)
+                
+                with c1:
+                    st.markdown(f"🏨 **Hotel**")
+                    st.link_button("Vedi Offerte", get_booking_link(city_name))
+                with c2:
+                    st.markdown(f"🎟️ **Tour**")
+                    st.link_button("Prenota Attività", get_gyg_link(city_name))
+                with c3:
+                    st.markdown(f"📲 **eSim Dati**")
+                    st.link_button("AloSIM", ALOSIM_LINK)
+                with c4:
+                    st.markdown(f"🛡️ **Assicurazione**")
+                    st.link_button("Auras", AURAS_LINK)
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
 
 
