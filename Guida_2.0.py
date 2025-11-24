@@ -400,4 +400,31 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
             except Exception as e:
                 st.error(f"Errore: {e}")
 
+# --- SEZIONE SEO (Testo per i motori di ricerca) ---
+st.markdown("---")
+st.markdown("""
+<div style="text-align: justify; color: #555;">
+    <h3>Come funziona 30SecondsToGuide?</h3>
+    <p>
+        <strong>30SecondsToGuide</strong> è il primo generatore di guide turistiche basato sull'Intelligenza Artificiale. 
+        A differenza dei tradizionali blog di viaggio, il nostro algoritmo crea <strong>itinerari personalizzati in PDF</strong> 
+        per qualsiasi città del mondo in meno di 30 secondi.
+    </p>
+    <p>
+        Che tu stia cercando <em>cosa vedere a Parigi</em>, un <em>itinerario di 3 giorni a New York</em> o 
+        consigli su <em>dove dormire a Tokyo</em>, la nostra AI analizza migliaia di fonti per offrirti:
+    </p>
+    <ul>
+        <li>🗺️ <strong>Itinerari passo-passo</strong> ottimizzati per risparmiare tempo.</li>
+        <li>🍽️ Consigli gastronomici sui <strong>migliori ristoranti locali</strong>.</li>
+        <li>🏛️ Informazioni storiche e culturali dettagliate.</li>
+        <li>📲 Link utili per <strong>prenotare hotel, voli e tour</strong> al miglior prezzo.</li>
+    </ul>
+    <p>
+        Il servizio è <strong>gratuito al 100%</strong> e non richiede registrazione. 
+        Inserisci la destinazione, clicca e scarica la tua guida di viaggio in PDF pronta per essere stampata o letta su smartphone.
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
 
