@@ -25,7 +25,7 @@ GYG_PARTNER_ID = "000000"
 # Incolla qui i link interi che ottieni dalle piattaforme
 ALOSIM_LINK = "https://www.alosim.com" 
 AURAS_LINK = "https://www.aurasinsure.com"
-KIWI_LINK = "https://www.kiwi.com" # <--- Incolla qui il link di Travelpayouts per Kiwi
+KIWI_LINK = "https://kiwi.tpx.lt/k6iWGXOK" # <--- Incolla qui il link di Travelpayouts per Kiwi
 
 def get_booking_link(city):
     if BOOKING_AID == "000000": return "https://www.booking.com"
@@ -376,3 +376,4 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
