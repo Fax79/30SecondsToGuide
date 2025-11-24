@@ -313,7 +313,7 @@ if st.button("Genera Guida PDF"):
                 2. Se devi fare un confronto, usa elenchi puntati descrittivi.
                 3. Usa ESATTAMENTE la struttura seguente.
                 4. Scrivi paragrafi ricchi e lunghi.
-				5. NON USARE MAI CARATTERI SPECIALI
+				5. NON USARE MAI CARATTERI SPECIALI, anche se semplifica la grafia delle parole straniere utilizzando l'alfabeto standard
 				6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso
                 
                 MODELLO:
@@ -359,6 +359,7 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
 
 
