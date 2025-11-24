@@ -69,11 +69,11 @@ TESTO_MODELLO = """
 * **[bevande tradizionali]:** [i migliori locali, i più caratteristici, consigli per risparmiare]
 
 ## 5. Attrazioni
-* **[Monumento 1]:** [Descrizione]
-* **[Monumento 2]:** [Descrizione]
-* **[Monumento 3]:** [Descrizione]
-* **[Monumento 4]:** [Descrizione]
-* **[Monumento 5]:** [Descrizione]
+* **[Monumento 1]:** [Descrizione, se presenti giorni e orari di apertura, prezzi biglietti]
+* **[Monumento 2]:** [Descrizione, se presenti giorni e orari di apertura, prezzi biglietti]
+* **[Monumento 3]:** [Descrizione, se presenti giorni e orari di apertura, prezzi biglietti]
+* **[Monumento 4]:** [Descrizione,  se presenti giorni e orari di apertura, prezzi biglietti]
+* **[Monumento 5]:** [Descrizione,  se presenti giorni e orari di apertura, prezzi biglietti]
 
 ## 6. I mercati
 * **[Mercato 1]:** [Descrizione]
@@ -399,4 +399,5 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
