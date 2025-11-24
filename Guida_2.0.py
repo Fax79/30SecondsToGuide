@@ -282,11 +282,11 @@ with st.sidebar:
     # Usiamo colonne per risparmiare spazio verticale
     c_sb1, c_sb2 = st.columns(2)
     with c_sb1:
-        st.link_button("eSim", SAILY_LINK)
+        st.link_button("eSim (Saily)", SAILY_LINK)
         st.link_button("Bagagli", LUGGAGE_LINK)
     with c_sb2:
         st.link_button("Polizza", AURAS_LINK)
-        st.link_button("Rimborsi", AIRHELP_LINK)
+        st.link_button("Rimborsi (Airhelp)", AIRHELP_LINK)
     
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
@@ -316,7 +316,7 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
     if not city_name:
         st.warning("Inserisci una città.")
     else:
-        with st.spinner("Sto attivando Gemini 2.5 Flash per scrivere la guida... (non chiudere la pagina)"):
+        with st.spinner("Stiamo scrivendo la tua guida... (non chiudere la pagina)"):
             try:
                 model = genai.GenerativeModel("gemini-2.5-flash")
                 
@@ -399,3 +399,4 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
