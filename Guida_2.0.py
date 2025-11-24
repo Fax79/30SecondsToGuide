@@ -49,7 +49,7 @@ TESTO_MODELLO = """
 * **Chi ci va:** [Target turisti]
 
 ## 3. Dove dormire
-[Migliori quartieri dove alloggiare per tipologia di turista/vacanza: in famiglia, in coppia, con un gruppo di amici, viaggiatori anziani (senior). Aggiungi qualche link booking].
+[Migliori quartieri dove alloggiare per tipologia di turista/vacanza: in famiglia, in coppia, con un gruppo di amici, viaggiatori senior].
 
 ## 4. Gastronomia
 [Cosa mangiare e dove, la tradizione gastronomica].
@@ -57,8 +57,8 @@ TESTO_MODELLO = """
 ### Piatti Imperdibili
 * **[Piatto 1]:** [Descrizione e ingredienti]
 * **[Piatto 2]:** [Descrizione e ingredienti]
-* **[il cibo tradizionale]:** [i migliori ristoranti, i più caratteristici, consigli per risparmiare, link tripadvisor]
-* **[bevande tradizionali]:** [i migliori locali, i più caratteristici, consigli per risparmiare, link tripadvisor]
+* **[il cibo tradizionale]:** [i migliori ristoranti, i più caratteristici, consigli per risparmiare]
+* **[bevande tradizionali]:** [i migliori locali, i più caratteristici, consigli per risparmiare]
 
 ## 5. Attrazioni
 * **[Monumento 1]:** [Descrizione]
@@ -312,6 +312,7 @@ if st.button("Genera Guida PDF"):
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
+
 
 
 
