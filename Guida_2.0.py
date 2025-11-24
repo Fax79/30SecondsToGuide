@@ -15,11 +15,17 @@ genai.configure(api_key=API_KEY)
 # ==========================================
 # 💰 AREA MONETIZZAZIONE
 # ==========================================
+# 1. BOOKING (Codice Numerico)
 BOOKING_AID = "000000"  
+
+# 2. GETYOURGUIDE (Codice Numerico o Link Generico)
 GYG_PARTNER_ID = "000000" 
 
+# 3. LINK COMPLETI DA CJ / TRAVELPAYOUTS
+# Incolla qui i link interi che ottieni dalle piattaforme
 ALOSIM_LINK = "https://www.alosim.com" 
 AURAS_LINK = "https://www.aurasinsure.com"
+KIWI_LINK = "https://www.kiwi.com" # <--- Incolla qui il link di Travelpayouts per Kiwi
 
 def get_booking_link(city):
     if BOOKING_AID == "000000": return "https://www.booking.com"
@@ -31,7 +37,7 @@ def get_gyg_link(city):
 # ==========================================
 
 
-# --- IL NUOVO MODELLO STANDARD (Avanzato) ---
+# --- IL MODELLO STANDARD ---
 TESTO_MODELLO = """
 # [NOME CITTÀ]: Guida Esclusiva
 
@@ -209,7 +215,7 @@ def create_pdf(text, city):
                 pdf.multi_cell(0, 6, content)
                 pdf.ln(2)
 
-    # --- PAGINA SPONSOR ---
+    # --- PAGINA SPONSOR (LINK UTILI) ---
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 16)
     pdf.set_text_color(44, 62, 80)
@@ -234,6 +240,7 @@ def create_pdf(text, city):
         pdf.cell(0, 8, subtitle, 0, 1, link=link)
         pdf.ln(15)
 
+    make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", KIWI_LINK)
     make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
     make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", get_gyg_link(city))
     make_sponsor_box("Connettività (eSim)", "Naviga subito all'estero senza roaming costoso con AloSIM", ALOSIM_LINK)
@@ -257,11 +264,14 @@ with st.sidebar:
     st.markdown("---")
     st.header("🧳 Organizza")
     
-    st.info("🏨 **Hotel & Alloggi**")
-    st.link_button("Vedi offerte su Booking", get_booking_link(""))
+    st.info("✈️ **Voli**")
+    st.link_button("Cerca Voli su Kiwi", KIWI_LINK)
     
-    st.info("🎟️ **Tour & Biglietti**")
-    st.link_button("Prenota su GetYourGuide", get_gyg_link(""))
+    st.info("🏨 **Hotel**")
+    st.link_button("Offerte su Booking", get_booking_link(""))
+    
+    st.info("🎟️ **Tour**")
+    st.link_button("Attività (GetYourGuide)", get_gyg_link(""))
     
     st.divider()
     st.markdown("### 🛠️ Utilità")
@@ -279,13 +289,11 @@ with st.sidebar:
 
 # --- CORPO CENTRALE (MOBILE FRIENDLY) ---
 
-# 1. Logo Mobile (Centrato)
 if os.path.exists("logo.png"):
     col_sp1, col_img, col_sp2 = st.columns([3, 2, 3])
     with col_img:
         st.image("logo.png", use_container_width=True)
 
-# 2. Titolo Brandizzato
 st.markdown("""
     <h1 style='text-align: center; color: #2C3E50; margin-bottom: 0; margin-top: -10px;'>
         Generatore Guide Turistiche
@@ -295,18 +303,16 @@ st.markdown("""
     </p>
     """, unsafe_allow_html=True)
 
-st.write("") # Spaziatura
+st.write("") 
 
 city_name = st.text_input("Inserisci la destinazione:", placeholder="Es. Parigi, Tokyo, New York...")
 
-# 3. Bottone Largo e Centrato
 if st.button("Genera Guida PDF", type="primary", use_container_width=True):
     if not city_name:
         st.warning("Inserisci una città.")
     else:
-        with st.spinner("Sto scrivendo e impaginando la guida... non chiudere la pagina"):
+        with st.spinner("Sto attivando Gemini 2.5 Flash per scrivere la guida... (non chiudere la pagina)"):
             try:
-                # USARE GEMINI 1.5 FLASH (2.5 non esiste ancora pubblicamente)
                 model = genai.GenerativeModel("gemini-2.5-flash")
                 
                 full_prompt = f"""
@@ -342,26 +348,31 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                     use_container_width=True
                 )
                 
-                # Banner sotto il download
                 st.markdown("---")
                 st.subheader(f"✈️ Pronto a partire per {city_name}?")
                 
-                c1, c2 = st.columns(2)
-                c3, c4 = st.columns(2)
+                # Griglia 3 pulsanti sopra, 2 sotto
+                c_flight, c_hotel, c_tour = st.columns(3)
                 
-                with c1:
+                with c_flight:
+                    st.markdown(f"✈️ **Voli**")
+                    st.link_button("Kiwi.com", KIWI_LINK)
+                with c_hotel:
                     st.markdown(f"🏨 **Hotel**")
-                    st.link_button("Vedi Offerte", get_booking_link(city_name))
-                with c2:
+                    st.link_button("Booking", get_booking_link(city_name))
+                with c_tour:
                     st.markdown(f"🎟️ **Tour**")
-                    st.link_button("Prenota Attività", get_gyg_link(city_name))
-                with c3:
+                    st.link_button("Attività", get_gyg_link(city_name))
+                
+                st.write("")
+                
+                c_sim, c_ins = st.columns(2)
+                with c_sim:
                     st.markdown(f"📲 **eSim Dati**")
                     st.link_button("AloSIM", ALOSIM_LINK)
-                with c4:
+                with c_ins:
                     st.markdown(f"🛡️ **Assicurazione**")
                     st.link_button("Auras", AURAS_LINK)
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
-
