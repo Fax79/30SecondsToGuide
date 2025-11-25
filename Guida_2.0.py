@@ -19,11 +19,11 @@ genai.configure(api_key=API_KEY)
 BOOKING_AID = "000000"  
 GYG_PARTNER_ID = "000000" 
 
-# 2. LINK TRACCIATI (I tuoi link attivi)
+# 2. LINK TRACCIATI (Attivi)
 FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"            # Voli
 LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW" # Bagagli
-REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"      # Rimborsi
-ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"          # eSim
+REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"          # Rimborsi
+ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"             # eSim
 
 # 3. LINK GENERICI (In attesa)
 INSURANCE_LINK = "https://www.heymondo.it"
@@ -38,10 +38,20 @@ def get_booking_link(city):
 def get_gyg_link(city):
     if GYG_PARTNER_ID == "000000": return "https://www.getyourguide.com"
     return f"https://www.getyourguide.com/s?q={city}&partner_id={GYG_PARTNER_ID}"
+
+# --- Funzione Helper per Bottoni con Logo ---
+def partner_button(label, link, image_file):
+    if os.path.exists(image_file):
+        # Se c'è il logo, mostra immagine cliccabile
+        st.image(image_file, use_container_width=True)
+        st.markdown(f"<div style='text-align: center; margin-top: -5px; margin-bottom: 10px;'><a href='{link}' target='_blank' style='text-decoration: none; color: #E67E22; font-weight: bold; font-size: 0.9em;'>VAI AL SITO ➜</a></div>", unsafe_allow_html=True)
+    else:
+        # Fallback: Se manca il logo, mostra il bottone classico
+        st.link_button(label, link, use_container_width=True)
 # ==========================================
 
 
-# --- MODELLO TESTO (IL TUO A 12 PUNTI) ---
+# --- MODELLO TESTO (12 PUNTI) ---
 TESTO_MODELLO = """
 # [NOME CITTÀ]: Guida Esclusiva
 
@@ -83,27 +93,27 @@ TESTO_MODELLO = """
 [I principali festival, fiere, ricorrenze e feste della città].
 
 ## 8. Info Pratiche
-* **Come arrivare:** [Info su compagnie aeree che servono l'aeroporto principale (tradizionali e low cost), voli dall'Italia (se la destinazione è all'estero), mezzi alternativi per raggiungere la destinazione: treni/autobus)]
+* **Come arrivare:** [Info su compagnie aeree che servono l'aeroporto principale (tradizionali e low cost), voli dall'Italia, mezzi alternativi: treni/autobus)]
 * **Trasporti:** [Info]
 * **Sicurezza:** [Info]
 * **Clima:** [Info sui migliori periodi per visitare la città]
-* **Visti e requisiti per l'ingresso nel paese:** [Info]
+* **Visti e requisiti:** [Info]
 * **Fuso orario:** [Info]
 * **Consigli utili:** [Info su valuta locale e prese elettriche, non usare mai simboli delle valute ma i loro codici, es. EUR, USD, GBP, ecc]
 
 ## 9. Itinerario 3 Giorni
-* **Giorno 1:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
-* **Giorno 2:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
-* **Giorno 3:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
+* **Giorno 1:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore per razionalizzare i tempi]
+* **Giorno 2:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore per razionalizzare i tempi]
+* **Giorno 3:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore per razionalizzare i tempi]
 
 ## 10. Itinerario 5 Giorni
 * **Giorni 1-3:** Come sopra.
-* **Giorno 4:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
-* **Giorno 5:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore del susseguirsi delle tappe per razionalizzare i tempi]
+* **Giorno 4:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore per razionalizzare i tempi]
+* **Giorno 5:** [Mattina/Pomeriggio/Sera, pensa all'itinerario nell'ordine migliore per razionalizzare i tempi]
 
 ## 11. Se hai più tempo
 * **Fuori dai sentieri battuti:** [Un quartiere meno turistico].
-* **Gite fuori porta:** [Una o più gite di mezza giornata o di un giorno nei dintorni, link get your guide].
+* **Gite fuori porta:** [Una o più gite di mezza giornata o di un giorno nei dintorni].
 
 ## 12. Conclusione
 [Riflessione finale filosofica sul viaggio in questa città, descrivi l'essenza del viaggio].
@@ -163,18 +173,14 @@ def create_pdf(text, city):
             self.set_text_color(44, 62, 80)
             self.cell(0, 10, "GENERATO DA 30SecondsToGuide")
 
-    # --- FUNZIONE SPAZZINO (Cruciale per non crashare) ---
+    # --- FUNZIONE SPAZZINO ---
     def clean_text_for_pdf(text_line):
-        # Mappa dei caratteri vietati
         replacements = {
             "€": "EUR", "$": "USD", "£": "GBP",
             "’": "'", "“": '"', "”": '"', "–": "-", "…": "..."
         }
-        # Sostituisce ogni carattere vietato
         for char, replacement in replacements.items():
             text_line = text_line.replace(char, replacement)
-        
-        # Forza codifica Latin-1
         return text_line.encode('latin-1', 'replace').decode('latin-1')
 
     pdf = ModernPDF()
@@ -185,7 +191,6 @@ def create_pdf(text, city):
     lines = text.split('\n')
     
     for line in lines:
-        # PULIZIA ATTIVA SU OGNI RIGA DELL'AI
         clean_line = clean_text_for_pdf(line)
         
         if line.startswith('# '): 
@@ -235,7 +240,7 @@ def create_pdf(text, city):
                 pdf.multi_cell(0, 6, content)
                 pdf.ln(2)
 
-    # --- PAGINA SPONSOR (PDF) ---
+    # --- PAGINA SPONSOR (PDF - 9 BOX) ---
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 16)
     pdf.set_text_color(44, 62, 80)
@@ -243,16 +248,15 @@ def create_pdf(text, city):
     pdf.ln(5)
     
     def make_sponsor_box(title, subtitle, link):
-        # PULIZIA PREVENTIVA anche qui! (Evita errori su stringhe manuali)
         title = clean_text_for_pdf(title)
         subtitle = clean_text_for_pdf(subtitle)
-
+        
         pdf.set_fill_color(245, 245, 245)
         start_y = pdf.get_y()
-        # Altezza ridotta per farne stare 7
-        pdf.rect(10, start_y, 190, 22, 'F') 
+        # Altezza ridotta per farne stare 9
+        pdf.rect(10, start_y, 190, 20, 'F') 
         
-        pdf.set_y(start_y + 4)
+        pdf.set_y(start_y + 3)
         pdf.set_x(15)
         pdf.set_font("Helvetica", 'B', 11)
         pdf.set_text_color(44, 62, 80)
@@ -263,9 +267,8 @@ def create_pdf(text, city):
         pdf.set_text_color(0, 102, 204)
         
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
-        pdf.ln(10)
+        pdf.ln(8) # Spazio ridotto
 
-    # I TUOI LINK SPECIFICI (Senza simboli Euro!)
     make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", FLIGHT_LINK)
     make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
     make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", get_gyg_link(city))
@@ -273,6 +276,8 @@ def create_pdf(text, city):
     make_sponsor_box("Assicurazione Viaggio", "Parti senza pensieri con la protezione di Heymondo", INSURANCE_LINK)
     make_sponsor_box("Deposito bagagli", "Quando il bagaglio diventa un peso, depositalo in sicurezza", LUGGAGE_LINK)
     make_sponsor_box("Rimborso voli", "Volo cancellato o in ritardo? Ottieni fino a 600 EUR!", REIMB_LINK)
+    make_sponsor_box("Treni e Bus", f"Spostati facilmente da/per {city} con Omio", TRAIN_LINK)
+    make_sponsor_box("Noleggio Auto", f"Noleggia un'auto a {city} al miglior prezzo", RENTAL_LINK)
 
     return bytes(pdf.output(dest='S'))
 
@@ -282,7 +287,7 @@ if os.path.exists("logo.png"):
 else:
     st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
 
-# --- SIDEBAR (COMPLETA) ---
+# --- SIDEBAR ---
 with st.sidebar:
     if os.path.exists("logo.png"):
         st.image("logo.png", width=200)
@@ -290,34 +295,26 @@ with st.sidebar:
         st.title("⏱️")
     
     st.markdown("---")
-    
-    # 1. TRASPORTI & HOTEL
     st.caption("✈️ PRENOTAZIONI")
-    st.link_button("Voli (Kiwi)", FLIGHT_LINK)
-    st.link_button("Hotel (Booking)", get_booking_link(""))
-    st.link_button("Treni (Omio)", TRAIN_LINK)
-    st.link_button("Auto (Discover)", RENTAL_LINK)
+    partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
+    partner_button("Hotel (Booking)", get_booking_link(""), "btn_booking.png")
+    partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
+    partner_button("Auto (Discover)", RENTAL_LINK, "btn_discover.png")
     
-    # 2. ATTIVITÀ
     st.caption("🎟️ ESPERIENZE")
-    st.link_button("Tour (GetYourGuide)", get_gyg_link(""))
+    partner_button("Tour (GetYourGuide)", get_gyg_link(""), "btn_gyg.png")
     
-    # 3. UTILITÀ
     st.caption("🛠️ SERVIZI UTILI")
-    c_sb1, c_sb2 = st.columns(2)
-    with c_sb1:
-        st.link_button("eSim (Saily)", ESIM_LINK)
-        st.link_button("Bagagli", LUGGAGE_LINK)
-    with c_sb2:
-        st.link_button("Polizza (Heymondo)", INSURANCE_LINK)
-        st.link_button("Rimborsi (Airhelp)", REIMB_LINK)
+    partner_button("eSim (Saily)", ESIM_LINK, "btn_saily.png")
+    partner_button("Bagagli", LUGGAGE_LINK, "btn_radical.png")
+    partner_button("Polizza (Heymondo)", INSURANCE_LINK, "btn_heymondo.png")
+    partner_button("Rimborsi (Airhelp)", REIMB_LINK, "btn_airhelp.png")
     
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
     st.page_link("pages/privacy.py", label="Privacy Policy", icon="🔒")
 
 # --- CORPO CENTRALE ---
-
 if os.path.exists("logo.png"):
     col_sp1, col_img, col_sp2 = st.columns([3, 2, 3])
     with col_img:
@@ -336,6 +333,7 @@ st.write("")
 
 city_name = st.text_input("Inserisci la destinazione:", placeholder="Es. Parigi, Tokyo, New York...")
 
+# --- GENERAZIONE GUIDA ---
 if st.button("Genera Guida PDF", type="primary", use_container_width=True):
     if not city_name:
         st.warning("Inserisci una città.")
@@ -352,7 +350,7 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 2. Se devi fare un confronto, usa elenchi puntati descrittivi.
                 3. Usa ESATTAMENTE la struttura seguente.
                 4. Scrivi paragrafi ricchi e lunghi.
-                5. NON USARE MAI CARATTERI SPECIALI, NON USARE MAI simboli delle valute (come € o $), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
+                5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come € o $), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
                 6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso.
                 
                 MODELLO:
@@ -367,7 +365,7 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 
                 pdf_bytes = create_pdf(markdown_content, city_name)
                 
-st.success("✅ Guida pronta!")
+                st.success("✅ Guida pronta!")
                 st.download_button(
                     label="🎨 SCARICA GUIDA PDF PRO",
                     data=pdf_bytes,
@@ -377,22 +375,10 @@ st.success("✅ Guida pronta!")
                     use_container_width=True
                 )
                 
-                # --- GRIGLIA FINALE CON LOGHI (Hub di Viaggio) ---
+                # --- GRIGLIA FINALE (Hub di Viaggio) ---
                 st.markdown("---")
                 st.subheader(f"✈️ Organizza il viaggio a {city_name}")
                 
-                # Funzione helper per creare il bottone (Logo o Testo)
-                def partner_button(label, link, image_file):
-                    if os.path.exists(image_file):
-                        # Se c'è il logo, mostra immagine cliccabile
-                        st.image(image_file, use_container_width=True) # Mostra il logo
-                        st.markdown(f"<div style='text-align: center; margin-top: -10px;'><a href='{link}' target='_blank' style='text-decoration: none; color: #E67E22; font-weight: bold;'>VAI AL SITO ➜</a></div>", unsafe_allow_html=True)
-                        st.write("") # Spazio extra
-                    else:
-                        # Fallback: Se manca il logo, mostra il bottone classico
-                        st.link_button(label, link, use_container_width=True)
-
-                # GRIGLIA 1: Trasporti & Alloggio
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     st.caption("✈️ **Voli**")
@@ -406,7 +392,6 @@ st.success("✅ Guida pronta!")
 
                 st.write("") 
 
-                # GRIGLIA 2: Esperienze & Servizi
                 c4, c5, c6 = st.columns(3)
                 with c4:
                     st.caption("🎟️ **Tour**")
@@ -420,7 +405,6 @@ st.success("✅ Guida pronta!")
 
                 st.write("") 
 
-                # GRIGLIA 3: Sicurezza
                 c7, c8, c9 = st.columns(3)
                 with c7:
                     st.caption("📲 **Dati**")
@@ -461,4 +445,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
