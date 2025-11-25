@@ -248,6 +248,7 @@ def create_pdf(text, city):
     make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
     make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", get_gyg_link(city))
     make_sponsor_box("Internet (eSim)", f"Naviga a {city} senza roaming con Saily", SAILY_LINK)
+    make_sponsor_box("Assicurazione Viaggio", "Parti senza pensieri con la protezione di Heymondo", INSURANCE_LINK)
 
     return bytes(pdf.output(dest='S'))
 
@@ -426,6 +427,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
