@@ -41,7 +41,7 @@ def get_gyg_link(city):
 # ==========================================
 
 
-# --- MODELLO TESTO ---
+# --- MODELLO TESTO (IL TUO A 12 PUNTI) ---
 TESTO_MODELLO = """
 # [NOME CITTÀ]: Guida Esclusiva
 
@@ -163,6 +163,17 @@ def create_pdf(text, city):
             self.set_text_color(44, 62, 80)
             self.cell(0, 10, "GENERATO DA 30SecondsToGuide")
 
+    # --- FUNZIONE SPAZZINO (AGGIUNTA QUI) ---
+    # Questa pulisce il testo dai simboli che bloccano il PDF
+    def clean_text_for_pdf(text_line):
+        replacements = {
+            "€": "EUR", "$": "USD", "£": "GBP",
+            "’": "'", "“": '"', "”": '"', "–": "-", "…": "..."
+        }
+        for char, replacement in replacements.items():
+            text_line = text_line.replace(char, replacement)
+        return text_line.encode('latin-1', 'replace').decode('latin-1')
+
     pdf = ModernPDF()
     pdf.set_auto_page_break(auto=True, margin=25)
     pdf.make_cover(city)
@@ -171,7 +182,8 @@ def create_pdf(text, city):
     lines = text.split('\n')
     
     for line in lines:
-        clean_line = line.encode('latin-1', 'replace').decode('latin-1')
+        # PULIZIA ATTIVA SU OGNI RIGA
+        clean_line = clean_text_for_pdf(line)
         
         if line.startswith('# '): 
             pdf.ln(10)
@@ -230,21 +242,23 @@ def create_pdf(text, city):
     def make_sponsor_box(title, subtitle, link):
         pdf.set_fill_color(245, 245, 245)
         start_y = pdf.get_y()
-        pdf.rect(10, start_y, 190, 30, 'F')
+        # Altezza ridotta per farne stare 7
+        pdf.rect(10, start_y, 190, 22, 'F') 
         
-        pdf.set_y(start_y + 5)
+        pdf.set_y(start_y + 4)
         pdf.set_x(15)
-        pdf.set_font("Helvetica", 'B', 12)
+        pdf.set_font("Helvetica", 'B', 11)
         pdf.set_text_color(44, 62, 80)
         pdf.cell(0, 5, title, 0, 1)
         
         pdf.set_x(15)
-        pdf.set_font("Helvetica", '', 10)
+        pdf.set_font("Helvetica", '', 9)
         pdf.set_text_color(0, 102, 204)
         
-        pdf.cell(0, 8, subtitle, 0, 1, link=link)
-        pdf.ln(15)
+        pdf.cell(0, 6, subtitle, 0, 1, link=link)
+        pdf.ln(10)
 
+    # I TUOI LINK SPECIFICI
     make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", FLIGHT_LINK)
     make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
     make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", get_gyg_link(city))
@@ -283,7 +297,6 @@ with st.sidebar:
     
     # 3. UTILITÀ
     st.caption("🛠️ SERVIZI UTILI")
-    # Usiamo colonne per risparmiare spazio verticale
     c_sb1, c_sb2 = st.columns(2)
     with c_sb1:
         st.link_button("eSim (Saily)", ESIM_LINK)
@@ -296,7 +309,7 @@ with st.sidebar:
     st.caption("© 2025 30SecondsToGuide")
     st.page_link("pages/privacy.py", label="Privacy Policy", icon="🔒")
 
-# --- CORPO CENTRALE (MOBILE FRIENDLY) ---
+# --- CORPO CENTRALE ---
 
 if os.path.exists("logo.png"):
     col_sp1, col_img, col_sp2 = st.columns([3, 2, 3])
@@ -361,7 +374,6 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 st.markdown("---")
                 st.subheader(f"✈️ Organizza il viaggio a {city_name}")
                 
-                # GRIGLIA 1: Trasporti & Alloggio
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     st.markdown(f"✈️ **Voli**")
@@ -375,7 +387,6 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
 
                 st.write("") 
 
-                # GRIGLIA 2: Esperienze & Servizi
                 c4, c5, c6 = st.columns(3)
                 with c4:
                     st.markdown(f"🎟️ **Tour**")
@@ -389,7 +400,6 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
 
                 st.write("") 
 
-                # GRIGLIA 3: Sicurezza
                 c7, c8, c9 = st.columns(3)
                 with c7:
                     st.markdown(f"📲 **Dati**")
@@ -404,7 +414,7 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
             except Exception as e:
                 st.error(f"Errore: {e}")
 
-# --- SEZIONE SEO (Testo per i motori di ricerca) ---
+# --- SEZIONE SEO ---
 st.markdown("---")
 st.markdown("""
 <div style="text-align: justify; color: #555;">
@@ -430,14 +440,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
