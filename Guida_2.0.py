@@ -20,14 +20,14 @@ BOOKING_AID = "000000"
 GYG_PARTNER_ID = "000000" 
 
 # 2. LINK TRACCIATI (I tuoi link attivi)
-KIWI_LINK = "https://kiwi.tpx.lt/k6iWGXOK"            # Voli
+FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"            # Voli
 LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW" # Bagagli
-AIRHELP_LINK = "https://airhelp.tpx.lt/YS9ciIsW"      # Rimborsi
-SAILY_LINK = "https://saily.tpx.lt/Myxhqmox"          # eSim
+REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"      # Rimborsi
+ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"          # eSim
 
 # 3. LINK GENERICI (In attesa)
 INSURANCE_LINK = "https://www.heymondo.it"
-OMIO_LINK = "https://www.omio.com"             
+TRAIN_LINK = "https://www.omio.com"             
 RENTAL_LINK = "https://www.discovercars.com"   
 
 # --- Funzioni Link ---
@@ -245,11 +245,13 @@ def create_pdf(text, city):
         pdf.cell(0, 8, subtitle, 0, 1, link=link)
         pdf.ln(15)
 
-    make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", KIWI_LINK)
+    make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", FLIGHT_LINK)
     make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
     make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", get_gyg_link(city))
-    make_sponsor_box("Internet (eSim)", f"Naviga a {city} senza roaming con Saily", SAILY_LINK)
+    make_sponsor_box("Internet (eSim)", f"Naviga a {city} senza roaming con Saily", ESIM_LINK)
     make_sponsor_box("Assicurazione Viaggio", "Parti senza pensieri con la protezione di Heymondo", INSURANCE_LINK)
+    make_sponsor_box("Deposito bagagli", "Quando il bagaglio diventa un peso, depositalo in sicurezza", LUGGAGE_LINK)
+    make_sponsor_box("Rimborso voli", "Volo cancellato o in ritardo? Ottieni fino a 600 €!", REIMB_LINK)
 
     return bytes(pdf.output(dest='S'))
 
@@ -270,9 +272,9 @@ with st.sidebar:
     
     # 1. TRASPORTI & HOTEL
     st.caption("✈️ PRENOTAZIONI")
-    st.link_button("Voli (Kiwi)", KIWI_LINK)
+    st.link_button("Voli (Kiwi)", FLIGHT_LINK)
     st.link_button("Hotel (Booking)", get_booking_link(""))
-    st.link_button("Treni (Omio)", OMIO_LINK)
+    st.link_button("Treni (Omio)", TRAIN_LINK)
     st.link_button("Auto (Discover)", RENTAL_LINK)
     
     # 2. ATTIVITÀ
@@ -284,11 +286,11 @@ with st.sidebar:
     # Usiamo colonne per risparmiare spazio verticale
     c_sb1, c_sb2 = st.columns(2)
     with c_sb1:
-        st.link_button("eSim (Saily)", SAILY_LINK)
+        st.link_button("eSim (Saily)", ESIM_LINK)
         st.link_button("Bagagli", LUGGAGE_LINK)
     with c_sb2:
         st.link_button("Polizza (Heymondo)", INSURANCE_LINK)
-        st.link_button("Rimborsi (Airhelp)", AIRHELP_LINK)
+        st.link_button("Rimborsi (Airhelp)", REIMB_LINK)
     
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
@@ -363,13 +365,13 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     st.markdown(f"✈️ **Voli**")
-                    st.link_button("Voli Kiwi", KIWI_LINK)
+                    st.link_button("Voli Kiwi", FLIGHT_LINK)
                 with c2:
                     st.markdown(f"🏨 **Hotel**")
                     st.link_button("Booking", get_booking_link(city_name))
                 with c3:
                     st.markdown(f"🚆 **Treni**")
-                    st.link_button("Omio", OMIO_LINK)
+                    st.link_button("Omio", TRAIN_LINK)
 
                 st.write("") 
 
@@ -391,13 +393,13 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 c7, c8, c9 = st.columns(3)
                 with c7:
                     st.markdown(f"📲 **Dati**")
-                    st.link_button("eSim Saily", SAILY_LINK)
+                    st.link_button("eSim Saily", ESIM_LINK)
                 with c8:
                     st.markdown(f"🛡️ **Polizza**")
                     st.link_button("Assicuraz.", INSURANCE_LINK)
                 with c9:
                     st.markdown(f"💸 **Risarcim.**")
-                    st.link_button("AirHelp", AIRHELP_LINK)
+                    st.link_button("AirHelp", REIMB_LINK)
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
@@ -428,6 +430,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
