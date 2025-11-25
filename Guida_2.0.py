@@ -83,6 +83,7 @@ TESTO_MODELLO = """
 [I principali festival, fiere, ricorrenze e feste della città].
 
 ## 8. Info Pratiche
+* **Come arrivare:** [Info su compagnie aeree che servono l'aeroporto principale (tradizionali e low cost), voli dall'Italia (se la destinazione è all'estero), mezzi alternativi per raggiungere la destinazione: treni/autobus)]
 * **Trasporti:** [Info]
 * **Sicurezza:** [Info]
 * **Clima:** [Info sui migliori periodi per visitare la città]
@@ -427,6 +428,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
