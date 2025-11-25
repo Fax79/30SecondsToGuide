@@ -25,11 +25,11 @@ FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"            # Voli
 LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW" # Bagagli
 REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"          # Rimborsi
 ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"             # eSim
+RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"
 
 # 3. LINK GENERICI (In attesa)
 INSURANCE_LINK = "https://www.heymondo.it"
 TRAIN_LINK = "https://www.omio.com"             
-RENTAL_LINK = "https://www.discovercars.com"   
 
 # --- Funzioni Link ---
 def get_booking_link(city):
@@ -462,3 +462,4 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
