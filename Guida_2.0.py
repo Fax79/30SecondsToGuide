@@ -316,7 +316,7 @@ with st.sidebar:
     partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
     partner_button("Hotel (Booking)", get_booking_link(""), "btn_booking.png")
     partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
-    partner_button("Auto (Discover)", RENTAL_LINK, "btn_discover.png")
+    partner_button("Auto (Autoeurope)", RENTAL_LINK, "btn_autoe.png")
     
     st.caption("🎟️ ESPERIENZE")
     partner_button("Tour (GetYourGuide)", get_gyg_link(""), "btn_gyg.png")
@@ -415,7 +415,7 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                     partner_button("Attività", get_gyg_link(city_name), "btn_gyg.png")
                 with c5:
                     st.caption("🚗 **Auto**")
-                    partner_button("Noleggio", RENTAL_LINK, "btn_discover.png")
+                    partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
                 with c6:
                     st.caption("🎒 **Bagagli**")
                     partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
@@ -462,4 +462,5 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
