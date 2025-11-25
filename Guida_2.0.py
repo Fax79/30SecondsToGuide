@@ -367,7 +367,7 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 
                 pdf_bytes = create_pdf(markdown_content, city_name)
                 
-                st.success("✅ Guida pronta!")
+st.success("✅ Guida pronta!")
                 st.download_button(
                     label="🎨 SCARICA GUIDA PDF PRO",
                     data=pdf_bytes,
@@ -377,46 +377,60 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                     use_container_width=True
                 )
                 
-                # --- GRIGLIA FINALE (Hub di Viaggio) ---
+                # --- GRIGLIA FINALE CON LOGHI (Hub di Viaggio) ---
                 st.markdown("---")
                 st.subheader(f"✈️ Organizza il viaggio a {city_name}")
                 
+                # Funzione helper per creare il bottone (Logo o Testo)
+                def partner_button(label, link, image_file):
+                    if os.path.exists(image_file):
+                        # Se c'è il logo, mostra immagine cliccabile
+                        st.image(image_file, use_container_width=True) # Mostra il logo
+                        st.markdown(f"<div style='text-align: center; margin-top: -10px;'><a href='{link}' target='_blank' style='text-decoration: none; color: #E67E22; font-weight: bold;'>VAI AL SITO ➜</a></div>", unsafe_allow_html=True)
+                        st.write("") # Spazio extra
+                    else:
+                        # Fallback: Se manca il logo, mostra il bottone classico
+                        st.link_button(label, link, use_container_width=True)
+
+                # GRIGLIA 1: Trasporti & Alloggio
                 c1, c2, c3 = st.columns(3)
                 with c1:
-                    st.markdown(f"✈️ **Voli**")
-                    st.link_button("Voli Kiwi", FLIGHT_LINK)
+                    st.caption("✈️ **Voli**")
+                    partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
                 with c2:
-                    st.markdown(f"🏨 **Hotel**")
-                    st.link_button("Booking", get_booking_link(city_name))
+                    st.caption("🏨 **Hotel**")
+                    partner_button("Booking", get_booking_link(city_name), "btn_booking.png")
                 with c3:
-                    st.markdown(f"🚆 **Treni**")
-                    st.link_button("Omio", TRAIN_LINK)
+                    st.caption("🚆 **Treni**")
+                    partner_button("Omio", TRAIN_LINK, "btn_omio.png")
 
                 st.write("") 
 
+                # GRIGLIA 2: Esperienze & Servizi
                 c4, c5, c6 = st.columns(3)
                 with c4:
-                    st.markdown(f"🎟️ **Tour**")
-                    st.link_button("Attività", get_gyg_link(city_name))
+                    st.caption("🎟️ **Tour**")
+                    partner_button("Attività", get_gyg_link(city_name), "btn_gyg.png")
                 with c5:
-                    st.markdown(f"🚗 **Auto**")
-                    st.link_button("Noleggio", RENTAL_LINK)
+                    st.caption("🚗 **Auto**")
+                    partner_button("Noleggio", RENTAL_LINK, "btn_discover.png")
                 with c6:
-                    st.markdown(f"🎒 **Bagagli**")
-                    st.link_button("Deposito", LUGGAGE_LINK)
+                    st.caption("🎒 **Bagagli**")
+                    partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
 
                 st.write("") 
 
+                # GRIGLIA 3: Sicurezza
                 c7, c8, c9 = st.columns(3)
                 with c7:
-                    st.markdown(f"📲 **Dati**")
-                    st.link_button("eSim Saily", ESIM_LINK)
+                    st.caption("📲 **Dati**")
+                    partner_button("eSim Saily", ESIM_LINK, "btn_saily.png")
                 with c8:
-                    st.markdown(f"🛡️ **Polizza**")
-                    st.link_button("Assicuraz.", INSURANCE_LINK)
+                    st.caption("🛡️ **Polizza**")
+                    partner_button("Assicuraz.", INSURANCE_LINK, "btn_heymondo.png")
                 with c9:
-                    st.markdown(f"💸 **Risarcim.**")
-                    st.link_button("AirHelp", REIMB_LINK)
+                    st.caption("💸 **Risarcim.**")
+                    partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
@@ -447,3 +461,4 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
