@@ -26,7 +26,7 @@ AIRHELP_LINK = "https://airhelp.tpx.lt/YS9ciIsW"      # Rimborsi
 SAILY_LINK = "https://saily.tpx.lt/Myxhqmox"          # eSim
 
 # 3. LINK GENERICI (In attesa)
-AURAS_LINK = "https://www.aurasinsure.com"
+INSURANCE_LINK = "https://www.heymondo.it"
 OMIO_LINK = "https://www.omio.com"             
 RENTAL_LINK = "https://www.discovercars.com"   
 
@@ -285,7 +285,7 @@ with st.sidebar:
         st.link_button("eSim (Saily)", SAILY_LINK)
         st.link_button("Bagagli", LUGGAGE_LINK)
     with c_sb2:
-        st.link_button("Polizza", AURAS_LINK)
+        st.link_button("Polizza", INSURANCE_LINK)
         st.link_button("Rimborsi (Airhelp)", AIRHELP_LINK)
     
     st.markdown("---")
@@ -392,7 +392,7 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                     st.link_button("eSim Saily", SAILY_LINK)
                 with c8:
                     st.markdown(f"🛡️ **Polizza**")
-                    st.link_button("Assicuraz.", AURAS_LINK)
+                    st.link_button("Assicuraz.", INSURANCE_LINK)
                 with c9:
                     st.markdown(f"💸 **Risarcim.**")
                     st.link_button("AirHelp", AIRHELP_LINK)
@@ -426,5 +426,6 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
