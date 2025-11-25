@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 from fpdf import FPDF
 import os
-import base64 # <--- NUOVO IMPORT NECESSARIO
+import base64
 
 # --- CONFIGURAZIONE ---
 try:
@@ -40,7 +40,7 @@ def get_gyg_link(city):
     if GYG_PARTNER_ID == "000000": return "https://www.getyourguide.com"
     return f"https://www.getyourguide.com/s?q={city}&partner_id={GYG_PARTNER_ID}"
 
-# --- FUNZIONI PER BOTTONI CON LOGHI CLICCABILI ---
+# --- Funzione Helper per Bottoni con Logo ---
 def get_base64_of_bin_file(bin_file):
     with open(bin_file, 'rb') as f:
         data = f.read()
@@ -48,17 +48,20 @@ def get_base64_of_bin_file(bin_file):
 
 def partner_button(label, link, image_file):
     if os.path.exists(image_file):
-        # Se c'è il logo, lo trasformiamo in HTML cliccabile
-        img_base64 = get_base64_of_bin_file(image_file)
-        html_code = f"""
-        <a href="{link}" target="_blank">
-            <img src="data:image/png;base64,{img_base64}" style="width:100%; border-radius:8px; border: 1px solid #e0e0e0; transition: transform 0.2s;">
-        </a>
-        <div style="text-align: center; margin-top: 5px; margin-bottom: 15px;">
-            <a href="{link}" target="_blank" style="text-decoration: none; color: #E67E22; font-weight: bold; font-size: 0.9em;">{label} ➜</a>
-        </div>
-        """
-        st.markdown(html_code, unsafe_allow_html=True)
+        # Se c'è il logo, mostra immagine cliccabile
+        try:
+            img_base64 = get_base64_of_bin_file(image_file)
+            html_code = f"""
+            <a href="{link}" target="_blank">
+                <img src="data:image/png;base64,{img_base64}" style="width:100%; border-radius:8px; border: 1px solid #e0e0e0; transition: transform 0.2s;">
+            </a>
+            <div style="text-align: center; margin-top: 5px; margin-bottom: 15px;">
+                <a href="{link}" target="_blank" style="text-decoration: none; color: #E67E22; font-weight: bold; font-size: 0.9em;">{label} ➜</a>
+            </div>
+            """
+            st.markdown(html_code, unsafe_allow_html=True)
+        exceptException:
+            st.link_button(label, link, use_container_width=True)
     else:
         # Fallback: Se manca il logo, mostra il bottone classico
         st.link_button(label, link, use_container_width=True)
@@ -267,7 +270,6 @@ def create_pdf(text, city):
         
         pdf.set_fill_color(245, 245, 245)
         start_y = pdf.get_y()
-        # Altezza ridotta per farne stare 9
         pdf.rect(10, start_y, 190, 20, 'F') 
         
         pdf.set_y(start_y + 3)
@@ -281,7 +283,7 @@ def create_pdf(text, city):
         pdf.set_text_color(0, 102, 204)
         
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
-        pdf.ln(8) # Spazio ridotto
+        pdf.ln(8)
 
     make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", FLIGHT_LINK)
     make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
@@ -383,4 +385,79 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 st.download_button(
                     label="🎨 SCARICA GUIDA PDF PRO",
                     data=pdf_bytes,
-                    file_name=f
+                    file_name=f"Guida_{city_name}.pdf",
+                    mime="application/pdf",
+                    type="primary",
+                    use_container_width=True
+                )
+                
+                # --- GRIGLIA FINALE (Hub di Viaggio) ---
+                st.markdown("---")
+                st.subheader(f"✈️ Organizza il viaggio a {city_name}")
+                
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    st.caption("✈️ **Voli**")
+                    partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
+                with c2:
+                    st.caption("🏨 **Hotel**")
+                    partner_button("Booking", get_booking_link(city_name), "btn_booking.png")
+                with c3:
+                    st.caption("🚆 **Treni**")
+                    partner_button("Omio", TRAIN_LINK, "btn_omio.png")
+
+                st.write("") 
+
+                c4, c5, c6 = st.columns(3)
+                with c4:
+                    st.caption("🎟️ **Tour**")
+                    partner_button("Attività", get_gyg_link(city_name), "btn_gyg.png")
+                with c5:
+                    st.caption("🚗 **Auto**")
+                    partner_button("Noleggio", RENTAL_LINK, "btn_discover.png")
+                with c6:
+                    st.caption("🎒 **Bagagli**")
+                    partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
+
+                st.write("") 
+
+                c7, c8, c9 = st.columns(3)
+                with c7:
+                    st.caption("📲 **Dati**")
+                    partner_button("eSim Saily", ESIM_LINK, "btn_saily.png")
+                with c8:
+                    st.caption("🛡️ **Polizza**")
+                    partner_button("Assicuraz.", INSURANCE_LINK, "btn_heymondo.png")
+                with c9:
+                    st.caption("💸 **Risarcim.**")
+                    partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
+                
+            except Exception as e:
+                st.error(f"Errore: {e}")
+
+# --- SEZIONE SEO ---
+st.markdown("---")
+st.markdown("""
+<div style="text-align: justify; color: #555;">
+    <h3>Come funziona 30SecondsToGuide?</h3>
+    <p>
+        <strong>30SecondsToGuide</strong> è il primo generatore di guide turistiche basato sull'Intelligenza Artificiale. 
+        A differenza dei tradizionali blog di viaggio, il nostro algoritmo crea <strong>itinerari personalizzati in PDF</strong> 
+        per qualsiasi città del mondo in meno di 30 secondi.
+    </p>
+    <p>
+        Che tu stia cercando <em>cosa vedere a Parigi</em>, un <em>itinerario di 3 giorni a New York</em> o 
+        consigli su <em>dove dormire a Tokyo</em>, la nostra AI analizza migliaia di fonti per offrirti:
+    </p>
+    <ul>
+        <li>🗺️ <strong>Itinerari passo-passo</strong> ottimizzati per risparmiare tempo.</li>
+        <li>🍽️ Consigli gastronomici sui <strong>migliori ristoranti locali</strong>.</li>
+        <li>🏛️ Informazioni storiche e culturali dettagliate.</li>
+        <li>📲 Link utili per <strong>prenotare hotel, voli e tour</strong> al miglior prezzo.</li>
+    </ul>
+    <p>
+        Il servizio è <strong>gratuito al 100%</strong> e non richiede registrazione. 
+        Inserisci la destinazione, clicca e scarica la tua guida di viaggio in PDF pronta per essere stampata o letta su smartphone.
+    </p>
+</div>
+""", unsafe_allow_html=True)
