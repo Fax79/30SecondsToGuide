@@ -60,7 +60,7 @@ def partner_button(label, link, image_file):
             </div>
             """
             st.markdown(html_code, unsafe_allow_html=True)
-        exceptException:
+        except: # <--- CORRETTO QUI (Era exceptException)
             st.link_button(label, link, use_container_width=True)
     else:
         # Fallback: Se manca il logo, mostra il bottone classico
@@ -270,6 +270,7 @@ def create_pdf(text, city):
         
         pdf.set_fill_color(245, 245, 245)
         start_y = pdf.get_y()
+        # Altezza ridotta per farne stare 9
         pdf.rect(10, start_y, 190, 20, 'F') 
         
         pdf.set_y(start_y + 3)
@@ -283,7 +284,7 @@ def create_pdf(text, city):
         pdf.set_text_color(0, 102, 204)
         
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
-        pdf.ln(8)
+        pdf.ln(8) # Spazio ridotto
 
     make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", FLIGHT_LINK)
     make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
