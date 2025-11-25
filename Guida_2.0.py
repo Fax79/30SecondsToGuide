@@ -323,7 +323,7 @@ with st.sidebar:
     
     st.caption("🛠️ SERVIZI UTILI")
     partner_button("eSim (Saily)", ESIM_LINK, "btn_saily.png")
-    partner_button("Bagagli", LUGGAGE_LINK, "btn_radical.png")
+    partner_button("Bagagli (Radical)", LUGGAGE_LINK, "btn_radical.png")
     partner_button("Polizza (Heymondo)", INSURANCE_LINK, "btn_heymondo.png")
     partner_button("Rimborsi (Airhelp)", REIMB_LINK, "btn_airhelp.png")
     
@@ -462,5 +462,6 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
