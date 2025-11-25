@@ -3,6 +3,12 @@ import google.generativeai as genai
 from fpdf import FPDF
 import os
 import base64
+import datetime # Assicurati che ci sia
+
+# --- MEMORIA CONDIVISA (LOG) ---
+@st.cache_resource
+def get_shared_logs():
+    return [] # Una lista vuota che persiste nella RAM del server
 
 # --- CONFIGURAZIONE ---
 try:
@@ -326,7 +332,28 @@ with st.sidebar:
     partner_button("Bagagli (Radical)", LUGGAGE_LINK, "btn_radical.png")
     partner_button("Polizza (Heymondo)", INSURANCE_LINK, "btn_heymondo.png")
     partner_button("Rimborsi (Airhelp)", REIMB_LINK, "btn_airhelp.png")
-    
+
+        # ... (dopo i bottoni dei partner) ...
+
+    # --- AREA ADMIN SEGRETA ---
+    with st.sidebar.expander("🔐 Admin Stats"):
+        # Password semplice per non far vedere i fatti tuoi a tutti
+        secret_pwd = st.text_input("Password", type="password")
+        if secret_pwd == "fabio123": # Metti la password che vuoi
+            st.write("### 📊 Ultime Ricerche:")
+            # Mostra la lista al contrario (dall'ultima alla prima)
+            logs = get_shared_logs()
+            if logs:
+                for log in reversed(logs):
+                    st.caption(log)
+            else:
+                st.caption("Nessuna ricerca ancora.")
+            
+            st.write(f"**Totale:** {len(logs)}")
+
+    st.markdown("---")
+    # ... (segue il copyright)
+
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
     st.page_link("pages/privacy.py", label="Privacy Policy", icon="🔒")
@@ -355,7 +382,14 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
     if not city_name:
         st.warning("Inserisci una città.")
     else:
+        # --- SALVATAGGIO NELLA MEMORIA RAM ---
+        timestamp = datetime.datetime.now().strftime("%H:%M")
+        # Aggiungiamo alla lista condivisa
+        get_shared_logs().append(f"📍 {city_name} ({timestamp})")
+        # -------------------------------------
+
         with st.spinner("Stiamo scrivendo la tua guida... (non chiudere la pagina)"):
+            # ... (il resto del codice prosegue uguale)
             try:
                 model = genai.GenerativeModel("gemini-2.5-flash")
                 
@@ -462,6 +496,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
