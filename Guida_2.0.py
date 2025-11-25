@@ -163,15 +163,18 @@ def create_pdf(text, city):
             self.set_text_color(44, 62, 80)
             self.cell(0, 10, "GENERATO DA 30SecondsToGuide")
 
-    # --- FUNZIONE SPAZZINO (AGGIUNTA QUI) ---
-    # Questa pulisce il testo dai simboli che bloccano il PDF
+    # --- FUNZIONE SPAZZINO (Cruciale per non crashare) ---
     def clean_text_for_pdf(text_line):
+        # Mappa dei caratteri vietati
         replacements = {
             "€": "EUR", "$": "USD", "£": "GBP",
             "’": "'", "“": '"', "”": '"', "–": "-", "…": "..."
         }
+        # Sostituisce ogni carattere vietato
         for char, replacement in replacements.items():
             text_line = text_line.replace(char, replacement)
+        
+        # Forza codifica Latin-1
         return text_line.encode('latin-1', 'replace').decode('latin-1')
 
     pdf = ModernPDF()
@@ -182,7 +185,7 @@ def create_pdf(text, city):
     lines = text.split('\n')
     
     for line in lines:
-        # PULIZIA ATTIVA SU OGNI RIGA
+        # PULIZIA ATTIVA SU OGNI RIGA DELL'AI
         clean_line = clean_text_for_pdf(line)
         
         if line.startswith('# '): 
@@ -240,6 +243,10 @@ def create_pdf(text, city):
     pdf.ln(5)
     
     def make_sponsor_box(title, subtitle, link):
+        # PULIZIA PREVENTIVA anche qui! (Evita errori su stringhe manuali)
+        title = clean_text_for_pdf(title)
+        subtitle = clean_text_for_pdf(subtitle)
+
         pdf.set_fill_color(245, 245, 245)
         start_y = pdf.get_y()
         # Altezza ridotta per farne stare 7
@@ -258,14 +265,14 @@ def create_pdf(text, city):
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
         pdf.ln(10)
 
-    # I TUOI LINK SPECIFICI
+    # I TUOI LINK SPECIFICI (Senza simboli Euro!)
     make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", FLIGHT_LINK)
     make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
     make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", get_gyg_link(city))
     make_sponsor_box("Internet (eSim)", f"Naviga a {city} senza roaming con Saily", ESIM_LINK)
     make_sponsor_box("Assicurazione Viaggio", "Parti senza pensieri con la protezione di Heymondo", INSURANCE_LINK)
     make_sponsor_box("Deposito bagagli", "Quando il bagaglio diventa un peso, depositalo in sicurezza", LUGGAGE_LINK)
-    make_sponsor_box("Rimborso voli", "Volo cancellato o in ritardo? Ottieni fino a 600 €!", REIMB_LINK)
+    make_sponsor_box("Rimborso voli", "Volo cancellato o in ritardo? Ottieni fino a 600 EUR!", REIMB_LINK)
 
     return bytes(pdf.output(dest='S'))
 
