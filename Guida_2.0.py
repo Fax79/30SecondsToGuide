@@ -103,7 +103,7 @@ TESTO_MODELLO = """
 
 ## 11. Se hai più tempo
 * **Fuori dai sentieri battuti:** [Un quartiere meno turistico].
-* **Gite fuori porta:** [Una o più gita di mezza giornata o di un giorno nei dintorni, link get your guide].
+* **Gite fuori porta:** [Una o più gite di mezza giornata o di un giorno nei dintorni, link get your guide].
 
 ## 12. Conclusione
 [Riflessione finale filosofica sul viaggio in questa città, descrivi l'essenza del viaggio].
@@ -330,7 +330,7 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 2. Se devi fare un confronto, usa elenchi puntati descrittivi.
                 3. Usa ESATTAMENTE la struttura seguente.
                 4. Scrivi paragrafi ricchi e lunghi.
-                5. NON USARE MAI CARATTERI SPECIALI, anche se semplifica la grafia delle parole straniere utilizzando l'alfabeto standard.
+                5. NON USARE MAI CARATTERI SPECIALI, anche se semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse lettere accentate comunemente usate in italiano.
                 6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso.
                 
                 MODELLO:
@@ -428,6 +428,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
