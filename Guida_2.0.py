@@ -285,7 +285,7 @@ with st.sidebar:
         st.link_button("eSim (Saily)", SAILY_LINK)
         st.link_button("Bagagli", LUGGAGE_LINK)
     with c_sb2:
-        st.link_button("Polizza", INSURANCE_LINK)
+        st.link_button("Assicurazione (Heymondo)", INSURANCE_LINK)
         st.link_button("Rimborsi (Airhelp)", AIRHELP_LINK)
     
     st.markdown("---")
@@ -391,7 +391,7 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                     st.markdown(f"📲 **Dati**")
                     st.link_button("eSim Saily", SAILY_LINK)
                 with c8:
-                    st.markdown(f"🛡️ **Polizza**")
+                    st.markdown(f"🛡️ **Assicurazione**")
                     st.link_button("Assicuraz.", INSURANCE_LINK)
                 with c9:
                     st.markdown(f"💸 **Risarcim.**")
@@ -426,6 +426,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
