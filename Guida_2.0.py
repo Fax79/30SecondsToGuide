@@ -484,6 +484,116 @@ st.markdown("""
         Che tu stia cercando <em>cosa vedere a Parigi</em>, un <em>itinerario di 3 giorni a New York</em> o 
         consigli su <em>dove dormire a Tokyo</em>, la nostra AI analizza migliaia di fonti per offrirti:
     </p>
+# --- GENERAZIONE GUIDA ---
+# Usiamo un container per separare visivamente l'area di azione
+with st.container():
+    if st.button("Genera Guida PDF", type="primary", use_container_width=True):
+        if not city_name:
+            st.warning("Inserisci una città.")
+        else:
+            with st.spinner("Stiamo scrivendo la tua guida... (non chiudere la pagina)"):
+                try:
+                    model = genai.GenerativeModel("gemini-2.5-flash")
+                    
+                    full_prompt = f"""
+                    Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
+                    
+                    REGOLE FONDAMENTALI:
+                    1. NON USARE MAI TABELLE MARKDOWN (niente righe con | |).
+                    2. Se devi fare un confronto, usa elenchi puntati descrittivi.
+                    3. Usa ESATTAMENTE la struttura seguente.
+                    4. Scrivi paragrafi ricchi e lunghi.
+                    5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come € o $), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
+                    6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso.
+                    
+                    MODELLO:
+                    {TESTO_MODELLO}
+                    """
+                    
+                    response = model.generate_content(full_prompt)
+                    markdown_content = response.text
+                    
+                    # Salviamo il risultato nella sessione per non perderlo al ricaricamento
+                    st.session_state['generated_pdf'] = create_pdf(markdown_content, city_name)
+                    st.session_state['last_city'] = city_name
+                    
+                except Exception as e:
+                    st.error(f"Errore: {e}")
+
+# --- MOSTRA IL BOTTONE DI DOWNLOAD SE ESISTE IL PDF ---
+if 'generated_pdf' in st.session_state:
+    st.success(f"✅ Guida per {st.session_state['last_city']} pronta!")
+    st.download_button(
+        label="🎨 SCARICA GUIDA PDF PRO",
+        data=st.session_state['generated_pdf'],
+        file_name=f"Guida_{st.session_state['last_city']}.pdf",
+        mime="application/pdf",
+        type="primary",
+        use_container_width=True
+    )
+
+# =========================================================
+# 🏨 TRAVEL HUB (SEMPRE VISIBILE)
+# =========================================================
+st.markdown("---")
+# Se c'è una città scritta, il titolo è personalizzato, altrimenti generico
+if city_name:
+    st.subheader(f"✈️ Organizza il viaggio a {city_name}")
+else:
+    st.subheader("✈️ I migliori strumenti per il tuo viaggio")
+
+c1, c2, c3 = st.columns(3)
+with c1:
+    st.caption("✈️ **Voli**")
+    partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
+with c2:
+    st.caption("🏨 **Hotel**")
+    # Passiamo city_name se c'è, altrimenti stringa vuota
+    partner_button("Booking", get_booking_link(city_name if city_name else ""), "btn_booking.png")
+with c3:
+    st.caption("🚆 **Treni**")
+    partner_button("Omio", TRAIN_LINK, "btn_omio.png")
+
+st.write("") 
+
+c4, c5, c6 = st.columns(3)
+with c4:
+    st.caption("🎟️ **Tour**")
+    partner_button("Attività", get_gyg_link(city_name if city_name else ""), "btn_gyg.png")
+with c5:
+    st.caption("🚗 **Auto**")
+    partner_button("Noleggio", RENTAL_LINK, "btn_discover.png")
+with c6:
+    st.caption("🎒 **Bagagli**")
+    partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
+
+st.write("") 
+
+c7, c8, c9 = st.columns(3)
+with c7:
+    st.caption("📲 **Dati**")
+    partner_button("eSim Saily", ESIM_LINK, "btn_saily.png")
+with c8:
+    st.caption("🛡️ **Polizza**")
+    partner_button("Assicuraz.", INSURANCE_LINK, "btn_heymondo.png")
+with c9:
+    st.caption("💸 **Risarcim.**")
+    partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
+
+# --- SEZIONE SEO ---
+st.markdown("---")
+st.markdown("""
+<div style="text-align: justify; color: #555;">
+    <h3>Come funziona 30SecondsToGuide?</h3>
+    <p>
+        <strong>30SecondsToGuide</strong> è il primo generatore di guide turistiche basato sull'Intelligenza Artificiale. 
+        A differenza dei tradizionali blog di viaggio, il nostro algoritmo crea <strong>itinerari personalizzati in PDF</strong> 
+        per qualsiasi città del mondo in meno di 30 secondi.
+    </p>
+    <p>
+        Che tu stia cercando <em>cosa vedere a Parigi</em>, un <em>itinerario di 3 giorni a New York</em> o 
+        consigli su <em>dove dormire a Tokyo</em>, la nostra AI analizza migliaia di fonti per offrirti:
+    </p>
     <ul>
         <li>🗺️ <strong>Itinerari passo-passo</strong> ottimizzati per risparmiare tempo.</li>
         <li>🍽️ Consigli gastronomici sui <strong>migliori ristoranti locali</strong>.</li>
@@ -496,7 +606,5 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
-
 
 
