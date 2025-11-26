@@ -3,12 +3,12 @@ import google.generativeai as genai
 from fpdf import FPDF
 import os
 import base64
-import datetime # Assicurati che ci sia
+import datetime
 
 # --- MEMORIA CONDIVISA (LOG) ---
 @st.cache_resource
 def get_shared_logs():
-    return [] # Una lista vuota che persiste nella RAM del server
+    return [] 
 
 # --- CONFIGURAZIONE ---
 try:
@@ -31,7 +31,7 @@ FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"            # Voli
 LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW" # Bagagli
 REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"          # Rimborsi
 ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"             # eSim
-RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"
+RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"      # Auto Europe
 
 # 3. LINK GENERICI (In attesa)
 INSURANCE_LINK = "https://www.heymondo.it"
@@ -54,7 +54,6 @@ def get_base64_of_bin_file(bin_file):
 
 def partner_button(label, link, image_file):
     if os.path.exists(image_file):
-        # Se c'è il logo, mostra immagine cliccabile
         try:
             img_base64 = get_base64_of_bin_file(image_file)
             html_code = f"""
@@ -66,10 +65,9 @@ def partner_button(label, link, image_file):
             </div>
             """
             st.markdown(html_code, unsafe_allow_html=True)
-        except: # <--- CORRETTO QUI (Era exceptException)
+        except:
             st.link_button(label, link, use_container_width=True)
     else:
-        # Fallback: Se manca il logo, mostra il bottone classico
         st.link_button(label, link, use_container_width=True)
 # ==========================================
 
@@ -196,7 +194,7 @@ def create_pdf(text, city):
             self.set_text_color(44, 62, 80)
             self.cell(0, 10, "GENERATO DA 30SecondsToGuide")
 
-    # --- FUNZIONE SPAZZINO ---
+    # --- FUNZIONE SPAZZINO (Cruciale per non crashare) ---
     def clean_text_for_pdf(text_line):
         replacements = {
             "€": "EUR", "$": "USD", "£": "GBP",
@@ -332,27 +330,19 @@ with st.sidebar:
     partner_button("Bagagli (Radical)", LUGGAGE_LINK, "btn_radical.png")
     partner_button("Polizza (Heymondo)", INSURANCE_LINK, "btn_heymondo.png")
     partner_button("Rimborsi (Airhelp)", REIMB_LINK, "btn_airhelp.png")
-
-        # ... (dopo i bottoni dei partner) ...
-
+    
     # --- AREA ADMIN SEGRETA ---
     with st.sidebar.expander("🔐 Admin Stats"):
-        # Password semplice per non far vedere i fatti tuoi a tutti
         secret_pwd = st.text_input("Password", type="password")
-        if secret_pwd == "fabio123": # Metti la password che vuoi
+        if secret_pwd == "fabio123": 
             st.write("### 📊 Ultime Ricerche:")
-            # Mostra la lista al contrario (dall'ultima alla prima)
             logs = get_shared_logs()
             if logs:
                 for log in reversed(logs):
                     st.caption(log)
             else:
                 st.caption("Nessuna ricerca ancora.")
-            
             st.write(f"**Totale:** {len(logs)}")
-
-    st.markdown("---")
-    # ... (segue il copyright)
 
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
@@ -377,19 +367,16 @@ st.write("")
 
 city_name = st.text_input("Inserisci la destinazione:", placeholder="Es. Parigi, Tokyo, New York...")
 
-# --- GENERAZIONE GUIDA ---
+# --- GENERAZIONE GUIDA (LOGICA SESSION STATE) ---
 if st.button("Genera Guida PDF", type="primary", use_container_width=True):
     if not city_name:
         st.warning("Inserisci una città.")
     else:
-        # --- SALVATAGGIO NELLA MEMORIA RAM ---
+        # LOGGING
         timestamp = datetime.datetime.now().strftime("%H:%M")
-        # Aggiungiamo alla lista condivisa
         get_shared_logs().append(f"📍 {city_name} ({timestamp})")
-        # -------------------------------------
-
+        
         with st.spinner("Stiamo scrivendo la tua guida... (non chiudere la pagina)"):
-            # ... (il resto del codice prosegue uguale)
             try:
                 model = genai.GenerativeModel("gemini-2.5-flash")
                 
@@ -401,7 +388,7 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 2. Se devi fare un confronto, usa elenchi puntati descrittivi.
                 3. Usa ESATTAMENTE la struttura seguente.
                 4. Scrivi paragrafi ricchi e lunghi.
-                5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come € o $), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
+                5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
                 6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso.
                 
                 MODELLO:
@@ -411,116 +398,14 @@ if st.button("Genera Guida PDF", type="primary", use_container_width=True):
                 response = model.generate_content(full_prompt)
                 markdown_content = response.text
                 
-                with st.expander("Anteprima Testo"):
-                    st.markdown(markdown_content)
-                
-                pdf_bytes = create_pdf(markdown_content, city_name)
-                
-                st.success("✅ Guida pronta!")
-                st.download_button(
-                    label="🎨 SCARICA GUIDA PDF PRO",
-                    data=pdf_bytes,
-                    file_name=f"Guida_{city_name}.pdf",
-                    mime="application/pdf",
-                    type="primary",
-                    use_container_width=True
-                )
-                
-                # --- GRIGLIA FINALE (Hub di Viaggio) ---
-                st.markdown("---")
-                st.subheader(f"✈️ Organizza il viaggio a {city_name}")
-                
-                c1, c2, c3 = st.columns(3)
-                with c1:
-                    st.caption("✈️ **Voli**")
-                    partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
-                with c2:
-                    st.caption("🏨 **Hotel**")
-                    partner_button("Booking", get_booking_link(city_name), "btn_booking.png")
-                with c3:
-                    st.caption("🚆 **Treni**")
-                    partner_button("Omio", TRAIN_LINK, "btn_omio.png")
-
-                st.write("") 
-
-                c4, c5, c6 = st.columns(3)
-                with c4:
-                    st.caption("🎟️ **Tour**")
-                    partner_button("Attività", get_gyg_link(city_name), "btn_gyg.png")
-                with c5:
-                    st.caption("🚗 **Auto**")
-                    partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
-                with c6:
-                    st.caption("🎒 **Bagagli**")
-                    partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
-
-                st.write("") 
-
-                c7, c8, c9 = st.columns(3)
-                with c7:
-                    st.caption("📲 **Dati**")
-                    partner_button("eSim Saily", ESIM_LINK, "btn_saily.png")
-                with c8:
-                    st.caption("🛡️ **Polizza**")
-                    partner_button("Assicuraz.", INSURANCE_LINK, "btn_heymondo.png")
-                with c9:
-                    st.caption("💸 **Risarcim.**")
-                    partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
+                # Salva in sessione
+                st.session_state['generated_pdf'] = create_pdf(markdown_content, city_name)
+                st.session_state['last_city'] = city_name
                 
             except Exception as e:
                 st.error(f"Errore: {e}")
 
-# --- SEZIONE SEO ---
-st.markdown("---")
-st.markdown("""
-<div style="text-align: justify; color: #555;">
-    <h3>Come funziona 30SecondsToGuide?</h3>
-    <p>
-        <strong>30SecondsToGuide</strong> è il primo generatore di guide turistiche basato sull'Intelligenza Artificiale. 
-        A differenza dei tradizionali blog di viaggio, il nostro algoritmo crea <strong>itinerari personalizzati in PDF</strong> 
-        per qualsiasi città del mondo in meno di 30 secondi.
-    </p>
-    <p>
-        Che tu stia cercando <em>cosa vedere a Parigi</em>, un <em>itinerario di 3 giorni a New York</em> o 
-        consigli su <em>dove dormire a Tokyo</em>, la nostra AI analizza migliaia di fonti per offrirti:
-    </p>
-# --- GENERAZIONE GUIDA ---
-# Usiamo un container per separare visivamente l'area di azione
-with st.container():
-    if st.button("Genera Guida PDF", type="primary", use_container_width=True):
-        if not city_name:
-            st.warning("Inserisci una città.")
-        else:
-            with st.spinner("Stiamo scrivendo la tua guida... (non chiudere la pagina)"):
-                try:
-                    model = genai.GenerativeModel("gemini-2.5-flash")
-                    
-                    full_prompt = f"""
-                    Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
-                    
-                    REGOLE FONDAMENTALI:
-                    1. NON USARE MAI TABELLE MARKDOWN (niente righe con | |).
-                    2. Se devi fare un confronto, usa elenchi puntati descrittivi.
-                    3. Usa ESATTAMENTE la struttura seguente.
-                    4. Scrivi paragrafi ricchi e lunghi.
-                    5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come euro o $), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
-                    6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso.
-                    
-                    MODELLO:
-                    {TESTO_MODELLO}
-                    """
-                    
-                    response = model.generate_content(full_prompt)
-                    markdown_content = response.text
-                    
-                    # Salviamo il risultato nella sessione per non perderlo al ricaricamento
-                    st.session_state['generated_pdf'] = create_pdf(markdown_content, city_name)
-                    st.session_state['last_city'] = city_name
-                    
-                except Exception as e:
-                    st.error(f"Errore: {e}")
-
-# --- MOSTRA IL BOTTONE DI DOWNLOAD SE ESISTE IL PDF ---
+# --- BOTTONE DOWNLOAD (Se esiste il PDF) ---
 if 'generated_pdf' in st.session_state:
     st.success(f"✅ Guida per {st.session_state['last_city']} pronta!")
     st.download_button(
@@ -533,10 +418,9 @@ if 'generated_pdf' in st.session_state:
     )
 
 # =========================================================
-# 🏨 TRAVEL HUB (SEMPRE VISIBILE)
+# 🏨 TRAVEL HUB (SEMPRE VISIBILE FUORI DAL LOOP)
 # =========================================================
 st.markdown("---")
-# Se c'è una città scritta, il titolo è personalizzato, altrimenti generico
 if city_name:
     st.subheader(f"✈️ Organizza il viaggio a {city_name}")
 else:
@@ -548,7 +432,6 @@ with c1:
     partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
 with c2:
     st.caption("🏨 **Hotel**")
-    # Passiamo city_name se c'è, altrimenti stringa vuota
     partner_button("Booking", get_booking_link(city_name if city_name else ""), "btn_booking.png")
 with c3:
     st.caption("🚆 **Treni**")
@@ -562,7 +445,7 @@ with c4:
     partner_button("Attività", get_gyg_link(city_name if city_name else ""), "btn_gyg.png")
 with c5:
     st.caption("🚗 **Auto**")
-    partner_button("Noleggio", RENTAL_LINK, "btn_discover.png")
+    partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
 with c6:
     st.caption("🎒 **Bagagli**")
     partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
@@ -606,6 +489,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
-
-
