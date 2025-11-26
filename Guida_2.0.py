@@ -34,7 +34,7 @@ ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"             # eSim
 RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"      # Auto Europe
 
 # 3. LINK GENERICI (In attesa)
-INSURANCE_LINK = "https://www.heymondo.it"
+INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 TRAIN_LINK = "https://www.omio.com"             
 
 # --- Funzioni Link ---
@@ -489,3 +489,4 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
