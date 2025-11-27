@@ -32,10 +32,13 @@ LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW" # Bagagli
 REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"          # Rimborsi
 ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"             # eSim
 RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"      # Auto Europe
+INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 
 # 3. LINK GENERICI (In attesa)
-INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 TRAIN_LINK = "https://www.omio.com"             
+
+# --- LINK PROMOZIONE (Modifica questo se cambi banner!) ---
+PROMO_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL" # <--- INCOLLA QUI IL LINK SPECIFICO DELL'OFFERTA
 
 # --- Funzioni Link ---
 def get_booking_link(city):
@@ -365,6 +368,33 @@ st.markdown("""
 
 st.write("") 
 
+# ==========================================
+# 📢 AREA PROMO AUTOMATICA (Black Friday)
+# ==========================================
+# Se esiste il file "promo_banner.png", viene mostrato.
+PROMO_IMG = "promo_banner.png"
+
+if os.path.exists(PROMO_IMG):
+    try:
+        promo_b64 = get_base64_of_bin_file(PROMO_IMG)
+        promo_html = f"""
+        <div style="margin-bottom: 20px; text-align: center;">
+            <a href="{PROMO_LINK}" target="_blank">
+                <img src="data:image/png;base64,{promo_b64}" 
+                     style="width: 100%; max-width: 700px; border-radius: 10px; 
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+                            transition: transform 0.2s; cursor: pointer;"
+                     onmouseover="this.style.transform='scale(1.02)'"
+                     onmouseout="this.style.transform='scale(1.0)'"
+                >
+            </a>
+        </div>
+        """
+        st.markdown(promo_html, unsafe_allow_html=True)
+    except:
+        pass
+# ==========================================
+
 city_name = st.text_input("Inserisci la destinazione:", placeholder="Es. Parigi, Tokyo, New York...")
 
 # --- GENERAZIONE GUIDA (LOGICA SESSION STATE) ---
@@ -489,4 +519,5 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
