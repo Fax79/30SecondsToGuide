@@ -32,13 +32,15 @@ LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW" # Bagagli
 REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"          # Rimborsi
 ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"             # eSim
 RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"      # Auto Europe
+
+# LINK HEYMONDO (Affiliato)
 INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 
 # 3. LINK GENERICI (In attesa)
 TRAIN_LINK = "https://www.omio.com"             
 
-# --- LINK PROMOZIONE (Modifica questo se cambi banner!) ---
-PROMO_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL" # <--- INCOLLA QUI IL LINK SPECIFICO DELL'OFFERTA
+# --- LINK PROMOZIONE (Banner Black Friday) ---
+PROMO_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL" 
 
 # --- Funzioni Link ---
 def get_booking_link(city):
@@ -57,6 +59,7 @@ def get_base64_of_bin_file(bin_file):
 
 def partner_button(label, link, image_file):
     if os.path.exists(image_file):
+        # Se c'è il logo, mostra immagine cliccabile
         try:
             img_base64 = get_base64_of_bin_file(image_file)
             html_code = f"""
@@ -71,6 +74,7 @@ def partner_button(label, link, image_file):
         except:
             st.link_button(label, link, use_container_width=True)
     else:
+        # Fallback: Se manca il logo, mostra il bottone classico
         st.link_button(label, link, use_container_width=True)
 # ==========================================
 
@@ -190,6 +194,15 @@ def create_pdf(text, city):
             self.ln(20)
             self.set_fill_color(230, 126, 34) 
             self.rect(70, self.get_y(), 100, 2, 'F')
+            
+            # --- MESSAGGIO GRATUITO (DISCLAIMER) ---
+            self.set_y(225) 
+            self.set_x(70)
+            self.set_font('Helvetica', 'I', 9) 
+            self.set_text_color(100, 100, 100)
+            disclaimer = "Questa guida è offerta gratuitamente. Se ti è utile, nell'ultima pagina trovi una selezione di sconti esclusivi per voli e hotel che ci aiutano a mantenere il servizio attivo. Buon viaggio!"
+            self.multi_cell(110, 5, disclaimer)
+            # ---------------------------------------
             
             self.set_y(250)
             self.set_x(70)
@@ -371,7 +384,6 @@ st.write("")
 # ==========================================
 # 📢 AREA PROMO AUTOMATICA (Black Friday)
 # ==========================================
-# Se esiste il file "promo_banner.png", viene mostrato.
 PROMO_IMG = "promo_banner.png"
 
 if os.path.exists(PROMO_IMG):
@@ -397,45 +409,47 @@ if os.path.exists(PROMO_IMG):
 
 city_name = st.text_input("Inserisci la destinazione:", placeholder="Es. Parigi, Tokyo, New York...")
 
-# --- GENERAZIONE GUIDA (LOGICA SESSION STATE) ---
-if st.button("Genera Guida PDF", type="primary", use_container_width=True):
-    if not city_name:
-        st.warning("Inserisci una città.")
-    else:
-        # LOGGING
-        timestamp = datetime.datetime.now().strftime("%H:%M")
-        get_shared_logs().append(f"📍 {city_name} ({timestamp})")
-        
-        with st.spinner("Stiamo scrivendo la tua guida... (non chiudere la pagina)"):
-            try:
-                model = genai.GenerativeModel("gemini-2.5-flash")
-                
-                full_prompt = f"""
-                Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
-                
-                REGOLE FONDAMENTALI:
-                1. NON USARE MAI TABELLE MARKDOWN (niente righe con | |).
-                2. Se devi fare un confronto, usa elenchi puntati descrittivi.
-                3. Usa ESATTAMENTE la struttura seguente.
-                4. Scrivi paragrafi ricchi e lunghi.
-                5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
-                6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso.
-                
-                MODELLO:
-                {TESTO_MODELLO}
-                """
-                
-                response = model.generate_content(full_prompt)
-                markdown_content = response.text
-                
-                # Salva in sessione
-                st.session_state['generated_pdf'] = create_pdf(markdown_content, city_name)
-                st.session_state['last_city'] = city_name
-                
-            except Exception as e:
-                st.error(f"Errore: {e}")
+# --- GENERAZIONE GUIDA ---
+# Usiamo un container per separare visivamente l'area di azione
+with st.container():
+    if st.button("Genera Guida PDF", type="primary", use_container_width=True):
+        if not city_name:
+            st.warning("Inserisci una città.")
+        else:
+            # LOGGING
+            timestamp = datetime.datetime.now().strftime("%H:%M")
+            get_shared_logs().append(f"📍 {city_name} ({timestamp})")
+            
+            with st.spinner("Stiamo scrivendo la tua guida... (non chiudere la pagina)"):
+                try:
+                    model = genai.GenerativeModel("gemini-2.5-flash")
+                    
+                    full_prompt = f"""
+                    Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
+                    
+                    REGOLE FONDAMENTALI:
+                    1. NON USARE MAI TABELLE MARKDOWN (niente righe con | |).
+                    2. Se devi fare un confronto, usa elenchi puntati descrittivi.
+                    3. Usa ESATTAMENTE la struttura seguente.
+                    4. Scrivi paragrafi ricchi e lunghi.
+                    5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
+                    6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso.
+                    
+                    MODELLO:
+                    {TESTO_MODELLO}
+                    """
+                    
+                    response = model.generate_content(full_prompt)
+                    markdown_content = response.text
+                    
+                    # Salva in sessione
+                    st.session_state['generated_pdf'] = create_pdf(markdown_content, city_name)
+                    st.session_state['last_city'] = city_name
+                    
+                except Exception as e:
+                    st.error(f"Errore: {e}")
 
-# --- BOTTONE DOWNLOAD (Se esiste il PDF) ---
+# --- MOSTRA IL BOTTONE DI DOWNLOAD SE ESISTE IL PDF ---
 if 'generated_pdf' in st.session_state:
     st.success(f"✅ Guida per {st.session_state['last_city']} pronta!")
     st.download_button(
@@ -448,7 +462,7 @@ if 'generated_pdf' in st.session_state:
     )
 
 # =========================================================
-# 🏨 TRAVEL HUB (SEMPRE VISIBILE FUORI DAL LOOP)
+# 🏨 TRAVEL HUB (SEMPRE VISIBILE)
 # =========================================================
 st.markdown("---")
 if city_name:
@@ -519,5 +533,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
-
