@@ -245,3 +245,292 @@ def create_pdf(text, city):
             
         elif line.startswith('## '): 
             pdf.ln(5)
+            pdf.set_font("Helvetica", 'B', 16)
+            pdf.set_text_color(230, 126, 34)
+            content = clean_line.replace('## ', '').replace('*', '').strip()
+            pdf.cell(0, 10, content, ln=True)
+            pdf.ln(2)
+            
+        elif line.startswith('### '): 
+            pdf.ln(3)
+            pdf.set_font("Helvetica", 'B', 13)
+            pdf.set_text_color(52, 73, 94)
+            content = clean_line.replace('### ', '').replace('*', '').strip()
+            pdf.cell(0, 10, content, ln=True)
+            
+        elif line.strip().startswith('* ') or line.strip().startswith('- '):
+            pdf.set_font("Helvetica", '', 11)
+            pdf.set_text_color(0, 0, 0)
+            if line.strip().startswith('* '): content_raw = line.strip()[2:] 
+            else: content_raw = line.strip()[2:]
+            content = content_raw.replace('*', '')
+            pdf.set_x(15) 
+            pdf.cell(5, 5, chr(149), 0, 0) 
+            pdf.set_x(22) 
+            pdf.multi_cell(0, 6, content)
+            pdf.ln(1)
+            
+        else: 
+            if line.strip():
+                pdf.set_font("Helvetica", '', 11)
+                pdf.set_text_color(40, 40, 40)
+                content = clean_line.replace('*', '')
+                pdf.multi_cell(0, 6, content)
+                pdf.ln(2)
+
+    # --- PAGINA SPONSOR (PDF) ---
+    pdf.add_page()
+    pdf.set_font("Helvetica", 'B', 16)
+    pdf.set_text_color(44, 62, 80)
+    pdf.cell(0, 10, "LINK UTILI PER IL VIAGGIO", 0, 1, 'C')
+    pdf.ln(5)
+    
+    def make_sponsor_box(title, subtitle, link):
+        title = clean_text_for_pdf(title)
+        subtitle = clean_text_for_pdf(subtitle)
+        
+        pdf.set_fill_color(245, 245, 245)
+        start_y = pdf.get_y()
+        # Altezza ridotta per farne stare 9
+        pdf.rect(10, start_y, 190, 20, 'F') 
+        
+        pdf.set_y(start_y + 3)
+        pdf.set_x(15)
+        pdf.set_font("Helvetica", 'B', 11)
+        pdf.set_text_color(44, 62, 80)
+        pdf.cell(0, 5, title, 0, 1)
+        
+        pdf.set_x(15)
+        pdf.set_font("Helvetica", '', 9)
+        pdf.set_text_color(0, 102, 204)
+        
+        pdf.cell(0, 6, subtitle, 0, 1, link=link)
+        pdf.ln(8) # Spazio ridotto
+
+    make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", FLIGHT_LINK)
+    make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
+    make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", get_gyg_link(city))
+    make_sponsor_box("Internet (eSim)", f"Naviga a {city} senza roaming con Saily", ESIM_LINK)
+    make_sponsor_box("Assicurazione Viaggio", "Parti senza pensieri con la protezione di Heymondo", INSURANCE_LINK)
+    make_sponsor_box("Deposito bagagli", "Quando il bagaglio diventa un peso, depositalo in sicurezza", LUGGAGE_LINK)
+    make_sponsor_box("Rimborso voli", "Volo cancellato o in ritardo? Ottieni fino a 600 EUR!", REIMB_LINK)
+    make_sponsor_box("Treni e Bus", f"Spostati facilmente da/per {city} con Omio", TRAIN_LINK)
+    make_sponsor_box("Noleggio Auto", f"Noleggia un'auto a {city} al miglior prezzo", RENTAL_LINK)
+
+    return bytes(pdf.output(dest='S'))
+
+# --- INTERFACCIA ---
+if os.path.exists("logo.png"):
+    st.set_page_config(page_title="30SecondsToGuide", page_icon="logo.png", layout="centered")
+else:
+    st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
+
+# --- SIDEBAR ---
+with st.sidebar:
+    if os.path.exists("logo.png"):
+        st.image("logo.png", width=200)
+    else:
+        st.title("⏱️")
+    
+    st.markdown("---")
+    st.caption("✈️ PRENOTAZIONI")
+    partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
+    partner_button("Hotel (Booking)", get_booking_link(""), "btn_booking.png")
+    partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
+    partner_button("Auto (Autoeurope)", RENTAL_LINK, "btn_autoe.png")
+    
+    st.caption("🎟️ ESPERIENZE")
+    partner_button("Tour (GetYourGuide)", get_gyg_link(""), "btn_gyg.png")
+    
+    st.caption("🛠️ SERVIZI UTILI")
+    partner_button("eSim (Saily)", ESIM_LINK, "btn_saily.png")
+    partner_button("Bagagli (Radical)", LUGGAGE_LINK, "btn_radical.png")
+    partner_button("Polizza (Heymondo)", INSURANCE_LINK, "btn_heymondo.png")
+    partner_button("Rimborsi (Airhelp)", REIMB_LINK, "btn_airhelp.png")
+    
+    # --- AREA ADMIN SEGRETA ---
+    with st.sidebar.expander("🔐 Admin Stats"):
+        secret_pwd = st.text_input("Password", type="password")
+        if secret_pwd == "fabio123": 
+            st.write("### 📊 Ultime Ricerche:")
+            logs = get_shared_logs()
+            if logs:
+                for log in reversed(logs):
+                    st.caption(log)
+            else:
+                st.caption("Nessuna ricerca ancora.")
+            st.write(f"**Totale:** {len(logs)}")
+
+    st.markdown("---")
+    st.caption("© 2025 30SecondsToGuide")
+    st.page_link("pages/privacy.py", label="Privacy Policy", icon="🔒")
+
+# --- CORPO CENTRALE ---
+if os.path.exists("logo.png"):
+    col_sp1, col_img, col_sp2 = st.columns([3, 2, 3])
+    with col_img:
+        st.image("logo.png", use_container_width=True)
+
+st.markdown("""
+    <h1 style='text-align: center; color: #2C3E50; margin-bottom: 0; margin-top: -10px;'>
+        Generatore Guide Turistiche
+    </h1>
+    <p style='text-align: center; color: #E67E22; font-size: 1.2em; font-style: italic; margin-top: 5px;'>
+        Da zero a local in mezzo minuto.
+    </p>
+    """, unsafe_allow_html=True)
+
+st.write("") 
+
+# ==========================================
+# 📢 AREA PROMO AUTOMATICA (Black Friday)
+# ==========================================
+PROMO_IMG = "promo_banner.png"
+
+if os.path.exists(PROMO_IMG):
+    try:
+        promo_b64 = get_base64_of_bin_file(PROMO_IMG)
+        promo_html = f"""
+        <div style="margin-bottom: 20px; text-align: center;">
+            <a href="{PROMO_LINK}" target="_blank">
+                <img src="data:image/png;base64,{promo_b64}" 
+                     style="width: 100%; max-width: 700px; border-radius: 10px; 
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+                            transition: transform 0.2s; cursor: pointer;"
+                     onmouseover="this.style.transform='scale(1.02)'"
+                     onmouseout="this.style.transform='scale(1.0)'"
+                >
+            </a>
+        </div>
+        """
+        st.markdown(promo_html, unsafe_allow_html=True)
+    except:
+        pass
+# ==========================================
+
+city_name = st.text_input("Inserisci la destinazione:", placeholder="Es. Parigi, Tokyo, New York...")
+
+# --- GENERAZIONE GUIDA ---
+# Usiamo un container per separare visivamente l'area di azione
+with st.container():
+    if st.button("Genera Guida PDF", type="primary", use_container_width=True):
+        if not city_name:
+            st.warning("Inserisci una città.")
+        else:
+            # LOGGING
+            timestamp = datetime.datetime.now().strftime("%H:%M")
+            get_shared_logs().append(f"📍 {city_name} ({timestamp})")
+            
+            with st.spinner("Stiamo scrivendo la tua guida... (non chiudere la pagina)"):
+                try:
+                    model = genai.GenerativeModel("gemini-2.5-flash")
+                    
+                    full_prompt = f"""
+                    Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
+                    
+                    REGOLE FONDAMENTALI:
+                    1. NON USARE MAI TABELLE MARKDOWN (niente righe con | |).
+                    2. Se devi fare un confronto, usa elenchi puntati descrittivi.
+                    3. Usa ESATTAMENTE la struttura seguente.
+                    4. Scrivi paragrafi ricchi e lunghi.
+                    5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
+                    6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso.
+                    
+                    MODELLO:
+                    {TESTO_MODELLO}
+                    """
+                    
+                    response = model.generate_content(full_prompt)
+                    markdown_content = response.text
+                    
+                    # Salva in sessione
+                    st.session_state['generated_pdf'] = create_pdf(markdown_content, city_name)
+                    st.session_state['last_city'] = city_name
+                    
+                except Exception as e:
+                    st.error(f"Errore: {e}")
+
+# --- MOSTRA IL BOTTONE DI DOWNLOAD SE ESISTE IL PDF ---
+if 'generated_pdf' in st.session_state:
+    st.success(f"✅ Guida per {st.session_state['last_city']} pronta!")
+    st.download_button(
+        label="🎨 SCARICA GUIDA PDF PRO",
+        data=st.session_state['generated_pdf'],
+        file_name=f"Guida_{st.session_state['last_city']}.pdf",
+        mime="application/pdf",
+        type="primary",
+        use_container_width=True
+    )
+
+# =========================================================
+# 🏨 TRAVEL HUB (SEMPRE VISIBILE)
+# =========================================================
+st.markdown("---")
+if city_name:
+    st.subheader(f"✈️ Organizza il viaggio a {city_name}")
+else:
+    st.subheader("✈️ I migliori strumenti per il tuo viaggio")
+
+c1, c2, c3 = st.columns(3)
+with c1:
+    st.caption("✈️ **Voli**")
+    partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
+with c2:
+    st.caption("🏨 **Hotel**")
+    partner_button("Booking", get_booking_link(city_name if city_name else ""), "btn_booking.png")
+with c3:
+    st.caption("🚆 **Treni**")
+    partner_button("Omio", TRAIN_LINK, "btn_omio.png")
+
+st.write("") 
+
+c4, c5, c6 = st.columns(3)
+with c4:
+    st.caption("🎟️ **Tour**")
+    partner_button("Attività", get_gyg_link(city_name if city_name else ""), "btn_gyg.png")
+with c5:
+    st.caption("🚗 **Auto**")
+    partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
+with c6:
+    st.caption("🎒 **Bagagli**")
+    partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
+
+st.write("") 
+
+c7, c8, c9 = st.columns(3)
+with c7:
+    st.caption("📲 **Dati**")
+    partner_button("eSim Saily", ESIM_LINK, "btn_saily.png")
+with c8:
+    st.caption("🛡️ **Polizza**")
+    partner_button("Assicuraz.", INSURANCE_LINK, "btn_heymondo.png")
+with c9:
+    st.caption("💸 **Risarcim.**")
+    partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
+
+# --- SEZIONE SEO ---
+st.markdown("---")
+st.markdown("""
+<div style="text-align: justify; color: #555;">
+    <h3>Come funziona 30SecondsToGuide?</h3>
+    <p>
+        <strong>30SecondsToGuide</strong> è il primo generatore di guide turistiche basato sull'Intelligenza Artificiale. 
+        A differenza dei tradizionali blog di viaggio, il nostro algoritmo crea <strong>itinerari personalizzati in PDF</strong> 
+        per qualsiasi città del mondo in meno di 30 secondi.
+    </p>
+    <p>
+        Che tu stia cercando <em>cosa vedere a Parigi</em>, un <em>itinerario di 3 giorni a New York</em> o 
+        consigli su <em>dove dormire a Tokyo</em>, la nostra AI analizza migliaia di fonti per offrirti:
+    </p>
+    <ul>
+        <li>🗺️ <strong>Itinerari passo-passo</strong> ottimizzati per risparmiare tempo.</li>
+        <li>🍽️ Consigli gastronomici sui <strong>migliori ristoranti locali</strong>.</li>
+        <li>🏛️ Informazioni storiche e culturali dettagliate.</li>
+        <li>📲 Link utili per <strong>prenotare hotel, voli e tour</strong> al miglior prezzo.</li>
+    </ul>
+    <p>
+        Il servizio è <strong>gratuito al 100%</strong> e non richiede registrazione. 
+        Inserisci la destinazione, clicca e scarica la tua guida di viaggio in PDF pronta per essere stampata o letta su smartphone.
+    </p>
+</div>
+""", unsafe_allow_html=True)
