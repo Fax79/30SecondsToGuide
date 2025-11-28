@@ -204,11 +204,15 @@ def create_pdf(text, city):
             self.multi_cell(110, 5, disclaimer)
             # ---------------------------------------
             
-            self.set_y(250)
+                        self.set_y(250)
             self.set_x(70)
             self.set_font('Helvetica', 'B', 10)
-            self.set_text_color(44, 62, 80)
-            self.cell(0, 10, "GENERATO DA 30SecondsToGuide")
+            self.set_text_color(44, 62, 80) # Manteniamo il colore scuro o vuoi il blu link?
+            # Se vuoi il blu standard dei link scommenta la riga sotto:
+            # self.set_text_color(0, 0, 255) 
+            
+            # MODIFICA: Testo aggiornato + Parametro link
+            self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", link="https://www.30secondstoguide.it")
 
     # --- FUNZIONE SPAZZINO (Cruciale per non crashare) ---
     def clean_text_for_pdf(text_line):
@@ -533,3 +537,4 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
