@@ -206,9 +206,9 @@ def create_pdf(text, city):
             
             self.set_y(250)
             self.set_x(70)
-            self.set_font('Helvetica', 'B', 10)
+            self.set_font('Helvetica', 'BU', 10)
             self.set_text_color(44, 62, 80)
-            self.set_text_color(0, 0, 255)
+            #self.set_text_color(0, 0, 255)
             # --- MODIFICA LINK SITO WEB ---
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", link="https://www.30secondstoguide.it")
 
@@ -535,4 +535,5 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
