@@ -37,7 +37,7 @@ RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"      # Auto Europe
 INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 
 # 3. LINK GENERICI (In attesa)
-TRAIN_LINK = "https://www.omio.com"             
+TRAIN_LINK = "https://tpx.lt/O5I4OrpX"             
 
 # --- LINK PROMOZIONE (Banner Black Friday) ---
 PROMO_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL" 
@@ -535,5 +535,6 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
