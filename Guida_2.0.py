@@ -315,7 +315,7 @@ def create_pdf(text, city):
     make_sponsor_box("Assicurazione Viaggio", "Parti senza pensieri con la protezione di Heymondo", INSURANCE_LINK)
     make_sponsor_box("Deposito bagagli", "Quando il bagaglio diventa un peso, depositalo in sicurezza", LUGGAGE_LINK)
     make_sponsor_box("Rimborso voli", "Volo cancellato o in ritardo? Ottieni fino a 600 EUR!", REIMB_LINK)
-    make_sponsor_box("Treni e Bus", f"Spostati facilmente da/per {city} con Omio", TRAIN_LINK)
+    make_sponsor_box("Transfer da/per aeroporto", f"Prenota un comodo transfer verso il tuo hotel a {city} con Welcome Pickups", TRAIN_LINK)
     make_sponsor_box("Noleggio Auto", f"Noleggia un'auto a {city} al miglior prezzo", RENTAL_LINK)
 
     return bytes(pdf.output(dest='S'))
@@ -337,7 +337,7 @@ with st.sidebar:
     st.caption("✈️ PRENOTAZIONI")
     partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
     partner_button("Hotel (Booking)", get_booking_link(""), "btn_booking.png")
-    partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
+    partner_button("Transfers (Welcome pickups)", TRAIN_LINK, "btn_wp.png")
     partner_button("Auto (Autoeurope)", RENTAL_LINK, "btn_autoe.png")
     
     st.caption("🎟️ ESPERIENZE")
@@ -535,6 +535,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
