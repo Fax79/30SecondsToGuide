@@ -481,7 +481,7 @@ with c2:
     partner_button("Booking", get_booking_link(city_name if city_name else ""), "btn_booking.png")
 with c3:
     st.caption("🚆 **Treni**")
-    partner_button("Omio", TRAIN_LINK, "btn_omio.png")
+    partner_button("Welcome Pickups", TRAIN_LINK, "btn_wp.png")
 
 st.write("") 
 
@@ -535,6 +535,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
