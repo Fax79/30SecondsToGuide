@@ -480,7 +480,7 @@ with c2:
     st.caption("🏨 **Hotel**")
     partner_button("Booking", get_booking_link(city_name if city_name else ""), "btn_booking.png")
 with c3:
-    st.caption("🚆 **Treni**")
+    st.caption("🚘 **Transfer**")
     partner_button("Welcome Pickups", TRAIN_LINK, "btn_wp.png")
 
 st.write("") 
@@ -535,6 +535,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
