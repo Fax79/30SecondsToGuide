@@ -432,12 +432,12 @@ with st.container():
                     Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
                     
                     REGOLE FONDAMENTALI:
-                    1. NON USARE MAI TABELLE MARKDOWN.
-                    2. Usa elenchi puntati per confronti.
+                    1. NON USARE MAI TABELLE MARKDOWN (niente righe con | |).
+                    2. Se devi fare un confronto, usa elenchi puntati descrittivi.
                     3. Usa ESATTAMENTE la struttura seguente.
-                    4. Scrivi paragrafi ricchi.
-                    5. NO CARATTERI SPECIALI O SIMBOLI VALUTA (usa EUR, USD).
-                    6. Se non è una città, rispondi in modo scherzoso.
+                    4. Scrivi paragrafi ricchi e lunghi.
+                    5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
+                    6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso..
                     
                     MODELLO:
                     {TESTO_MODELLO}
@@ -544,3 +544,4 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
