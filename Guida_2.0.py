@@ -40,7 +40,7 @@ INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDST
 # 3. LINK GENERICI (In attesa)
 TRAIN_LINK = "https://www.omio.com"
 RESTAURANT_LINK = "https://www.tripadvisor.com"
-TAXI_LINK = "https://www.kiwitaxi.com"
+TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"
 
 # --- LINK PROMOZIONE (Banner Black Friday) ---
 PROMO_LINK = "https://www.30secondstoguide.it" 
@@ -520,13 +520,13 @@ with c9:
     
 c10, c11, c12 = st.columns(3)
 with c10:
-    st.caption("📲 **Treni**")
+    st.caption("🚆 **Treni**")
     partner_button("Omio", TRAIN_LINK, "btn_omio.png")
 with c11:
-    st.caption("🛡️ **Ristoranti**")
+    st.caption("🍴 **Ristoranti**")
     partner_button("Tripadvisor", RESTAURANT_LINK, "btn_tripadv.png")
 with c12:
-    st.caption("💸 **Taxi**")
+    st.caption("🚖 **Taxi**")
     partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
 
 
@@ -556,6 +556,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
