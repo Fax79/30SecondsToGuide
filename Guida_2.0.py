@@ -6,7 +6,6 @@ import base64
 import datetime
 
 # --- 0. CONFIGURAZIONE PAGINA (PRIMA DI TUTTO!) ---
-# Posizionata qui per evitare errori di caricamento o pagina bianca
 if os.path.exists("logo.png"):
     st.set_page_config(page_title="30SecondsToGuide", page_icon="logo.png", layout="centered")
 else:
@@ -213,7 +212,7 @@ def create_pdf(text, city):
             
             self.set_y(250)
             self.set_x(70)
-            self.set_font('Helvetica', 'BU', 10) # BOLD + UNDERLINE
+            self.set_font('Helvetica', 'BU', 10) 
             self.set_text_color(44, 62, 80)
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", link="https://www.30secondstoguide.it")
 
@@ -297,12 +296,12 @@ def create_pdf(text, city):
         
         pdf.set_fill_color(245, 245, 245)
         start_y = pdf.get_y()
-        # Altezza RIDOTTA a 18 (invece di 20) per far stare 12 box
-        pdf.rect(10, start_y, 190, 18, 'F') 
+        # Altezza RIDOTTA A 16 (STRATEGICA)
+        pdf.rect(10, start_y, 190, 16, 'F') 
         
-        pdf.set_y(start_y + 3)
+        pdf.set_y(start_y + 2) # Padding ridotto
         pdf.set_x(15)
-        pdf.set_font("Helvetica", 'B', 10) # Font leggermente più piccolo
+        pdf.set_font("Helvetica", 'B', 10) 
         pdf.set_text_color(44, 62, 80)
         pdf.cell(0, 5, title, 0, 1)
         
@@ -311,7 +310,7 @@ def create_pdf(text, city):
         pdf.set_text_color(0, 102, 204)
         
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
-        pdf.ln(6) # Spazio ridotto tra i box (era 8)
+        pdf.ln(5) # Spazio ridotto tra i box (GAP)
 
     # 12 PARTNER IN ORDINE
     make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", FLIGHT_LINK)
