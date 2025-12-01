@@ -148,13 +148,11 @@ TESTO_MODELLO = """
 def create_pdf(text, city):
     
     # --- FUNZIONE SPAZZINO NUCLEARE ---
-    # Questa funzione deve essere accessibile da tutto lo scope del PDF
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        # 1. Normalizza: separa i caratteri base dagli accenti (es. 'ť' diventa 't' + 'ˇ')
+        # 1. Normalizza (scompone 'Č' in 'C' + accento)
         normalized = unicodedata.normalize('NFKD', text_input)
-        # 2. Codifica in Latin-1 e IGNORA tutto ciò che non ci sta (es. il 'ˇ' viene buttato via, la 't' resta)
-        #    Questo preserva à, è, ì, ò, ù perché esistono in Latin-1.
+        # 2. Tiene SOLO i caratteri Latin-1 (quindi 'C' resta, l'accento strano sparisce)
         return normalized.encode('latin-1', 'ignore').decode('latin-1')
 
     # Puliamo subito il nome della città per la copertina
@@ -168,7 +166,6 @@ def create_pdf(text, city):
             self.set_font('Helvetica', 'B', 10)
             self.set_text_color(255, 255, 255)
             self.set_y(8)
-            # Usiamo la versione pulita
             self.cell(0, 0, f'GUIDA: {city_clean.upper()}', 0, 0, 'R')
             self.ln(20) 
             
@@ -229,19 +226,20 @@ def create_pdf(text, city):
     lines = text.split('\n')
     
     for line in lines:
-        # Sostituzioni preliminari manuali (per sicurezza sui simboli noti)
+        # 1. Sostituzioni manuali per simboli comuni
         line = line.replace("€", "EUR").replace("$", "USD").replace("£", "GBP")
         line = line.replace("’", "'").replace("“", '"').replace("”", '"')
         line = line.replace("–", "-").replace("—", "-").replace("…", "...")
         
-        # PULIZIA NUCLEARE
-        clean_line = clean_text_for_pdf(line)
+        # 2. PULIZIA NUCLEARE APPLICATA SUBITO ALLA RIGA
+        # (Questo era il pezzo mancante che causava il crash negli elenchi)
+        line = clean_text_for_pdf(line)
         
         if line.startswith('# '): 
             pdf.ln(10)
             pdf.set_font("Helvetica", 'B', 22)
             pdf.set_text_color(44, 62, 80)
-            content = clean_line.replace('# ', '').replace('*', '').upper().strip()
+            content = line.replace('# ', '').replace('*', '').upper().strip()
             pdf.multi_cell(0, 10, content)
             y = pdf.get_y()
             pdf.set_draw_color(230, 126, 34)
@@ -253,7 +251,7 @@ def create_pdf(text, city):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 16)
             pdf.set_text_color(230, 126, 34)
-            content = clean_line.replace('## ', '').replace('*', '').strip()
+            content = line.replace('## ', '').replace('*', '').strip()
             pdf.cell(0, 10, content, ln=True)
             pdf.ln(2)
             
@@ -261,7 +259,7 @@ def create_pdf(text, city):
             pdf.ln(3)
             pdf.set_font("Helvetica", 'B', 13)
             pdf.set_text_color(52, 73, 94)
-            content = clean_line.replace('### ', '').replace('*', '').strip()
+            content = line.replace('### ', '').replace('*', '').strip()
             pdf.cell(0, 10, content, ln=True)
             
         elif line.strip().startswith('* ') or line.strip().startswith('- '):
@@ -273,6 +271,7 @@ def create_pdf(text, city):
             pdf.set_x(15) 
             pdf.cell(5, 5, chr(149), 0, 0) 
             pdf.set_x(22) 
+            # Qui ora usa 'content' che deriva da 'line' che è già pulita
             pdf.multi_cell(0, 6, content)
             pdf.ln(1)
             
@@ -280,7 +279,7 @@ def create_pdf(text, city):
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                content = clean_line.replace('*', '')
+                content = line.replace('*', '')
                 pdf.multi_cell(0, 6, content)
                 pdf.ln(2)
 
@@ -292,7 +291,6 @@ def create_pdf(text, city):
     pdf.ln(5)
     
     def make_sponsor_box(title, subtitle, link):
-        # Pulizia anche qui, per sicurezza assoluta
         title = clean_text_for_pdf(title)
         subtitle = clean_text_for_pdf(subtitle)
         
@@ -313,19 +311,19 @@ def create_pdf(text, city):
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
         pdf.ln(5) 
 
-    # 12 PARTNER IN ORDINE (TUTTI LINK ATTIVI)
-    make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", FLIGHT_LINK)
-    make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", HOTEL_LINK)
-    make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", TOUR_LINK)
-    make_sponsor_box("Internet (eSim)", f"Naviga a {city} senza roaming con Saily", ESIM_LINK)
+    # 12 PARTNER
+    make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city_clean} su Kiwi.com", FLIGHT_LINK)
+    make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city_clean} su Booking.com", HOTEL_LINK)
+    make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city_clean}", TOUR_LINK)
+    make_sponsor_box("Internet (eSim)", f"Naviga a {city_clean} senza roaming con Saily", ESIM_LINK)
     make_sponsor_box("Assicurazione Viaggio", "Parti senza pensieri con la protezione di Heymondo", INSURANCE_LINK)
-    make_sponsor_box("Treni e bus", f"Prenota un treno o un bus fino a {city} al miglior prezzo", TRAIN_LINK)
+    make_sponsor_box("Treni e bus", f"Prenota un treno o un bus fino a {city_clean} al miglior prezzo", TRAIN_LINK)
     make_sponsor_box("Deposito bagagli", "Quando il bagaglio diventa un peso, depositalo in sicurezza", LUGGAGE_LINK)
     make_sponsor_box("Rimborso voli", "Volo cancellato o in ritardo? Ottieni fino a 600 EUR!", REIMB_LINK)
-    make_sponsor_box("Transfer Aeroporto", f"Transfer comodo verso il tuo hotel a {city}", TRANSF_LINK)
-    make_sponsor_box("Noleggio Auto", f"Noleggia un'auto a {city} al miglior prezzo", RENTAL_LINK)
-    make_sponsor_box("Taxi", f"Prenota un taxi affidabile a {city}", TAXI_LINK)
-    make_sponsor_box("Ristoranti", f"Leggi le recensioni dei migliori ristoranti a {city}", RESTAURANT_LINK)
+    make_sponsor_box("Transfer Aeroporto", f"Transfer comodo verso il tuo hotel a {city_clean}", TRANSF_LINK)
+    make_sponsor_box("Noleggio Auto", f"Noleggia un'auto a {city_clean} al miglior prezzo", RENTAL_LINK)
+    make_sponsor_box("Taxi", f"Prenota un taxi affidabile a {city_clean}", TAXI_LINK)
+    make_sponsor_box("Ristoranti", f"Leggi le recensioni dei migliori ristoranti a {city_clean}", RESTAURANT_LINK)
 
     return bytes(pdf.output(dest='S'))
 
@@ -429,7 +427,7 @@ with st.container():
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
-                    # --- PROMPT RIPRISTINATO ---
+                    # --- PROMPT ORIGINALE ---
                     full_prompt = f"""
                     Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
                     
