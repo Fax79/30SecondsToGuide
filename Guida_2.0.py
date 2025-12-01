@@ -354,6 +354,8 @@ with st.sidebar:
     partner_button("Bagagli (Radical)", LUGGAGE_LINK, "btn_radical.png")
     partner_button("Polizza (Heymondo)", INSURANCE_LINK, "btn_heymondo.png")
     partner_button("Rimborsi (Airhelp)", REIMB_LINK, "btn_airhelp.png")
+    partner_button("Taxi (Kiwitaxi)", TAXI_LINK, "btn_taxi.png")
+    partner_button("Ristoranti (Tripadvisor)", RESTAURANT_LINK, "btn_tripadv.png")
     
     # --- AREA ADMIN SEGRETA ---
     with st.sidebar.expander("🔐 Admin Stats"):
@@ -554,6 +556,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
