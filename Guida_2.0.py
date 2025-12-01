@@ -5,24 +5,31 @@ import os
 import base64
 import datetime
 
+# --- 0. CONFIGURAZIONE PAGINA (PRIMA DI TUTTO!) ---
+# Posizionata qui per evitare errori di caricamento o pagina bianca
+if os.path.exists("logo.png"):
+    st.set_page_config(page_title="30SecondsToGuide", page_icon="logo.png", layout="centered")
+else:
+    st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
+
 # --- MEMORIA CONDIVISA (LOG) ---
 @st.cache_resource
 def get_shared_logs():
     return [] 
 
-# --- CONFIGURAZIONE ---
+# --- CONFIGURAZIONE API ---
 try:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
+    genai.configure(api_key=API_KEY)
 except:
     st.error("⚠️ Chiave API mancante! Inseriscila nei 'Secrets'.")
     st.stop()
 
-genai.configure(api_key=API_KEY)
+# ==========================================
+# 💰 AREA MONETIZZAZIONE & PARTNER
+# ==========================================
 
-# ==========================================
-# 💰 AREA MONETIZZAZIONE
-# ==========================================
-# 1. CODICI NUMERICI
+# 1. CODICI AFFILIATI (ID)
 BOOKING_AID = "000000"  
 GYG_PARTNER_ID = "000000" 
 
@@ -32,20 +39,20 @@ LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW" # Bagagli
 REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"          # Rimborsi
 ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"             # eSim
 RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"      # Auto Europe
-TRANSF_LINK = "https://tpx.lt/O5I4OrpX"                 # Transfer e noleggio auto con coducente
+TRANSF_LINK = "https://tpx.lt/O5I4OrpX"                 # Transfer / NCC
+TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"          # Taxi
 
 # LINK HEYMONDO (Affiliato)
 INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 
-# 3. LINK GENERICI (In attesa)
+# 3. LINK GENERICI (In attesa di affiliazione)
 TRAIN_LINK = "https://www.omio.com"
 RESTAURANT_LINK = "https://www.tripadvisor.com"
-TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"
 
-# --- LINK PROMOZIONE (Banner Black Friday) ---
+# --- LINK PROMOZIONE ---
 PROMO_LINK = "https://www.30secondstoguide.it" 
 
-# --- Funzioni Link ---
+# --- Funzioni Link Dinamici ---
 def get_booking_link(city):
     if BOOKING_AID == "000000": return "https://www.booking.com"
     return f"https://www.booking.com/searchresults.html?ss={city}&aid={BOOKING_AID}"
@@ -62,7 +69,6 @@ def get_base64_of_bin_file(bin_file):
 
 def partner_button(label, link, image_file):
     if os.path.exists(image_file):
-        # Se c'è il logo, mostra immagine cliccabile
         try:
             img_base64 = get_base64_of_bin_file(image_file)
             html_code = f"""
@@ -77,12 +83,11 @@ def partner_button(label, link, image_file):
         except:
             st.link_button(label, link, use_container_width=True)
     else:
-        # Fallback: Se manca il logo, mostra il bottone classico
         st.link_button(label, link, use_container_width=True)
+
 # ==========================================
 
-
-# --- MODELLO TESTO (12 PUNTI) ---
+# --- MODELLO TESTO PROMPT ---
 TESTO_MODELLO = """
 # [NOME CITTÀ]: Guida Esclusiva
 
@@ -198,24 +203,21 @@ def create_pdf(text, city):
             self.set_fill_color(230, 126, 34) 
             self.rect(70, self.get_y(), 100, 2, 'F')
             
-            # --- MESSAGGIO GRATUITO (DISCLAIMER) ---
+            # --- DISCLAIMER ---
             self.set_y(225) 
             self.set_x(70)
             self.set_font('Helvetica', 'I', 9) 
             self.set_text_color(100, 100, 100)
             disclaimer = "Questa guida è offerta gratuitamente. Se ti è utile, nell'ultima pagina trovi una selezione di sconti esclusivi per voli e hotel che ci aiutano a mantenere il servizio attivo. Buon viaggio!"
             self.multi_cell(110, 5, disclaimer)
-            # ---------------------------------------
             
             self.set_y(250)
             self.set_x(70)
-            self.set_font('Helvetica', 'BU', 10)
+            self.set_font('Helvetica', 'BU', 10) # BOLD + UNDERLINE
             self.set_text_color(44, 62, 80)
-            #self.set_text_color(0, 0, 255)
-            # --- MODIFICA LINK SITO WEB ---
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", link="https://www.30secondstoguide.it")
 
-    # --- FUNZIONE SPAZZINO (Cruciale per non crashare) ---
+    # --- FUNZIONE SPAZZINO ---
     def clean_text_for_pdf(text_line):
         replacements = {
             "€": "EUR", "$": "USD", "£": "GBP",
@@ -295,12 +297,12 @@ def create_pdf(text, city):
         
         pdf.set_fill_color(245, 245, 245)
         start_y = pdf.get_y()
-        # Altezza ridotta per farne stare 9
-        pdf.rect(10, start_y, 190, 20, 'F') 
+        # Altezza RIDOTTA a 18 (invece di 20) per far stare 12 box
+        pdf.rect(10, start_y, 190, 18, 'F') 
         
         pdf.set_y(start_y + 3)
         pdf.set_x(15)
-        pdf.set_font("Helvetica", 'B', 11)
+        pdf.set_font("Helvetica", 'B', 10) # Font leggermente più piccolo
         pdf.set_text_color(44, 62, 80)
         pdf.cell(0, 5, title, 0, 1)
         
@@ -309,27 +311,23 @@ def create_pdf(text, city):
         pdf.set_text_color(0, 102, 204)
         
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
-        pdf.ln(8) # Spazio ridotto
+        pdf.ln(6) # Spazio ridotto tra i box (era 8)
 
+    # 12 PARTNER IN ORDINE
     make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", FLIGHT_LINK)
     make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
     make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", get_gyg_link(city))
     make_sponsor_box("Internet (eSim)", f"Naviga a {city} senza roaming con Saily", ESIM_LINK)
     make_sponsor_box("Assicurazione Viaggio", "Parti senza pensieri con la protezione di Heymondo", INSURANCE_LINK)
-    make_sponsor_box("Treni e autobus low cost", f"Prenota un treno o un bus fino a {city} al miglior prezzo", TRAIN_LINK)
+    make_sponsor_box("Treni e bus", f"Prenota un treno o un bus fino a {city} al miglior prezzo", TRAIN_LINK)
     make_sponsor_box("Deposito bagagli", "Quando il bagaglio diventa un peso, depositalo in sicurezza", LUGGAGE_LINK)
     make_sponsor_box("Rimborso voli", "Volo cancellato o in ritardo? Ottieni fino a 600 EUR!", REIMB_LINK)
-    make_sponsor_box("Transfer da/per aeroporto", f"Prenota un comodo transfer verso il tuo hotel a {city} con Welcome Pickups", TRANSF_LINK)
+    make_sponsor_box("Transfer Aeroporto", f"Transfer comodo verso il tuo hotel a {city}", TRANSF_LINK)
     make_sponsor_box("Noleggio Auto", f"Noleggia un'auto a {city} al miglior prezzo", RENTAL_LINK)
-
+    make_sponsor_box("Taxi", f"Prenota un taxi affidabile a {city}", TAXI_LINK)
+    make_sponsor_box("Ristoranti", f"Leggi le recensioni dei migliori ristoranti a {city}", RESTAURANT_LINK)
 
     return bytes(pdf.output(dest='S'))
-
-# --- INTERFACCIA ---
-if os.path.exists("logo.png"):
-    st.set_page_config(page_title="30SecondsToGuide", page_icon="logo.png", layout="centered")
-else:
-    st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -342,20 +340,20 @@ with st.sidebar:
     st.caption("✈️ PRENOTAZIONI")
     partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
     partner_button("Hotel (Booking)", get_booking_link(""), "btn_booking.png")
-    partner_button("Transfers (Welcome pickups)", TRANSF_LINK, "btn_wp.png")
+    partner_button("Transfers (Welcome)", TRANSF_LINK, "btn_wp.png")
     partner_button("Auto (Autoeurope)", RENTAL_LINK, "btn_autoe.png")
     partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
+    partner_button("Taxi (Kiwitaxi)", TAXI_LINK, "btn_taxi.png")
     
-    st.caption("🎟️ ESPERIENZE")
+    st.caption("🎟️ ESPERIENZE & ALTRO")
     partner_button("Tour (GetYourGuide)", get_gyg_link(""), "btn_gyg.png")
+    partner_button("Ristoranti (Tripadvisor)", RESTAURANT_LINK, "btn_tripadv.png")
     
     st.caption("🛠️ SERVIZI UTILI")
     partner_button("eSim (Saily)", ESIM_LINK, "btn_saily.png")
     partner_button("Bagagli (Radical)", LUGGAGE_LINK, "btn_radical.png")
     partner_button("Polizza (Heymondo)", INSURANCE_LINK, "btn_heymondo.png")
     partner_button("Rimborsi (Airhelp)", REIMB_LINK, "btn_airhelp.png")
-    partner_button("Taxi (Kiwitaxi)", TAXI_LINK, "btn_taxi.png")
-    partner_button("Ristoranti (Tripadvisor)", RESTAURANT_LINK, "btn_tripadv.png")
     
     # --- AREA ADMIN SEGRETA ---
     with st.sidebar.expander("🔐 Admin Stats"):
@@ -392,7 +390,7 @@ st.markdown("""
 st.write("") 
 
 # ==========================================
-# 📢 AREA PROMO AUTOMATICA (Black Friday)
+# 📢 AREA PROMO AUTOMATICA
 # ==========================================
 PROMO_IMG = "promo_banner.png"
 
@@ -415,18 +413,15 @@ if os.path.exists(PROMO_IMG):
         st.markdown(promo_html, unsafe_allow_html=True)
     except:
         pass
-# ==========================================
 
 city_name = st.text_input("Inserisci la destinazione:", placeholder="Es. Parigi, Tokyo, New York...")
 
 # --- GENERAZIONE GUIDA ---
-# Usiamo un container per separare visivamente l'area di azione
 with st.container():
     if st.button("Genera Guida PDF", type="primary", use_container_width=True):
         if not city_name:
             st.warning("Inserisci una città.")
         else:
-            # LOGGING
             timestamp = datetime.datetime.now().strftime("%H:%M")
             get_shared_logs().append(f"📍 {city_name} ({timestamp})")
             
@@ -438,12 +433,12 @@ with st.container():
                     Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
                     
                     REGOLE FONDAMENTALI:
-                    1. NON USARE MAI TABELLE MARKDOWN (niente righe con | |).
-                    2. Se devi fare un confronto, usa elenchi puntati descrittivi.
+                    1. NON USARE MAI TABELLE MARKDOWN.
+                    2. Usa elenchi puntati per confronti.
                     3. Usa ESATTAMENTE la struttura seguente.
-                    4. Scrivi paragrafi ricchi e lunghi.
-                    5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
-                    6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso.
+                    4. Scrivi paragrafi ricchi.
+                    5. NO CARATTERI SPECIALI O SIMBOLI VALUTA (usa EUR, USD).
+                    6. Se non è una città, rispondi in modo scherzoso.
                     
                     MODELLO:
                     {TESTO_MODELLO}
@@ -455,11 +450,12 @@ with st.container():
                     # Salva in sessione
                     st.session_state['generated_pdf'] = create_pdf(markdown_content, city_name)
                     st.session_state['last_city'] = city_name
+                    st.rerun()
                     
                 except Exception as e:
                     st.error(f"Errore: {e}")
 
-# --- MOSTRA IL BOTTONE DI DOWNLOAD SE ESISTE IL PDF ---
+# --- DOWNLOAD BUTTON ---
 if 'generated_pdf' in st.session_state:
     st.success(f"✅ Guida per {st.session_state['last_city']} pronta!")
     st.download_button(
@@ -472,7 +468,7 @@ if 'generated_pdf' in st.session_state:
     )
 
 # =========================================================
-# 🏨 TRAVEL HUB (SEMPRE VISIBILE)
+# 🏨 TRAVEL HUB (GRID 4x3)
 # =========================================================
 st.markdown("---")
 if city_name:
@@ -480,6 +476,7 @@ if city_name:
 else:
     st.subheader("✈️ I migliori strumenti per il tuo viaggio")
 
+# RIGA 1
 c1, c2, c3 = st.columns(3)
 with c1:
     st.caption("✈️ **Voli**")
@@ -493,6 +490,7 @@ with c3:
 
 st.write("") 
 
+# RIGA 2
 c4, c5, c6 = st.columns(3)
 with c4:
     st.caption("🎟️ **Tour**")
@@ -506,6 +504,7 @@ with c6:
 
 st.write("") 
 
+# RIGA 3
 c7, c8, c9 = st.columns(3)
 with c7:
     st.caption("📲 **Dati**")
@@ -517,7 +516,9 @@ with c9:
     st.caption("💸 **Risarcim.**")
     partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
 
-    
+st.write("") 
+
+# RIGA 4
 c10, c11, c12 = st.columns(3)
 with c10:
     st.caption("🚆 **Treni**")
@@ -528,7 +529,6 @@ with c11:
 with c12:
     st.caption("🚖 **Taxi**")
     partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
-
 
 # --- SEZIONE SEO ---
 st.markdown("---")
@@ -541,28 +541,7 @@ st.markdown("""
         per qualsiasi città del mondo in meno di 30 secondi.
     </p>
     <p>
-        Che tu stia cercando <em>cosa vedere a Parigi</em>, un <em>itinerario di 3 giorni a New York</em> o 
-        consigli su <em>dove dormire a Tokyo</em>, la nostra AI analizza migliaia di fonti per offrirti:
-    </p>
-    <ul>
-        <li>🗺️ <strong>Itinerari passo-passo</strong> ottimizzati per risparmiare tempo.</li>
-        <li>🍽️ Consigli gastronomici sui <strong>migliori ristoranti locali</strong>.</li>
-        <li>🏛️ Informazioni storiche e culturali dettagliate.</li>
-        <li>📲 Link utili per <strong>prenotare hotel, voli e tour</strong> al miglior prezzo.</li>
-    </ul>
-    <p>
-        Il servizio è <strong>gratuito al 100%</strong> e non richiede registrazione. 
-        Inserisci la destinazione, clicca e scarica la tua guida di viaggio in PDF pronta per essere stampata o letta su smartphone.
+        Il servizio è <strong>gratuito al 100%</strong>.
     </p>
 </div>
 """, unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
