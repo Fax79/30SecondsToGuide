@@ -522,10 +522,10 @@ c10, c11, c12 = st.columns(3)
 with c10:
     st.caption("📲 **Treni**")
     partner_button("Omio", TRAIN_LINK, "btn_omio.png")
-with c8:
+with c11:
     st.caption("🛡️ **Ristoranti**")
     partner_button("Tripadvisor", RESTAURANT_LINK, "btn_tripadv.png")
-with c9:
+with c12:
     st.caption("💸 **Taxi**")
     partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
 
@@ -556,6 +556,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
