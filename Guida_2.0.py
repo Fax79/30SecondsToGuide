@@ -32,15 +32,18 @@ LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW" # Bagagli
 REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"          # Rimborsi
 ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"             # eSim
 RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"      # Auto Europe
+TRANSF_LINK = "https://tpx.lt/O5I4OrpX"                 # Transfer e noleggio auto con coducente
 
 # LINK HEYMONDO (Affiliato)
 INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 
 # 3. LINK GENERICI (In attesa)
-TRAIN_LINK = "https://tpx.lt/O5I4OrpX"             
+TRAIN_LINK = "https://www.omio.com"
+RESTAURANT_LINK = "https://www.tripadvisor.com"
+TAXI_LINK = "https://www.kiwitaxi.com"
 
 # --- LINK PROMOZIONE (Banner Black Friday) ---
-PROMO_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL" 
+PROMO_LINK = "https://www.30secondstoguide.it" 
 
 # --- Funzioni Link ---
 def get_booking_link(city):
@@ -313,10 +316,12 @@ def create_pdf(text, city):
     make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", get_gyg_link(city))
     make_sponsor_box("Internet (eSim)", f"Naviga a {city} senza roaming con Saily", ESIM_LINK)
     make_sponsor_box("Assicurazione Viaggio", "Parti senza pensieri con la protezione di Heymondo", INSURANCE_LINK)
+    make_sponsor_box("Treni e autobus low cost", f"Prenota un treno o un bus fino a {city} al miglior prezzo", TRAIN_LINK)
     make_sponsor_box("Deposito bagagli", "Quando il bagaglio diventa un peso, depositalo in sicurezza", LUGGAGE_LINK)
     make_sponsor_box("Rimborso voli", "Volo cancellato o in ritardo? Ottieni fino a 600 EUR!", REIMB_LINK)
-    make_sponsor_box("Transfer da/per aeroporto", f"Prenota un comodo transfer verso il tuo hotel a {city} con Welcome Pickups", TRAIN_LINK)
+    make_sponsor_box("Transfer da/per aeroporto", f"Prenota un comodo transfer verso il tuo hotel a {city} con Welcome Pickups", TRANSF_LINK)
     make_sponsor_box("Noleggio Auto", f"Noleggia un'auto a {city} al miglior prezzo", RENTAL_LINK)
+
 
     return bytes(pdf.output(dest='S'))
 
@@ -337,8 +342,9 @@ with st.sidebar:
     st.caption("✈️ PRENOTAZIONI")
     partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
     partner_button("Hotel (Booking)", get_booking_link(""), "btn_booking.png")
-    partner_button("Transfers (Welcome pickups)", TRAIN_LINK, "btn_wp.png")
+    partner_button("Transfers (Welcome pickups)", TRANSF_LINK, "btn_wp.png")
     partner_button("Auto (Autoeurope)", RENTAL_LINK, "btn_autoe.png")
+    partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
     
     st.caption("🎟️ ESPERIENZE")
     partner_button("Tour (GetYourGuide)", get_gyg_link(""), "btn_gyg.png")
@@ -481,7 +487,7 @@ with c2:
     partner_button("Booking", get_booking_link(city_name if city_name else ""), "btn_booking.png")
 with c3:
     st.caption("🚘 **Transfer**")
-    partner_button("Welcome Pickups", TRAIN_LINK, "btn_wp.png")
+    partner_button("Welcome Pickups", TRANSF_LINK, "btn_wp.png")
 
 st.write("") 
 
@@ -509,6 +515,19 @@ with c9:
     st.caption("💸 **Risarcim.**")
     partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
 
+    
+c10, c11, c12 = st.columns(3)
+with c10:
+    st.caption("📲 **Treni**")
+    partner_button("Omio", TRAIN_LINK, "btn_omio.png")
+with c8:
+    st.caption("🛡️ **Ristoranti**")
+    partner_button("Tripadvisor", RESTAURANT_LINK, "btn_tripadv.png")
+with c9:
+    st.caption("💸 **Taxi**")
+    partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
+
+
 # --- SEZIONE SEO ---
 st.markdown("---")
 st.markdown("""
@@ -535,6 +554,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
