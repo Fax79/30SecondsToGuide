@@ -28,11 +28,7 @@ except:
 # 💰 AREA MONETIZZAZIONE & PARTNER
 # ==========================================
 
-# 1. CODICI AFFILIATI (ID)
-BOOKING_AID = "000000"  
-GYG_PARTNER_ID = "000000" 
-
-# 2. LINK TRACCIATI (Attivi)
+# 1. LINK TRACCIATI (Attivi)
 FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"            # Voli
 LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW" # Bagagli
 REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"          # Rimborsi
@@ -44,21 +40,14 @@ TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"          # Taxi
 # LINK HEYMONDO (Affiliato)
 INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 
-# 3. LINK GENERICI (In attesa di affiliazione)
+# 2. LINK GENERICI (In attesa di affiliazione)
 TRAIN_LINK = "https://www.omio.com"
 RESTAURANT_LINK = "https://www.tripadvisor.com"
+HOTEL_LINK = "https://www.booking.com"
+TOUR_LINK = "https://www.getyourguide.com"
 
 # --- LINK PROMOZIONE ---
 PROMO_LINK = "https://www.30secondstoguide.it" 
-
-# --- Funzioni Link Dinamici ---
-def get_booking_link(city):
-    if BOOKING_AID == "000000": return "https://www.booking.com"
-    return f"https://www.booking.com/searchresults.html?ss={city}&aid={BOOKING_AID}"
-
-def get_gyg_link(city):
-    if GYG_PARTNER_ID == "000000": return "https://www.getyourguide.com"
-    return f"https://www.getyourguide.com/s?q={city}&partner_id={GYG_PARTNER_ID}"
 
 # --- Funzione Helper per Bottoni con Logo ---
 def get_base64_of_bin_file(bin_file):
@@ -86,7 +75,7 @@ def partner_button(label, link, image_file):
 
 # ==========================================
 
-# --- MODELLO TESTO PROMPT ---
+# --- MODELLO TESTO PROMPT (ORIGINALE RIPRISTINATO) ---
 TESTO_MODELLO = """
 # [NOME CITTÀ]: Guida Esclusiva
 
@@ -217,10 +206,13 @@ def create_pdf(text, city):
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", link="https://www.30secondstoguide.it")
 
     # --- FUNZIONE SPAZZINO ---
+    # Questa funzione è l'unica difesa tecnica contro crash imprevisti sui caratteri.
     def clean_text_for_pdf(text_line):
         replacements = {
             "€": "EUR", "$": "USD", "£": "GBP",
-            "’": "'", "“": '"', "”": '"', "–": "-", "…": "..."
+            "’": "'", "“": '"', "”": '"', 
+            "–": "-", "—": "-", # Aggiunto per evitare crash se l'AI "scivola"
+            "…": "..."
         }
         for char, replacement in replacements.items():
             text_line = text_line.replace(char, replacement)
@@ -312,10 +304,10 @@ def create_pdf(text, city):
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
         pdf.ln(5) # Spazio ridotto tra i box (GAP)
 
-    # 12 PARTNER IN ORDINE
+    # 12 PARTNER IN ORDINE (MODIFICATI CON LINK STATICI)
     make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", FLIGHT_LINK)
-    make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", get_booking_link(city))
-    make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", get_gyg_link(city))
+    make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", HOTEL_LINK)
+    make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", TOUR_LINK)
     make_sponsor_box("Internet (eSim)", f"Naviga a {city} senza roaming con Saily", ESIM_LINK)
     make_sponsor_box("Assicurazione Viaggio", "Parti senza pensieri con la protezione di Heymondo", INSURANCE_LINK)
     make_sponsor_box("Treni e bus", f"Prenota un treno o un bus fino a {city} al miglior prezzo", TRAIN_LINK)
@@ -338,14 +330,14 @@ with st.sidebar:
     st.markdown("---")
     st.caption("✈️ PRENOTAZIONI")
     partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
-    partner_button("Hotel (Booking)", get_booking_link(""), "btn_booking.png")
+    partner_button("Hotel (Booking)", HOTEL_LINK, "btn_booking.png")
     partner_button("Transfers (Welcome)", TRANSF_LINK, "btn_wp.png")
     partner_button("Auto (Autoeurope)", RENTAL_LINK, "btn_autoe.png")
     partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
     partner_button("Taxi (Kiwitaxi)", TAXI_LINK, "btn_taxi.png")
     
     st.caption("🎟️ ESPERIENZE & ALTRO")
-    partner_button("Tour (GetYourGuide)", get_gyg_link(""), "btn_gyg.png")
+    partner_button("Tour (GetYourGuide)", TOUR_LINK, "btn_gyg.png")
     partner_button("Ristoranti (Tripadvisor)", RESTAURANT_LINK, "btn_tripadv.png")
     
     st.caption("🛠️ SERVIZI UTILI")
@@ -428,6 +420,7 @@ with st.container():
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
+                    # --- PROMPT RIPRISTINATO ESATTAMENTE COME DA SPECIFICHE ---
                     full_prompt = f"""
                     Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
                     
@@ -437,7 +430,7 @@ with st.container():
                     3. Usa ESATTAMENTE la struttura seguente.
                     4. Scrivi paragrafi ricchi e lunghi.
                     5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
-                    6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso..
+                    6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso.
                     
                     MODELLO:
                     {TESTO_MODELLO}
@@ -482,7 +475,7 @@ with c1:
     partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
 with c2:
     st.caption("🏨 **Hotel**")
-    partner_button("Booking", get_booking_link(city_name if city_name else ""), "btn_booking.png")
+    partner_button("Booking", HOTEL_LINK, "btn_booking.png")
 with c3:
     st.caption("🚘 **Transfer**")
     partner_button("Welcome Pickups", TRANSF_LINK, "btn_wp.png")
@@ -493,7 +486,7 @@ st.write("")
 c4, c5, c6 = st.columns(3)
 with c4:
     st.caption("🎟️ **Tour**")
-    partner_button("Attività", get_gyg_link(city_name if city_name else ""), "btn_gyg.png")
+    partner_button("Attività", TOUR_LINK, "btn_gyg.png")
 with c5:
     st.caption("🚗 **Auto**")
     partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
@@ -544,4 +537,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
