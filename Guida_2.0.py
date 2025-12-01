@@ -4,8 +4,9 @@ from fpdf import FPDF
 import os
 import base64
 import datetime
+import unicodedata  # <--- NUOVO IMPORT FONDAMENTALE PER I CARATTERI
 
-# --- 0. CONFIGURAZIONE PAGINA (PRIMA DI TUTTO!) ---
+# --- 0. CONFIGURAZIONE PAGINA ---
 if os.path.exists("logo.png"):
     st.set_page_config(page_title="30SecondsToGuide", page_icon="logo.png", layout="centered")
 else:
@@ -40,7 +41,7 @@ TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"          # Taxi
 # LINK HEYMONDO (Affiliato)
 INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 
-# 2. LINK GENERICI (In attesa di affiliazione)
+# 2. LINK GENERICI (Statici)
 TRAIN_LINK = "https://www.omio.com"
 RESTAURANT_LINK = "https://www.tripadvisor.com"
 HOTEL_LINK = "https://www.booking.com"
@@ -75,7 +76,7 @@ def partner_button(label, link, image_file):
 
 # ==========================================
 
-# --- MODELLO TESTO PROMPT (ORIGINALE RIPRISTINATO) ---
+# --- MODELLO TESTO PROMPT (ORIGINALE) ---
 TESTO_MODELLO = """
 # [NOME CITTÀ]: Guida Esclusiva
 
@@ -145,6 +146,11 @@ TESTO_MODELLO = """
 
 # --- FUNZIONE PDF ---
 def create_pdf(text, city):
+    # PULIZIA PREVENTIVA DEL NOME CITTÀ PER LA COPERTINA
+    # Se la città ha caratteri strani (es. Kroměříž), li normalizziamo subito
+    # altrimenti make_cover crasherà prima ancora di iniziare
+    city_clean = unicodedata.normalize('NFKD', city).encode('latin-1', 'ignore').decode('latin-1')
+
     class ModernPDF(FPDF):
         def header(self):
             if self.page_no() == 1: return
@@ -153,7 +159,8 @@ def create_pdf(text, city):
             self.set_font('Helvetica', 'B', 10)
             self.set_text_color(255, 255, 255)
             self.set_y(8)
-            self.cell(0, 0, f'GUIDA: {city.upper()}', 0, 0, 'R')
+            # Usiamo la versione pulita anche nell'header
+            self.cell(0, 0, f'GUIDA: {city_clean.upper()}', 0, 0, 'R')
             self.ln(20) 
             
         def footer(self):
@@ -164,7 +171,7 @@ def create_pdf(text, city):
             self.set_text_color(128, 128, 128)
             self.cell(0, 10, f'30SecondsToGuide - Pagina {self.page_no()}', 0, 0, 'C')
 
-        def make_cover(self, city_name):
+        def make_cover(self, city_name_input):
             self.add_page()
             self.set_fill_color(236, 240, 241) 
             self.rect(0, 0, 60, 297, 'F') 
@@ -179,7 +186,8 @@ def create_pdf(text, city):
             self.set_x(70)
             self.set_font('Helvetica', 'B', 40)
             self.set_text_color(44, 62, 80)
-            self.multi_cell(0, 20, city_name.upper())
+            # Usiamo la variabile pulita passata come argomento o quella globale
+            self.multi_cell(0, 20, city_name_input.upper())
             
             self.ln(10)
             self.set_x(70)
@@ -205,22 +213,27 @@ def create_pdf(text, city):
             self.set_text_color(44, 62, 80)
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", link="https://www.30secondstoguide.it")
 
-    # --- FUNZIONE SPAZZINO ---
-    # Questa funzione è l'unica difesa tecnica contro crash imprevisti sui caratteri.
+    # --- FUNZIONE SPAZZINO BLINDATA (UNICODE NORMALIZATION) ---
     def clean_text_for_pdf(text_line):
+        # 1. Sostituzioni manuali per simboli comuni
         replacements = {
             "€": "EUR", "$": "USD", "£": "GBP",
             "’": "'", "“": '"', "”": '"', 
-            "–": "-", "—": "-", # Aggiunto per evitare crash se l'AI "scivola"
-            "…": "..."
+            "–": "-", "—": "-", "…": "..."
         }
         for char, replacement in replacements.items():
             text_line = text_line.replace(char, replacement)
-        return text_line.encode('latin-1', 'replace').decode('latin-1')
+        
+        # 2. NORMALIZZAZIONE UNICODE (Il vero Fix)
+        # Scompone i caratteri (es. ž diventa z + caron) e tiene solo ciò che è compatibile con Latin-1
+        # Questo mantiene le lettere accentate italiane (à, è...) ma trasforma ž in z
+        normalized = unicodedata.normalize('NFKD', text_line)
+        return "".join([c for c in normalized if ord(c) < 256])
 
     pdf = ModernPDF()
     pdf.set_auto_page_break(auto=True, margin=25)
-    pdf.make_cover(city)
+    # Passiamo la città pulita alla copertina per evitare crash sul titolo
+    pdf.make_cover(city_clean)
     pdf.add_page()
     
     lines = text.split('\n')
@@ -288,10 +301,10 @@ def create_pdf(text, city):
         
         pdf.set_fill_color(245, 245, 245)
         start_y = pdf.get_y()
-        # Altezza RIDOTTA A 16 (STRATEGICA)
+        # Altezza 16 per far stare tutto
         pdf.rect(10, start_y, 190, 16, 'F') 
         
-        pdf.set_y(start_y + 2) # Padding ridotto
+        pdf.set_y(start_y + 2)
         pdf.set_x(15)
         pdf.set_font("Helvetica", 'B', 10) 
         pdf.set_text_color(44, 62, 80)
@@ -302,9 +315,9 @@ def create_pdf(text, city):
         pdf.set_text_color(0, 102, 204)
         
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
-        pdf.ln(5) # Spazio ridotto tra i box (GAP)
+        pdf.ln(5) 
 
-    # 12 PARTNER IN ORDINE (MODIFICATI CON LINK STATICI)
+    # 12 PARTNER IN ORDINE (TUTTI LINK ATTIVI)
     make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city} su Kiwi.com", FLIGHT_LINK)
     make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city} su Booking.com", HOTEL_LINK)
     make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city}", TOUR_LINK)
@@ -420,7 +433,7 @@ with st.container():
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
-                    # --- PROMPT RIPRISTINATO ESATTAMENTE COME DA SPECIFICHE ---
+                    # --- PROMPT RIPRISTINATO ---
                     full_prompt = f"""
                     Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
                     
@@ -429,7 +442,7 @@ with st.container():
                     2. Se devi fare un confronto, usa elenchi puntati descrittivi.
                     3. Usa ESATTAMENTE la struttura seguente.
                     4. Scrivi paragrafi ricchi e lunghi.
-                    5. NON USARE MAI CARATTERI SPECIALI, NON USARE simboli delle valute (come Euro o Dollaro), semplifica SEMPRE la grafia delle parole straniere INCLUSI I NOMI DEI LUOGHI, utilizzando SOLO l'alfabeto italiano standard, ammesse SOLO lettere accentate comunemente usate in italiano.
+                    5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
                     6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso.
                     
                     MODELLO:
@@ -537,4 +550,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
