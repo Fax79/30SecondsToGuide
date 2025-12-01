@@ -4,7 +4,7 @@ from fpdf import FPDF
 import os
 import base64
 import datetime
-import unicodedata  # <--- NUOVO IMPORT FONDAMENTALE PER I CARATTERI
+import unicodedata
 
 # --- 0. CONFIGURAZIONE PAGINA ---
 if os.path.exists("logo.png"):
@@ -146,10 +146,19 @@ TESTO_MODELLO = """
 
 # --- FUNZIONE PDF ---
 def create_pdf(text, city):
-    # PULIZIA PREVENTIVA DEL NOME CITTÀ PER LA COPERTINA
-    # Se la città ha caratteri strani (es. Kroměříž), li normalizziamo subito
-    # altrimenti make_cover crasherà prima ancora di iniziare
-    city_clean = unicodedata.normalize('NFKD', city).encode('latin-1', 'ignore').decode('latin-1')
+    
+    # --- FUNZIONE SPAZZINO NUCLEARE ---
+    # Questa funzione deve essere accessibile da tutto lo scope del PDF
+    def clean_text_for_pdf(text_input):
+        if not text_input: return ""
+        # 1. Normalizza: separa i caratteri base dagli accenti (es. 'ť' diventa 't' + 'ˇ')
+        normalized = unicodedata.normalize('NFKD', text_input)
+        # 2. Codifica in Latin-1 e IGNORA tutto ciò che non ci sta (es. il 'ˇ' viene buttato via, la 't' resta)
+        #    Questo preserva à, è, ì, ò, ù perché esistono in Latin-1.
+        return normalized.encode('latin-1', 'ignore').decode('latin-1')
+
+    # Puliamo subito il nome della città per la copertina
+    city_clean = clean_text_for_pdf(city)
 
     class ModernPDF(FPDF):
         def header(self):
@@ -159,7 +168,7 @@ def create_pdf(text, city):
             self.set_font('Helvetica', 'B', 10)
             self.set_text_color(255, 255, 255)
             self.set_y(8)
-            # Usiamo la versione pulita anche nell'header
+            # Usiamo la versione pulita
             self.cell(0, 0, f'GUIDA: {city_clean.upper()}', 0, 0, 'R')
             self.ln(20) 
             
@@ -186,7 +195,6 @@ def create_pdf(text, city):
             self.set_x(70)
             self.set_font('Helvetica', 'B', 40)
             self.set_text_color(44, 62, 80)
-            # Usiamo la variabile pulita passata come argomento o quella globale
             self.multi_cell(0, 20, city_name_input.upper())
             
             self.ln(10)
@@ -213,32 +221,20 @@ def create_pdf(text, city):
             self.set_text_color(44, 62, 80)
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", link="https://www.30secondstoguide.it")
 
-    # --- FUNZIONE SPAZZINO BLINDATA (UNICODE NORMALIZATION) ---
-    def clean_text_for_pdf(text_line):
-        # 1. Sostituzioni manuali per simboli comuni
-        replacements = {
-            "€": "EUR", "$": "USD", "£": "GBP",
-            "’": "'", "“": '"', "”": '"', 
-            "–": "-", "—": "-", "…": "..."
-        }
-        for char, replacement in replacements.items():
-            text_line = text_line.replace(char, replacement)
-        
-        # 2. NORMALIZZAZIONE UNICODE (Il vero Fix)
-        # Scompone i caratteri (es. ž diventa z + caron) e tiene solo ciò che è compatibile con Latin-1
-        # Questo mantiene le lettere accentate italiane (à, è...) ma trasforma ž in z
-        normalized = unicodedata.normalize('NFKD', text_line)
-        return "".join([c for c in normalized if ord(c) < 256])
-
     pdf = ModernPDF()
     pdf.set_auto_page_break(auto=True, margin=25)
-    # Passiamo la città pulita alla copertina per evitare crash sul titolo
     pdf.make_cover(city_clean)
     pdf.add_page()
     
     lines = text.split('\n')
     
     for line in lines:
+        # Sostituzioni preliminari manuali (per sicurezza sui simboli noti)
+        line = line.replace("€", "EUR").replace("$", "USD").replace("£", "GBP")
+        line = line.replace("’", "'").replace("“", '"').replace("”", '"')
+        line = line.replace("–", "-").replace("—", "-").replace("…", "...")
+        
+        # PULIZIA NUCLEARE
         clean_line = clean_text_for_pdf(line)
         
         if line.startswith('# '): 
@@ -296,12 +292,12 @@ def create_pdf(text, city):
     pdf.ln(5)
     
     def make_sponsor_box(title, subtitle, link):
+        # Pulizia anche qui, per sicurezza assoluta
         title = clean_text_for_pdf(title)
         subtitle = clean_text_for_pdf(subtitle)
         
         pdf.set_fill_color(245, 245, 245)
         start_y = pdf.get_y()
-        # Altezza 16 per far stare tutto
         pdf.rect(10, start_y, 190, 16, 'F') 
         
         pdf.set_y(start_y + 2)
