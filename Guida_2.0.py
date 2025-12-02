@@ -147,15 +147,34 @@ TESTO_MODELLO = """
 # --- FUNZIONE PDF ---
 def create_pdf(text, city):
     
-    # --- FUNZIONE SPAZZINO NUCLEARE ---
+    # --- FUNZIONE SPAZZINO INTELLIGENTE (Fix Definitivo) ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        # 1. Normalizza (scompone 'Č' in 'C' + accento)
-        normalized = unicodedata.normalize('NFKD', text_input)
-        # 2. Tiene SOLO i caratteri Latin-1 (quindi 'C' resta, l'accento strano sparisce)
-        return normalized.encode('latin-1', 'ignore').decode('latin-1')
+        
+        # 1. Sostituzioni preliminari
+        replacements = {
+            "€": "EUR", "$": "USD", "£": "GBP",
+            "’": "'", "“": '"', "”": '"', 
+            "–": "-", "—": "-", "…": "..."
+        }
+        for char, replacement in replacements.items():
+            text_input = text_input.replace(char, replacement)
+            
+        output = ""
+        for char in text_input:
+            try:
+                # 2. Proviamo a codificare il singolo carattere in latin-1.
+                # Se è 'à', 'è', 'ì', 'ò', 'ù' (o testo normale), funziona e lo teniamo.
+                char.encode('latin-1')
+                output += char
+            except UnicodeEncodeError:
+                # 3. Se fallisce (es. 'Č', 'ž'), lo normalizziamo a ASCII (rimuovendo l'accento)
+                # 'Č' diventa 'C', 'ž' diventa 'z'.
+                output += unicodedata.normalize('NFKD', char).encode('ascii', 'ignore').decode('ascii')
+        
+        return output
 
-    # Puliamo subito il nome della città per la copertina
+    # Puliamo subito il nome della città
     city_clean = clean_text_for_pdf(city)
 
     class ModernPDF(FPDF):
@@ -226,20 +245,15 @@ def create_pdf(text, city):
     lines = text.split('\n')
     
     for line in lines:
-        # 1. Sostituzioni manuali per simboli comuni
-        line = line.replace("€", "EUR").replace("$", "USD").replace("£", "GBP")
-        line = line.replace("’", "'").replace("“", '"').replace("”", '"')
-        line = line.replace("–", "-").replace("—", "-").replace("…", "...")
-        
-        # 2. PULIZIA NUCLEARE APPLICATA SUBITO ALLA RIGA
-        # (Questo era il pezzo mancante che causava il crash negli elenchi)
-        line = clean_text_for_pdf(line)
+        # PULIZIA INTELLIGENTE APPLICATA QUI
+        # Mantiene gli accenti italiani, rimuove quelli slavi/orientali
+        clean_line = clean_text_for_pdf(line)
         
         if line.startswith('# '): 
             pdf.ln(10)
             pdf.set_font("Helvetica", 'B', 22)
             pdf.set_text_color(44, 62, 80)
-            content = line.replace('# ', '').replace('*', '').upper().strip()
+            content = clean_line.replace('# ', '').replace('*', '').upper().strip()
             pdf.multi_cell(0, 10, content)
             y = pdf.get_y()
             pdf.set_draw_color(230, 126, 34)
@@ -251,7 +265,7 @@ def create_pdf(text, city):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 16)
             pdf.set_text_color(230, 126, 34)
-            content = line.replace('## ', '').replace('*', '').strip()
+            content = clean_line.replace('## ', '').replace('*', '').strip()
             pdf.cell(0, 10, content, ln=True)
             pdf.ln(2)
             
@@ -259,7 +273,7 @@ def create_pdf(text, city):
             pdf.ln(3)
             pdf.set_font("Helvetica", 'B', 13)
             pdf.set_text_color(52, 73, 94)
-            content = line.replace('### ', '').replace('*', '').strip()
+            content = clean_line.replace('### ', '').replace('*', '').strip()
             pdf.cell(0, 10, content, ln=True)
             
         elif line.strip().startswith('* ') or line.strip().startswith('- '):
@@ -267,11 +281,13 @@ def create_pdf(text, city):
             pdf.set_text_color(0, 0, 0)
             if line.strip().startswith('* '): content_raw = line.strip()[2:] 
             else: content_raw = line.strip()[2:]
-            content = content_raw.replace('*', '')
+            
+            # Qui usiamo clean_line per estrarre il contenuto, quindi è sicuro
+            content = clean_text_for_pdf(content_raw.replace('*', ''))
+            
             pdf.set_x(15) 
             pdf.cell(5, 5, chr(149), 0, 0) 
             pdf.set_x(22) 
-            # Qui ora usa 'content' che deriva da 'line' che è già pulita
             pdf.multi_cell(0, 6, content)
             pdf.ln(1)
             
@@ -279,7 +295,7 @@ def create_pdf(text, city):
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                content = line.replace('*', '')
+                content = clean_line.replace('*', '')
                 pdf.multi_cell(0, 6, content)
                 pdf.ln(2)
 
