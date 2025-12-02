@@ -255,7 +255,7 @@ def create_pdf(text, city):
         
         # 2. Dopo DOVE DORMIRE: Booking
         if line.startswith('## 4. Gastronomia'):
-            make_contextual_box(pdf, f"Cobtrolla disponibilità e prezzi Hotel a {city_clean} su Booking.com", HOTEL_LINK, 235, 245, 255) # Azzurrino
+            make_contextual_box(pdf, f"Controlla disponibilità e prezzi Hotel a {city_clean} su Booking.com", HOTEL_LINK, 235, 245, 255) # Azzurrino
             
         # 3. Dopo ATTRAZIONI: GetYourGuide
         if line.startswith('## 6. I mercati'):
@@ -601,4 +601,5 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
