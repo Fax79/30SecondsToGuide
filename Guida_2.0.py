@@ -255,7 +255,7 @@ def create_pdf(text, city):
         
         # 2. Dopo DOVE DORMIRE: Booking
         if line.startswith('## 4. Gastronomia'):
-            make_contextual_box(pdf, f"Cerca offerte Hotel a {city_clean} su Booking.com", HOTEL_LINK, 235, 245, 255) # Azzurrino
+            make_contextual_box(pdf, f"Cobtrolla disponibilità e prezzi Hotel a {city_clean} su Booking.com", HOTEL_LINK, 235, 245, 255) # Azzurrino
             
         # 3. Dopo ATTRAZIONI: GetYourGuide
         if line.startswith('## 6. I mercati'):
@@ -269,9 +269,9 @@ def create_pdf(text, city):
         # 5. Fine INFO PRATICHE: Heymondo
         if line.startswith('## 9. Itinerario'):
              # Prima dell'itinerario mettiamo il blocco trasporti/sicurezza
-             make_contextual_box(pdf, f"Voli economici per {city_clean} su Kiwi.com", FLIGHT_LINK, 245, 245, 245) # Grigio
-             make_contextual_box(pdf, f"Transfer NCC dall'aeroporto (Welcome Pickups)", TRANSF_LINK, 245, 245, 245) # Grigio
-             make_contextual_box(pdf, "Assicurazione Viaggio (Sconto 10% Heymondo)", INSURANCE_LINK, 255, 252, 220) # Giallo
+             make_contextual_box(pdf, f"Trova subito voli economici per {city_clean} su Kiwi.com", FLIGHT_LINK, 245, 245, 245) # Grigio
+             make_contextual_box(pdf, f"Transfer NCC dall'aeroporto al prezzo di un taxi (Welcome Pickups)", TRANSF_LINK, 245, 245, 245) # Grigio
+             make_contextual_box(pdf, "Assicurazione Viaggio (Approfitta dell'esclusivo sconto del 10% con Heymondo)", INSURANCE_LINK, 255, 252, 220) # Giallo
         # --------------------------------
 
         if line.startswith('# '): 
@@ -601,3 +601,4 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
