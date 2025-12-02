@@ -147,11 +147,9 @@ TESTO_MODELLO = """
 # --- FUNZIONE PDF ---
 def create_pdf(text, city):
     
-    # --- FUNZIONE SPAZZINO INTELLIGENTE (Fix Definitivo) ---
+    # --- FUNZIONE SPAZZINO INTELLIGENTE ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        
-        # 1. Sostituzioni preliminari
         replacements = {
             "€": "EUR", "$": "USD", "£": "GBP",
             "’": "'", "“": '"', "”": '"', 
@@ -159,22 +157,15 @@ def create_pdf(text, city):
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
-            
         output = ""
         for char in text_input:
             try:
-                # 2. Proviamo a codificare il singolo carattere in latin-1.
-                # Se è 'à', 'è', 'ì', 'ò', 'ù' (o testo normale), funziona e lo teniamo.
                 char.encode('latin-1')
                 output += char
             except UnicodeEncodeError:
-                # 3. Se fallisce (es. 'Č', 'ž'), lo normalizziamo a ASCII (rimuovendo l'accento)
-                # 'Č' diventa 'C', 'ž' diventa 'z'.
                 output += unicodedata.normalize('NFKD', char).encode('ascii', 'ignore').decode('ascii')
-        
         return output
 
-    # Puliamo subito il nome della città
     city_clean = clean_text_for_pdf(city)
 
     class ModernPDF(FPDF):
@@ -200,37 +191,30 @@ def create_pdf(text, city):
             self.add_page()
             self.set_fill_color(236, 240, 241) 
             self.rect(0, 0, 60, 297, 'F') 
-            
             if os.path.exists("logo.png"):
                 self.image("logo.png", x=70, y=20, w=50)
                 y_start = 80 
             else:
                 y_start = 50
-
             self.set_y(y_start)
             self.set_x(70)
             self.set_font('Helvetica', 'B', 40)
             self.set_text_color(44, 62, 80)
             self.multi_cell(0, 20, city_name_input.upper())
-            
             self.ln(10)
             self.set_x(70)
             self.set_font('Helvetica', '', 16)
             self.set_text_color(127, 140, 141)
             self.multi_cell(0, 10, "Guida turistica completa\nItinerari, Storia e Cultura")
-            
             self.ln(20)
             self.set_fill_color(230, 126, 34) 
             self.rect(70, self.get_y(), 100, 2, 'F')
-            
-            # --- DISCLAIMER ---
             self.set_y(225) 
             self.set_x(70)
             self.set_font('Helvetica', 'I', 9) 
             self.set_text_color(100, 100, 100)
             disclaimer = "Questa guida è offerta gratuitamente. Se ti è utile, nell'ultima pagina trovi una selezione di sconti esclusivi per voli e hotel che ci aiutano a mantenere il servizio attivo. Buon viaggio!"
             self.multi_cell(110, 5, disclaimer)
-            
             self.set_y(250)
             self.set_x(70)
             self.set_font('Helvetica', 'BU', 10) 
@@ -244,11 +228,52 @@ def create_pdf(text, city):
     
     lines = text.split('\n')
     
+    # --- BOX CONTESTUALE DISCRETO ---
+    def make_contextual_box(pdf_obj, text, link, r, g, b):
+        pdf_obj.ln(2) # Spazio ridotto
+        pdf_obj.set_fill_color(r, g, b)
+        pdf_obj.set_draw_color(r-10, g-10, b-10) # Bordo appena visibile
+        # Altezza ridotta a 12 (molto discreto)
+        pdf_obj.rect(15, pdf_obj.get_y(), 180, 10, 'DF')
+        
+        pdf_obj.set_xy(20, pdf_obj.get_y() + 2)
+        pdf_obj.set_font("Helvetica", 'B', 9) # Font più piccolo
+        pdf_obj.set_text_color(44, 62, 80)
+        
+        pdf_obj.cell(170, 6, f"> {text}", link=link) # Freccia semplice
+        pdf_obj.ln(12) 
+    # ----------------------------------------
+
     for line in lines:
-        # PULIZIA INTELLIGENTE APPLICATA QUI
-        # Mantiene gli accenti italiani, rimuove quelli slavi/orientali
         clean_line = clean_text_for_pdf(line)
         
+        # --- INIEZIONI CONTESTUALI (DISCRETE) ---
+        
+        # 1. Dopo INTRO (L'Anima): Saily (eSim)
+        if line.startswith('## 2. Quartieri'):
+            make_contextual_box(pdf, f"Serve internet a {city_clean}? eSim Saily (Sconto 5%)", ESIM_LINK, 240, 255, 240) # Verdino
+        
+        # 2. Dopo DOVE DORMIRE: Booking
+        if line.startswith('## 4. Gastronomia'):
+            make_contextual_box(pdf, f"Cerca offerte Hotel a {city_clean} su Booking.com", HOTEL_LINK, 235, 245, 255) # Azzurrino
+            
+        # 3. Dopo ATTRAZIONI: GetYourGuide
+        if line.startswith('## 6. I mercati'):
+             make_contextual_box(pdf, f"Biglietti e Tour per {city_clean} (Salta la fila)", TOUR_LINK, 255, 245, 235) # Arancio chiari
+
+        # 4. Inizio INFO PRATICHE (Come Arrivare): Kiwi + Welcome
+        if line.startswith('## 8. Info Pratiche'):
+             # Qui non usiamo il box, lo mettiamo subito dopo il titolo
+             pass 
+
+        # 5. Fine INFO PRATICHE: Heymondo
+        if line.startswith('## 9. Itinerario'):
+             # Prima dell'itinerario mettiamo il blocco trasporti/sicurezza
+             make_contextual_box(pdf, f"Voli economici per {city_clean} su Kiwi.com", FLIGHT_LINK, 245, 245, 245) # Grigio
+             make_contextual_box(pdf, f"Transfer NCC dall'aeroporto (Welcome Pickups)", TRANSF_LINK, 245, 245, 245) # Grigio
+             make_contextual_box(pdf, "Assicurazione Viaggio (Sconto 10% Heymondo)", INSURANCE_LINK, 255, 252, 220) # Giallo
+        # --------------------------------
+
         if line.startswith('# '): 
             pdf.ln(10)
             pdf.set_font("Helvetica", 'B', 22)
@@ -282,7 +307,6 @@ def create_pdf(text, city):
             if line.strip().startswith('* '): content_raw = line.strip()[2:] 
             else: content_raw = line.strip()[2:]
             
-            # Qui usiamo clean_line per estrarre il contenuto, quindi è sicuro
             content = clean_text_for_pdf(content_raw.replace('*', ''))
             
             pdf.set_x(15) 
@@ -299,20 +323,23 @@ def create_pdf(text, city):
                 pdf.multi_cell(0, 6, content)
                 pdf.ln(2)
 
-    # --- PAGINA SPONSOR (PDF) ---
+    # --- PAGINA PARTNER FINALE ---
     pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 16)
-    pdf.set_text_color(44, 62, 80)
-    pdf.cell(0, 10, "LINK UTILI PER IL VIAGGIO", 0, 1, 'C')
-    pdf.ln(5)
     
-    def make_sponsor_box(title, subtitle, link):
+    def make_sponsor_box(title, subtitle, link, highlight=False):
         title = clean_text_for_pdf(title)
         subtitle = clean_text_for_pdf(subtitle)
         
-        pdf.set_fill_color(245, 245, 245)
+        # Se highlight=True, usiamo un colore diverso per enfatizzare quelli NON visti prima
+        if highlight:
+            pdf.set_fill_color(230, 240, 255) # Azzurrino
+            pdf.set_draw_color(0, 102, 204)   # Bordo blu
+        else:
+            pdf.set_fill_color(250, 250, 250) # Grigio chiarissimo
+            pdf.set_draw_color(220, 220, 220) # Bordo grigio
+            
         start_y = pdf.get_y()
-        pdf.rect(10, start_y, 190, 16, 'F') 
+        pdf.rect(10, start_y, 190, 14, 'DF') 
         
         pdf.set_y(start_y + 2)
         pdf.set_x(15)
@@ -325,21 +352,35 @@ def create_pdf(text, city):
         pdf.set_text_color(0, 102, 204)
         
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
-        pdf.ln(5) 
+        pdf.ln(4) 
 
-    # 12 PARTNER
-    make_sponsor_box("Voli Low Cost", f"Cerca i voli più economici per {city_clean} su Kiwi.com", FLIGHT_LINK)
-    make_sponsor_box("Dove Dormire", f"Trova le migliori offerte hotel a {city_clean} su Booking.com", HOTEL_LINK)
-    make_sponsor_box("Cosa Fare", f"Salta la fila: Biglietti e Tour a {city_clean}", TOUR_LINK)
-    make_sponsor_box("Internet (eSim)", f"Naviga a {city_clean} senza roaming con Saily", ESIM_LINK)
-    make_sponsor_box("Assicurazione Viaggio", "Parti senza pensieri con la protezione di Heymondo", INSURANCE_LINK)
-    make_sponsor_box("Treni e bus", f"Prenota un treno o un bus fino a {city_clean} al miglior prezzo", TRAIN_LINK)
-    make_sponsor_box("Deposito bagagli", "Quando il bagaglio diventa un peso, depositalo in sicurezza", LUGGAGE_LINK)
-    make_sponsor_box("Rimborso voli", "Volo cancellato o in ritardo? Ottieni fino a 600 EUR!", REIMB_LINK)
-    make_sponsor_box("Transfer Aeroporto", f"Transfer comodo verso il tuo hotel a {city_clean}", TRANSF_LINK)
-    make_sponsor_box("Noleggio Auto", f"Noleggia un'auto a {city_clean} al miglior prezzo", RENTAL_LINK)
-    make_sponsor_box("Taxi", f"Prenota un taxi affidabile a {city_clean}", TAXI_LINK)
-    make_sponsor_box("Ristoranti", f"Leggi le recensioni dei migliori ristoranti a {city_clean}", RESTAURANT_LINK)
+    # 1. Partner già apparsi nel testo (Discreti)
+    pdf.set_font("Helvetica", 'B', 14)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 10, "Già visti nella guida...", 0, 1, 'L')
+    pdf.ln(2)
+    
+    make_sponsor_box("Booking.com", "Hotel e alloggi", HOTEL_LINK)
+    make_sponsor_box("GetYourGuide", "Tour e biglietti", TOUR_LINK)
+    make_sponsor_box("Kiwi.com", "Voli low cost", FLIGHT_LINK)
+    make_sponsor_box("Heymondo", "Assicurazione viaggio", INSURANCE_LINK)
+    make_sponsor_box("Saily", "eSim internazionale", ESIM_LINK)
+    make_sponsor_box("Welcome Pickups", "Transfer aeroportuali", TRANSF_LINK)
+
+    pdf.ln(5)
+    
+    # 2. Partner NUOVI (Enfatizzati come richiesto)
+    pdf.set_font("Helvetica", 'B', 16)
+    pdf.set_text_color(44, 62, 80) # Colore principale scuro
+    pdf.cell(0, 10, "ALTRI SERVIZI INDISPENSABILI", 0, 1, 'L')
+    pdf.ln(2)
+    
+    make_sponsor_box("Deposito Bagagli", "Libera le mani con Radical Storage", LUGGAGE_LINK, highlight=True)
+    make_sponsor_box("Rimborsi Voli", "Volo in ritardo? Chiedi risarcimento con AirHelp", REIMB_LINK, highlight=True)
+    make_sponsor_box("Noleggio Auto", "Migliori tariffe con Auto Europe", RENTAL_LINK, highlight=True)
+    make_sponsor_box("Treni e Bus", "Prenota con Omio", TRAIN_LINK, highlight=True)
+    make_sponsor_box("Taxi Locale", "Kiwitaxi per spostamenti urbani", TAXI_LINK, highlight=True)
+    make_sponsor_box("Ristoranti", "Recensioni su TripAdvisor", RESTAURANT_LINK, highlight=True)
 
     return bytes(pdf.output(dest='S'))
 
