@@ -477,7 +477,7 @@ with st.container():
         if not city_name:
             st.warning("Inserisci una città.")
         else:
-            timestamp = datetime.datetime.now().strftime("%H:%M")
+            timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
             get_shared_logs().append(f"📍 {city_name} ({timestamp})")
             
             with st.spinner("Stiamo scrivendo la tua guida... (non chiudere la pagina)"):
@@ -601,5 +601,6 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
