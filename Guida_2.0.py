@@ -37,7 +37,7 @@ ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"             # eSim
 RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"      # Auto Europe
 TRANSF_LINK = "https://tpx.lt/O5I4OrpX"                 # Transfer / NCC
 TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"          # Taxi
-TIQETS_LINK = "https://tiqets.tpx.lt/XV1Urbnn"          # Biglietti Musei/Attrazioni
+TIQETS_LINK = "https://tiqets.tpx.lt/XV1Urbnn"          # Biglietti Musei
 
 # LINK HEYMONDO (Affiliato)
 INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
@@ -148,12 +148,15 @@ TESTO_MODELLO = """
 # --- FUNZIONE PDF ---
 def create_pdf(text, city):
     
-    # --- FUNZIONE SPAZZINO 3.5 (ACCENT SAVER) ---
+    # --- FUNZIONE SPAZZINO 3.6 (ITALIAN SAFE) ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
         
-        # 1. Mappatura caratteri sicuri (Italiano + Simboli)
-        # Questo preserva forzatamente le lettere italiane
+        # 1. Normalizzazione NFC: FONDAMENTALE per l'Italiano.
+        # Unisce lettera e accento in un unico carattere (es. 'à' resta 'à', non 'a' + '`')
+        text_input = unicodedata.normalize('NFC', text_input)
+        
+        # 2. Sostituzioni caratteri speciali (virgolette smart, trattini lunghi)
         replacements = {
             "’": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
             "€": "EUR", "$": "USD", "£": "GBP"
@@ -161,19 +164,21 @@ def create_pdf(text, city):
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
             
-        output = ""
+        output = []
         for char in text_input:
-            # 2. Controllo Identità: Se è un carattere Latin-1 standard (inclusi àèìòù), passa.
             try:
+                # 3. Test Latin-1: Se è italiano (à, è, ì, ò, ù) o standard, passa!
                 char.encode('latin-1')
-                output += char
+                output.append(char)
             except UnicodeEncodeError:
-                # 3. Solo se NON è Latin-1 (es. Ceco, Polacco, Giapponese), normalizziamo.
-                # 'Č' -> 'C', 'ž' -> 'z'
-                normalized = unicodedata.normalize('NFKD', char).encode('ascii', 'ignore').decode('ascii')
-                output += normalized
+                # 4. Fallback per caratteri alieni (es. Č, ž):
+                # Li scomponiamo (NFD), prendiamo la lettera base e buttiamo l'accento.
+                # Questo succede SOLO se il carattere non è nel set Latin-1.
+                decomposed = unicodedata.normalize('NFD', char)
+                stripped = "".join(c for c in decomposed if unicodedata.category(c) != 'Mn')
+                output.append(stripped)
         
-        return output
+        return "".join(output)
 
     city_clean = clean_text_for_pdf(city)
 
@@ -538,7 +543,7 @@ if 'generated_pdf' in st.session_state:
         mime="application/pdf",
         type="primary",
         use_container_width=True,
-        on_click=reset_app # <--- LA MAGIA DEL RESET
+        on_click=reset_app 
     )
 
 # =========================================================
