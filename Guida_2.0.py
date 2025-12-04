@@ -37,6 +37,7 @@ ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"             # eSim
 RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"      # Auto Europe
 TRANSF_LINK = "https://tpx.lt/O5I4OrpX"                 # Transfer / NCC
 TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"          # Taxi
+TIQETS_LINK = "https://tiqets.tpx.lt/XV1Urbnn"          # Biglietti Musei/Attrazioni (Nuovo)
 
 # LINK HEYMONDO (Affiliato)
 INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
@@ -45,7 +46,6 @@ INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDST
 TRAIN_LINK = "https://www.omio.com"
 RESTAURANT_LINK = "https://www.tripadvisor.com"
 HOTEL_LINK = "https://www.booking.com"
-TOUR_LINK = "https://www.getyourguide.com"
 
 # --- LINK PROMOZIONE ---
 PROMO_LINK = "https://www.30secondstoguide.it" 
@@ -76,7 +76,7 @@ def partner_button(label, link, image_file):
 
 # ==========================================
 
-# --- MODELLO TESTO PROMPT (ORIGINALE) ---
+# --- MODELLO TESTO PROMPT ---
 TESTO_MODELLO = """
 # [NOME CITTÀ]: Guida Esclusiva
 
@@ -230,17 +230,16 @@ def create_pdf(text, city):
     
     # --- BOX CONTESTUALE DISCRETO ---
     def make_contextual_box(pdf_obj, text, link, r, g, b):
-        pdf_obj.ln(2) # Spazio ridotto
+        pdf_obj.ln(2) 
         pdf_obj.set_fill_color(r, g, b)
-        pdf_obj.set_draw_color(r-10, g-10, b-10) # Bordo appena visibile
-        # Altezza ridotta a 12 (molto discreto)
+        pdf_obj.set_draw_color(r-10, g-10, b-10) 
         pdf_obj.rect(15, pdf_obj.get_y(), 180, 10, 'DF')
         
         pdf_obj.set_xy(20, pdf_obj.get_y() + 2)
-        pdf_obj.set_font("Helvetica", 'B', 9) # Font più piccolo
+        pdf_obj.set_font("Helvetica", 'B', 9) 
         pdf_obj.set_text_color(44, 62, 80)
         
-        pdf_obj.cell(170, 6, f"> {text}", link=link) # Freccia semplice
+        pdf_obj.cell(170, 6, f"> {text}", link=link) 
         pdf_obj.ln(12) 
     # ----------------------------------------
 
@@ -249,29 +248,28 @@ def create_pdf(text, city):
         
         # --- INIEZIONI CONTESTUALI (DISCRETE) ---
         
-        # 1. Dopo INTRO (L'Anima): Saily (eSim)
+        # 1. Dopo INTRO (L'Anima): Saily
         if line.startswith('## 2. Quartieri'):
-            make_contextual_box(pdf, f"Serve internet a {city_clean}? eSim Saily (Sconto 5%)", ESIM_LINK, 240, 255, 240) # Verdino
+            make_contextual_box(pdf, f"Serve internet a {city_clean}? eSim Saily (Sconto 5%)", ESIM_LINK, 240, 255, 240) 
         
         # 2. Dopo DOVE DORMIRE: Booking
         if line.startswith('## 4. Gastronomia'):
-            make_contextual_box(pdf, f"Controlla disponibilità e prezzi Hotel a {city_clean} su Booking.com", HOTEL_LINK, 235, 245, 255) # Azzurrino
+            make_contextual_box(pdf, f"Controlla disponibilità e prezzi Hotel a {city_clean} su Booking.com", HOTEL_LINK, 235, 245, 255) 
             
-        # 3. Dopo ATTRAZIONI: GetYourGuide
+        # 3. Dopo ATTRAZIONI: Tiqets (Nuovo Partner)
         if line.startswith('## 6. I mercati'):
-             make_contextual_box(pdf, f"Biglietti e Tour per {city_clean} (Salta la fila)", TOUR_LINK, 255, 245, 235) # Arancio chiari
+             # Sostituito GYG con Tiqets. Colore Arancio-Rosato (Brand Tiqets)
+             make_contextual_box(pdf, f"Biglietti ufficiali Musei e Attrazioni a {city_clean} su Tiqets", TIQETS_LINK, 255, 240, 230)
 
-        # 4. Inizio INFO PRATICHE (Come Arrivare): Kiwi + Welcome
+        # 4. Inizio INFO PRATICHE
         if line.startswith('## 8. Info Pratiche'):
-             # Qui non usiamo il box, lo mettiamo subito dopo il titolo
              pass 
 
-        # 5. Fine INFO PRATICHE: Heymondo
+        # 5. Fine INFO PRATICHE: Heymondo + Link
         if line.startswith('## 9. Itinerario'):
-             # Prima dell'itinerario mettiamo il blocco trasporti/sicurezza
-             make_contextual_box(pdf, f"Trova subito voli economici per {city_clean} su Kiwi.com", FLIGHT_LINK, 245, 245, 245) # Grigio
-             make_contextual_box(pdf, f"Transfer NCC dall'aeroporto al prezzo di un taxi (Welcome Pickups)", TRANSF_LINK, 245, 245, 245) # Grigio
-             make_contextual_box(pdf, "Assicurazione Viaggio (Approfitta dell'esclusivo sconto del 10% con Heymondo)", INSURANCE_LINK, 255, 252, 220) # Giallo
+             make_contextual_box(pdf, f"Trova subito voli economici per {city_clean} su Kiwi.com", FLIGHT_LINK, 245, 245, 245) 
+             make_contextual_box(pdf, f"Transfer NCC dall'aeroporto al prezzo di un taxi (Welcome Pickups)", TRANSF_LINK, 245, 245, 245) 
+             make_contextual_box(pdf, "Assicurazione Viaggio (Approfitta dell'esclusivo sconto del 10% con Heymondo)", INSURANCE_LINK, 255, 252, 220) 
         # --------------------------------
 
         if line.startswith('# '): 
@@ -330,13 +328,12 @@ def create_pdf(text, city):
         title = clean_text_for_pdf(title)
         subtitle = clean_text_for_pdf(subtitle)
         
-        # Se highlight=True, usiamo un colore diverso per enfatizzare quelli NON visti prima
         if highlight:
-            pdf.set_fill_color(230, 240, 255) # Azzurrino
-            pdf.set_draw_color(0, 102, 204)   # Bordo blu
+            pdf.set_fill_color(230, 240, 255) 
+            pdf.set_draw_color(0, 102, 204)   
         else:
-            pdf.set_fill_color(250, 250, 250) # Grigio chiarissimo
-            pdf.set_draw_color(220, 220, 220) # Bordo grigio
+            pdf.set_fill_color(250, 250, 250) 
+            pdf.set_draw_color(220, 220, 220) 
             
         start_y = pdf.get_y()
         pdf.rect(10, start_y, 190, 14, 'DF') 
@@ -354,14 +351,14 @@ def create_pdf(text, city):
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
         pdf.ln(4) 
 
-    # 1. Partner già apparsi nel testo (Discreti)
+    # 1. Partner già apparsi nel testo
     pdf.set_font("Helvetica", 'B', 14)
     pdf.set_text_color(100, 100, 100)
     pdf.cell(0, 10, "Già visti nella guida...", 0, 1, 'L')
     pdf.ln(2)
     
     make_sponsor_box("Booking.com", "Hotel e alloggi", HOTEL_LINK)
-    make_sponsor_box("GetYourGuide", "Tour e biglietti", TOUR_LINK)
+    make_sponsor_box("Tiqets", "Biglietti musei e attrazioni", TIQETS_LINK) # Aggiornato
     make_sponsor_box("Kiwi.com", "Voli low cost", FLIGHT_LINK)
     make_sponsor_box("Heymondo", "Assicurazione viaggio", INSURANCE_LINK)
     make_sponsor_box("Saily", "eSim internazionale", ESIM_LINK)
@@ -369,9 +366,9 @@ def create_pdf(text, city):
 
     pdf.ln(5)
     
-    # 2. Partner NUOVI (Enfatizzati come richiesto)
+    # 2. Partner NUOVI
     pdf.set_font("Helvetica", 'B', 16)
-    pdf.set_text_color(44, 62, 80) # Colore principale scuro
+    pdf.set_text_color(44, 62, 80) 
     pdf.cell(0, 10, "ALTRI SERVIZI INDISPENSABILI", 0, 1, 'L')
     pdf.ln(2)
     
@@ -401,7 +398,7 @@ with st.sidebar:
     partner_button("Taxi (Kiwitaxi)", TAXI_LINK, "btn_taxi.png")
     
     st.caption("🎟️ ESPERIENZE & ALTRO")
-    partner_button("Tour (GetYourGuide)", TOUR_LINK, "btn_gyg.png")
+    partner_button("Musei & Ticket (Tiqets)", TIQETS_LINK, "btn_tiqets.png") # Aggiornato
     partner_button("Ristoranti (Tripadvisor)", RESTAURANT_LINK, "btn_tripadv.png")
     
     st.caption("🛠️ SERVIZI UTILI")
@@ -477,6 +474,7 @@ with st.container():
         if not city_name:
             st.warning("Inserisci una città.")
         else:
+            # DATA NEL LOG
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
             get_shared_logs().append(f"📍 {city_name} ({timestamp})")
             
@@ -550,7 +548,7 @@ st.write("")
 c4, c5, c6 = st.columns(3)
 with c4:
     st.caption("🎟️ **Tour**")
-    partner_button("Attività", TOUR_LINK, "btn_gyg.png")
+    partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png") # Aggiornato
 with c5:
     st.caption("🚗 **Auto**")
     partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
@@ -601,6 +599,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
-
-
