@@ -37,7 +37,7 @@ ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"             # eSim
 RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"      # Auto Europe
 TRANSF_LINK = "https://tpx.lt/O5I4OrpX"                 # Transfer / NCC
 TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"          # Taxi
-TIQETS_LINK = "https://tiqets.tpx.lt/XV1Urbnn"          # Biglietti Musei/Attrazioni (Nuovo)
+TIQETS_LINK = "https://tiqets.tpx.lt/XV1Urbnn"          # Biglietti Musei/Attrazioni
 
 # LINK HEYMONDO (Affiliato)
 INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
@@ -46,6 +46,7 @@ INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDST
 TRAIN_LINK = "https://www.omio.com"
 RESTAURANT_LINK = "https://www.tripadvisor.com"
 HOTEL_LINK = "https://www.booking.com"
+TOUR_LINK = "https://www.getyourguide.com"
 
 # --- LINK PROMOZIONE ---
 PROMO_LINK = "https://www.30secondstoguide.it" 
@@ -147,23 +148,31 @@ TESTO_MODELLO = """
 # --- FUNZIONE PDF ---
 def create_pdf(text, city):
     
-    # --- FUNZIONE SPAZZINO INTELLIGENTE ---
+    # --- FUNZIONE SPAZZINO 3.5 (ACCENT SAVER) ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
+        
+        # 1. Mappatura caratteri sicuri (Italiano + Simboli)
+        # Questo preserva forzatamente le lettere italiane
         replacements = {
-            "€": "EUR", "$": "USD", "£": "GBP",
-            "’": "'", "“": '"', "”": '"', 
-            "–": "-", "—": "-", "…": "..."
+            "’": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
+            "€": "EUR", "$": "USD", "£": "GBP"
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
+            
         output = ""
         for char in text_input:
+            # 2. Controllo Identità: Se è un carattere Latin-1 standard (inclusi àèìòù), passa.
             try:
                 char.encode('latin-1')
                 output += char
             except UnicodeEncodeError:
-                output += unicodedata.normalize('NFKD', char).encode('ascii', 'ignore').decode('ascii')
+                # 3. Solo se NON è Latin-1 (es. Ceco, Polacco, Giapponese), normalizziamo.
+                # 'Č' -> 'C', 'ž' -> 'z'
+                normalized = unicodedata.normalize('NFKD', char).encode('ascii', 'ignore').decode('ascii')
+                output += normalized
+        
         return output
 
     city_clean = clean_text_for_pdf(city)
@@ -256,9 +265,8 @@ def create_pdf(text, city):
         if line.startswith('## 4. Gastronomia'):
             make_contextual_box(pdf, f"Controlla disponibilità e prezzi Hotel a {city_clean} su Booking.com", HOTEL_LINK, 235, 245, 255) 
             
-        # 3. Dopo ATTRAZIONI: Tiqets (Nuovo Partner)
+        # 3. Dopo ATTRAZIONI: Tiqets
         if line.startswith('## 6. I mercati'):
-             # Sostituito GYG con Tiqets. Colore Arancio-Rosato (Brand Tiqets)
              make_contextual_box(pdf, f"Biglietti ufficiali Musei e Attrazioni a {city_clean} su Tiqets", TIQETS_LINK, 255, 240, 230)
 
         # 4. Inizio INFO PRATICHE
@@ -358,7 +366,7 @@ def create_pdf(text, city):
     pdf.ln(2)
     
     make_sponsor_box("Booking.com", "Hotel e alloggi", HOTEL_LINK)
-    make_sponsor_box("Tiqets", "Biglietti musei e attrazioni", TIQETS_LINK) # Aggiornato
+    make_sponsor_box("Tiqets", "Biglietti musei e attrazioni", TIQETS_LINK) 
     make_sponsor_box("Kiwi.com", "Voli low cost", FLIGHT_LINK)
     make_sponsor_box("Heymondo", "Assicurazione viaggio", INSURANCE_LINK)
     make_sponsor_box("Saily", "eSim internazionale", ESIM_LINK)
@@ -398,7 +406,7 @@ with st.sidebar:
     partner_button("Taxi (Kiwitaxi)", TAXI_LINK, "btn_taxi.png")
     
     st.caption("🎟️ ESPERIENZE & ALTRO")
-    partner_button("Musei & Ticket (Tiqets)", TIQETS_LINK, "btn_tiqets.png") # Aggiornato
+    partner_button("Musei & Ticket (Tiqets)", TIQETS_LINK, "btn_tiqets.png") 
     partner_button("Ristoranti (Tripadvisor)", RESTAURANT_LINK, "btn_tripadv.png")
     
     st.caption("🛠️ SERVIZI UTILI")
@@ -466,11 +474,23 @@ if os.path.exists(PROMO_IMG):
     except:
         pass
 
-city_name = st.text_input("Inserisci la destinazione:", placeholder="Es. Parigi, Tokyo, New York...")
+# --- FUNZIONE RESET ---
+def reset_app():
+    if 'generated_pdf' in st.session_state:
+        del st.session_state['generated_pdf']
+    if 'last_city' in st.session_state:
+        del st.session_state['last_city']
+    st.session_state.city_input = ""
+
+# Collegamento variabile input
+city_name = st.text_input("Inserisci la destinazione:", placeholder="Es. Parigi, Tokyo, New York...", key="city_input")
 
 # --- GENERAZIONE GUIDA ---
 with st.container():
-    if st.button("Genera Guida PDF", type="primary", use_container_width=True):
+    # Logica Bottone: Se c'è già un PDF, il bottone Genera è disabilitato
+    is_generated = 'generated_pdf' in st.session_state
+    
+    if st.button("Genera Guida PDF", type="primary", use_container_width=True, disabled=is_generated):
         if not city_name:
             st.warning("Inserisci una città.")
         else:
@@ -482,7 +502,6 @@ with st.container():
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
-                    # --- PROMPT ORIGINALE ---
                     full_prompt = f"""
                     Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
                     
@@ -509,7 +528,7 @@ with st.container():
                 except Exception as e:
                     st.error(f"Errore: {e}")
 
-# --- DOWNLOAD BUTTON ---
+# --- DOWNLOAD BUTTON CON RESET ---
 if 'generated_pdf' in st.session_state:
     st.success(f"✅ Guida per {st.session_state['last_city']} pronta!")
     st.download_button(
@@ -518,7 +537,8 @@ if 'generated_pdf' in st.session_state:
         file_name=f"Guida_{st.session_state['last_city']}.pdf",
         mime="application/pdf",
         type="primary",
-        use_container_width=True
+        use_container_width=True,
+        on_click=reset_app # <--- LA MAGIA DEL RESET
     )
 
 # =========================================================
@@ -548,7 +568,7 @@ st.write("")
 c4, c5, c6 = st.columns(3)
 with c4:
     st.caption("🎟️ **Tour**")
-    partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png") # Aggiornato
+    partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png") 
 with c5:
     st.caption("🚗 **Auto**")
     partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
