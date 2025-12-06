@@ -264,11 +264,11 @@ def create_pdf(text, city):
         
         # 1. Dopo INTRO (L'Anima): Saily
         if line.startswith('## 2. Quartieri'):
-            make_contextual_box(pdf, f"Serve internet a {city_clean}? eSim Saily (Sconto 5%)", ESIM_LINK, 240, 255, 240) 
+            make_contextual_box(pdf, f"Non restare senza internet a {city_clean}? eSim Saily (Sconto 5%)", ESIM_LINK, 240, 255, 240) 
         
         # 2. Dopo DOVE DORMIRE: Booking
         if line.startswith('## 4. Gastronomia'):
-            make_contextual_box(pdf, f"Controlla disponibilità e prezzi Hotel a {city_clean} su Booking.com", HOTEL_LINK, 235, 245, 255) 
+            make_contextual_box(pdf, f"Disponibilità in calo e prezzi Hotel in aumento a {city_clean}. Blocca la tariffa", HOTEL_LINK, 235, 245, 255) 
             
         # 3. Dopo ATTRAZIONI: Tiqets
         if line.startswith('## 6. I mercati'):
@@ -624,4 +624,5 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
