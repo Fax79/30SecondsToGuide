@@ -45,7 +45,7 @@ INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDST
 # 2. LINK GENERICI (Statici)
 TRAIN_LINK = "https://www.omio.com"
 RESTAURANT_LINK = "https://www.tripadvisor.com"
-HOTEL_LINK = "https://www.booking.com"
+HOTEL_LINK = "https://www.expedia.com" # Aggiornato a Expedia per coerenza
 TOUR_LINK = "https://www.getyourguide.com"
 
 # --- LINK PROMOZIONE ---
@@ -53,9 +53,11 @@ PROMO_LINK = "https://www.30secondstoguide.it"
 
 # --- Funzione Helper per Bottoni con Logo ---
 def get_base64_of_bin_file(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
+    if os.path.exists(bin_file):
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    return None
 
 def partner_button(label, link, image_file):
     if os.path.exists(image_file):
@@ -151,33 +153,22 @@ def create_pdf(text, city):
     # --- FUNZIONE SPAZZINO 3.6 (ITALIAN SAFE) ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        
-        # 1. Normalizzazione NFC: FONDAMENTALE per l'Italiano.
-        # Unisce lettera e accento in un unico carattere (es. 'à' resta 'à', non 'a' + '`')
         text_input = unicodedata.normalize('NFC', text_input)
-        
-        # 2. Sostituzioni caratteri speciali (virgolette smart, trattini lunghi)
         replacements = {
             "’": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
             "€": "EUR", "$": "USD", "£": "GBP"
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
-            
         output = []
         for char in text_input:
             try:
-                # 3. Test Latin-1: Se è italiano (à, è, ì, ò, ù) o standard, passa!
                 char.encode('latin-1')
                 output.append(char)
             except UnicodeEncodeError:
-                # 4. Fallback per caratteri alieni (es. Č, ž):
-                # Li scomponiamo (NFD), prendiamo la lettera base e buttiamo l'accento.
-                # Questo succede SOLO se il carattere non è nel set Latin-1.
                 decomposed = unicodedata.normalize('NFD', char)
                 stripped = "".join(c for c in decomposed if unicodedata.category(c) != 'Mn')
                 output.append(stripped)
-        
         return "".join(output)
 
     city_clean = clean_text_for_pdf(city)
@@ -242,47 +233,62 @@ def create_pdf(text, city):
     
     lines = text.split('\n')
     
-    # --- BOX CONTESTUALE DISCRETO ---
-    def make_contextual_box(pdf_obj, text, link, r, g, b):
-        pdf_obj.ln(2) 
-        pdf_obj.set_fill_color(r, g, b)
-        pdf_obj.set_draw_color(r-10, g-10, b-10) 
-        pdf_obj.rect(15, pdf_obj.get_y(), 180, 10, 'DF')
+    # --- NUOVO BOX "MAGAZINE STYLE" (Uniformato a itinerari.py) ---
+    def make_box(pdf_obj, text, link, style="blue"):
+        text = clean_text_for_pdf(text)
         
-        pdf_obj.set_xy(20, pdf_obj.get_y() + 2)
-        pdf_obj.set_font("Helvetica", 'B', 9) 
+        palettes = {
+            "blue":   {"bg": (240, 248, 255), "accent": (0, 102, 204)}, 
+            "green":  {"bg": (240, 255, 240), "accent": (0, 153, 76)},  
+            "yellow": {"bg": (255, 253, 240), "accent": (204, 153, 0)}, 
+            "purple": {"bg": (248, 240, 255), "accent": (102, 0, 153)}, 
+            "orange": {"bg": (255, 245, 235), "accent": (230, 90, 0)}   
+        }
+        
+        chosen = palettes.get(style, palettes["blue"])
+        bg_r, bg_g, bg_b = chosen["bg"]
+        ac_r, ac_g, ac_b = chosen["accent"]
+        
+        # --- FIX PAGE BREAK ---
+        if pdf_obj.get_y() > 250: 
+             pdf_obj.add_page()   
+
+        pdf_obj.ln(4)
+        
+        current_y = pdf_obj.get_y()
+        pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
+        pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
+        pdf_obj.rect(10, current_y, 190, 14, 'DF')
+        
+        pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
+        pdf_obj.rect(10, current_y, 2, 14, 'F')
+        
+        pdf_obj.set_xy(15, current_y + 4) 
+        pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
+        pdf_obj.cell(180, 6, f"{text} >", link=link)
         
-        pdf_obj.cell(170, 6, f"> {text}", link=link) 
-        pdf_obj.ln(12) 
+        pdf_obj.ln(12)
     # ----------------------------------------
 
     for line in lines:
         clean_line = clean_text_for_pdf(line)
         
-        # --- INIEZIONI CONTESTUALI (DISCRETE) ---
+        # --- INIEZIONI CONTESTUALI (Uniformate) ---
         
-        # 1. Dopo INTRO (L'Anima): Saily
         if line.startswith('## 2. Quartieri'):
-            make_contextual_box(pdf, f"Non restare senza internet a {city_clean}? eSim Saily (Sconto 5%)", ESIM_LINK, 240, 255, 240) 
+            make_box(pdf, f"Non restare senza internet a {city_clean}? eSim Saily (Sconto 5%)", ESIM_LINK, style="yellow")
         
-        # 2. Dopo DOVE DORMIRE: Booking
         if line.startswith('## 4. Gastronomia'):
-            make_contextual_box(pdf, f"Disponibilità in calo e prezzi Hotel in aumento a {city_clean}. Blocca la tariffa", HOTEL_LINK, 235, 245, 255) 
+            make_box(pdf, f"Prezzi Hotel in aumento a {city_clean}? Verifica disponibilità su Expedia", HOTEL_LINK, style="blue")
             
-        # 3. Dopo ATTRAZIONI: Tiqets
         if line.startswith('## 6. I mercati'):
-             make_contextual_box(pdf, f"Biglietti ufficiali Musei e Attrazioni a {city_clean} su Tiqets", TIQETS_LINK, 255, 240, 230)
+             make_box(pdf, f"Biglietti ufficiali Musei e Attrazioni a {city_clean} su Tiqets", TIQETS_LINK, style="orange")
 
-        # 4. Inizio INFO PRATICHE
-        if line.startswith('## 8. Info Pratiche'):
-             pass 
-
-        # 5. Fine INFO PRATICHE: Heymondo + Link
         if line.startswith('## 9. Itinerario'):
-             make_contextual_box(pdf, f"Trova subito voli economici per {city_clean} su Kiwi.com", FLIGHT_LINK, 245, 245, 245) 
-             make_contextual_box(pdf, f"Transfer NCC dall'aeroporto al prezzo di un taxi (Welcome Pickups)", TRANSF_LINK, 245, 245, 245) 
-             make_contextual_box(pdf, "Assicurazione Viaggio (Approfitta dell'esclusivo sconto del 10% con Heymondo)", INSURANCE_LINK, 255, 252, 220) 
+             make_box(pdf, f"Trova subito voli economici per {city_clean} su Kiwi.com", FLIGHT_LINK, style="green")
+             make_box(pdf, f"Transfer NCC dall'aeroporto al prezzo di un taxi (Welcome Pickups)", TRANSF_LINK, style="purple")
+             make_box(pdf, "Assicurazione Viaggio (Sconto 10% con Heymondo)", INSURANCE_LINK, style="green")
         # --------------------------------
 
         if line.startswith('# '): 
@@ -370,7 +376,7 @@ def create_pdf(text, city):
     pdf.cell(0, 10, "Già visti nella guida...", 0, 1, 'L')
     pdf.ln(2)
     
-    make_sponsor_box("Booking.com", "Hotel e alloggi", HOTEL_LINK)
+    make_sponsor_box("Expedia", "Hotel e alloggi", HOTEL_LINK) # Booking -> Expedia
     make_sponsor_box("Tiqets", "Biglietti musei e attrazioni", TIQETS_LINK) 
     make_sponsor_box("Kiwi.com", "Voli low cost", FLIGHT_LINK)
     make_sponsor_box("Heymondo", "Assicurazione viaggio", INSURANCE_LINK)
@@ -404,7 +410,7 @@ with st.sidebar:
     st.markdown("---")
     st.caption("✈️ PRENOTAZIONI")
     partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
-    partner_button("Hotel (Booking)", HOTEL_LINK, "btn_booking.png")
+    partner_button("Hotel (Expedia)", HOTEL_LINK, "btn_booking.png") # Booking -> Expedia
     partner_button("Transfers (Welcome)", TRANSF_LINK, "btn_wp.png")
     partner_button("Auto (Autoeurope)", RENTAL_LINK, "btn_autoe.png")
     partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
@@ -451,6 +457,29 @@ st.markdown("""
         Da zero a local in mezzo minuto.
     </p>
     """, unsafe_allow_html=True)
+
+# ==========================================
+# 🆕 CTA WIZARD GRADIENT (NUOVA AGGIUNTA)
+# ==========================================
+st.markdown("""
+<a href="/itinerari" target="_self" style="text-decoration: none;">
+    <div style="
+        background: linear-gradient(90deg, #8E2DE2 0%, #4A00E0 100%);
+        padding: 15px;
+        border-radius: 10px;
+        color: white;
+        text-align: center;
+        font-weight: bold;
+        font-family: sans-serif;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        margin: 10px 0 25px 0;
+        transition: transform 0.2s;
+    " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1.0)'">
+        🧙‍♂️ Hai bisogno di un piano complesso e budget personalizzato? <br>
+        <span style="font-size: 1.1em; text-decoration: underline;">CLICCA QUI PER L'ITINERARY WIZARD ➜</span>
+    </div>
+</a>
+""", unsafe_allow_html=True)
 
 st.write("") 
 
@@ -562,7 +591,7 @@ with c1:
     partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
 with c2:
     st.caption("🏨 **Hotel**")
-    partner_button("Booking", HOTEL_LINK, "btn_booking.png")
+    partner_button("Expedia", HOTEL_LINK, "btn_booking.png") # Booking -> Expedia
 with c3:
     st.caption("🚘 **Transfer**")
     partner_button("Welcome Pickups", TRANSF_LINK, "btn_wp.png")
@@ -624,5 +653,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
-
