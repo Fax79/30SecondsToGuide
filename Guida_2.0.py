@@ -516,7 +516,7 @@ with st.container():
                     3. Usa ESATTAMENTE la struttura seguente.
                     4. Scrivi paragrafi ricchi e lunghi.
                     5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
-                    6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso.
+                    6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso ma sintetico, non usare la struttura della guida.
                     
                     MODELLO:
                     {TESTO_MODELLO}
@@ -624,3 +624,4 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
