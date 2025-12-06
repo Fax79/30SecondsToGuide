@@ -45,7 +45,7 @@ INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDST
 # 2. LINK GENERICI (Statici)
 TRAIN_LINK = "https://www.omio.com"
 RESTAURANT_LINK = "https://www.tripadvisor.com"
-HOTEL_LINK = "https://www.expedia.com" # Aggiornato a Expedia per coerenza
+HOTEL_LINK = "https://www.expedia.com" 
 TOUR_LINK = "https://www.getyourguide.com"
 
 # --- LINK PROMOZIONE ---
@@ -376,7 +376,7 @@ def create_pdf(text, city):
     pdf.cell(0, 10, "Già visti nella guida...", 0, 1, 'L')
     pdf.ln(2)
     
-    make_sponsor_box("Expedia", "Hotel e alloggi", HOTEL_LINK) # Booking -> Expedia
+    make_sponsor_box("Expedia", "Hotel e alloggi", HOTEL_LINK) 
     make_sponsor_box("Tiqets", "Biglietti musei e attrazioni", TIQETS_LINK) 
     make_sponsor_box("Kiwi.com", "Voli low cost", FLIGHT_LINK)
     make_sponsor_box("Heymondo", "Assicurazione viaggio", INSURANCE_LINK)
@@ -410,7 +410,7 @@ with st.sidebar:
     st.markdown("---")
     st.caption("✈️ PRENOTAZIONI")
     partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
-    partner_button("Hotel (Expedia)", HOTEL_LINK, "btn_booking.png") # Booking -> Expedia
+    partner_button("Hotel (Expedia)", HOTEL_LINK, "btn_booking.png") 
     partner_button("Transfers (Welcome)", TRANSF_LINK, "btn_wp.png")
     partner_button("Auto (Autoeurope)", RENTAL_LINK, "btn_autoe.png")
     partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
@@ -459,18 +459,14 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 🆕 CTA WIZARD (VERSIONE STABILE)
+# 🆕 CTA WIZARD (VERSIONE HIGH VISIBILITY)
 # ==========================================
-st.divider()
-st.markdown("""
-<div style="text-align: center; font-weight: bold; margin-bottom: 10px; color: #4A00E0;">
-    🧙‍♂️ Hai bisogno di un piano complesso e budget personalizzato?
-</div>
-""", unsafe_allow_html=True)
-
-# Sostituito l'HTML rotto con il componente nativo robusto
-st.page_link("pages/itinerari.py", label="ACCEDI ALL'ITINERARY WIZARD ✨", icon="🔮", use_container_width=True)
-st.divider()
+st.write("") 
+# Usiamo st.info per creare un "blocco" colorato visivamente distinto
+with st.info("🧙‍♂️ **VUOI DI PIÙ? Prova l'ITINERARY WIZARD**", icon="✨"):
+    st.write("Hai date fisse e un budget da rispettare? Abbiamo creato uno strumento avanzato per pianificare ogni dettaglio.")
+    # Pulsante con icona freccia e testo maiuscolo per massima visibilità
+    st.page_link("pages/itinerari.py", label="👉 CLICCA QUI PER APRIRE IL WIZARD AVANZATO", icon="🚀", use_container_width=True)
 
 st.write("") 
 
@@ -582,7 +578,7 @@ with c1:
     partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
 with c2:
     st.caption("🏨 **Hotel**")
-    partner_button("Expedia", HOTEL_LINK, "btn_booking.png") # Booking -> Expedia
+    partner_button("Expedia", HOTEL_LINK, "btn_booking.png") 
 with c3:
     st.caption("🚘 **Transfer**")
     partner_button("Welcome Pickups", TRANSF_LINK, "btn_wp.png")
