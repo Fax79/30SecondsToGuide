@@ -69,7 +69,7 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v4.4 DESIGN"
+# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v4.3 DYNAMIC"
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
@@ -100,6 +100,7 @@ def create_complex_pdf(text, destination, meta_data):
         return "".join(output)
 
     dest_clean = clean_text_for_pdf(destination)
+    # Recupero mese in sicurezza
     month_clean = clean_text_for_pdf(meta_data.get('month_name', ''))
 
     class WizardPDF(FPDF):
@@ -153,45 +154,26 @@ def create_complex_pdf(text, destination, meta_data):
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE STILE "MAGAZINE" (ACCENT BAR) ---
-    def make_box(pdf_obj, text, link, style="blue"):
+    # --- BOX CONTESTUALE COLORATO ---
+    def make_box(pdf_obj, text, link, color="blue"):
         text = clean_text_for_pdf(text)
-        
-        # Palette Colori: (R, G, B) per Sfondo Chiaro e Accento Scuro
-        palettes = {
-            "blue":   {"bg": (240, 248, 255), "accent": (0, 102, 204)}, # Expedia Blue
-            "green":  {"bg": (240, 255, 240), "accent": (0, 153, 76)},  # Kiwi Green
-            "yellow": {"bg": (255, 253, 240), "accent": (204, 153, 0)}, # Heymondo Gold
-            "purple": {"bg": (248, 240, 255), "accent": (102, 0, 153)}, # Welcome Purple
-            "orange": {"bg": (255, 245, 235), "accent": (230, 90, 0)}   # Tiqets Orange
+        colors = {
+            "blue": (230, 240, 255),    # Blu Expedia
+            "green": (235, 255, 235),   # Verde Saily/Kiwi
+            "yellow": (255, 250, 225),  # Giallo Heymondo
+            "orange": (255, 240, 230),  # Arancio Tiqets
+            "purple": (245, 235, 255)   # Viola Omio/Auto/Welcome
         }
-        
-        chosen = palettes.get(style, palettes["blue"])
-        bg_r, bg_g, bg_b = chosen["bg"]
-        ac_r, ac_g, ac_b = chosen["accent"]
-        
-        pdf_obj.ln(4)
-        
-        # 1. Sfondo Chiaro (Tutta la larghezza)
-        current_y = pdf_obj.get_y()
-        pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
-        pdf_obj.set_draw_color(bg_r, bg_g, bg_b) # Bordo uguale allo sfondo per non averlo nero
-        pdf_obj.rect(10, current_y, 190, 14, 'DF')
-        
-        # 2. Barra di Accento a Sinistra (Larghezza 2mm, Colore Forte)
-        pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
-        pdf_obj.rect(10, current_y, 2, 14, 'F')
-        
-        # 3. Testo
-        pdf_obj.set_xy(15, current_y + 4) # Offset di 5mm (2mm barra + 3mm padding)
+        r, g, b = colors.get(color, (230, 240, 255))
+        pdf_obj.ln(3)
+        pdf_obj.set_fill_color(r, g, b)
+        pdf_obj.set_draw_color(r-10, g-10, b-10)
+        pdf_obj.rect(10, pdf_obj.get_y(), 190, 12, 'DF')
+        pdf_obj.set_xy(15, pdf_obj.get_y() + 3)
         pdf_obj.set_font("Helvetica", 'B', 9)
-        pdf_obj.set_text_color(44, 62, 80) # Testo scuro professionale
-        
-        # Usiamo Cell con link. Se il testo è lungo, FPDF lo taglia, quindi usiamo MultiCell simulata se serve, 
-        # ma per i link banner 1 riga è meglio.
-        pdf_obj.cell(180, 6, f"{text} >", link=link)
-        
-        pdf_obj.ln(12)
+        pdf_obj.set_text_color(44, 62, 80)
+        pdf_obj.cell(180, 6, f"> {text}", link=link)
+        pdf_obj.ln(14)
 
     lines = text.split('\n')
     
@@ -207,28 +189,30 @@ def create_complex_pdf(text, destination, meta_data):
         
         # --- LOGICA BLINDATA LINK A FINE CAPITOLO ---
         
-        # Fine Capitolo 1 -> Kiwi (Dinamico), Saily, Heymondo
+        # Fine Capitolo 1
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
-            banner_text = f"Voli per {month_clean}? Verifica tariffe per {dest_clean} su Kiwi.com"
+            # === BANNER DINAMICO ===
+            banner_text = f"Voli per {month_clean}? Verifica tariffe migliori per {dest_clean} su Kiwi.com"
             make_box(pdf, banner_text, FLIGHT_LINK, "green")
+            # =======================
             make_box(pdf, "eSim Saily: Internet immediato all'arrivo", ESIM_LINK, "green")
             make_box(pdf, "Assicurazione Sanitaria: Sconto 10% Heymondo", INSURANCE_LINK, "yellow")
             inserted_ch1 = True
             
-        # Fine Capitolo 2 -> Expedia, Welcome
+        # Fine Capitolo 2
         elif "## CAPITOLO 3" in line_upper and not inserted_ch2:
             make_box(pdf, f"Verifica offerte Hotel a {dest_clean} su Expedia", HOTEL_LINK, "blue")
             make_box(pdf, "Transfer privati ad un prezzo WOW! da e per l'aeroporto", TRANSF_LINK, "purple")
             inserted_ch2 = True
 
-        # Fine Capitolo 3 -> Tiqets, Auto, Omio
+        # Fine Capitolo 3
         elif "## CAPITOLO 4" in line_upper and not inserted_ch3:
             make_box(pdf, f"Biglietti Attrazioni a {dest_clean} su Tiqets", TIQETS_LINK, "orange")
             make_box(pdf, "Noleggio Auto: Migliori tariffe con Auto Europe", RENTAL_LINK, "purple")
             make_box(pdf, "Treni e Bus: Prenota su Omio", TRAIN_LINK, "purple")
             inserted_ch3 = True
             
-        # Fine Capitolo 4 -> Tripadvisor
+        # Fine Capitolo 4
         elif "## CAPITOLO 5" in line_upper and not inserted_ch4:
             make_box(pdf, "Ristoranti: Leggi le recensioni su TripAdvisor", RESTAURANT_LINK, "green")
             inserted_ch4 = True
@@ -276,7 +260,7 @@ def create_complex_pdf(text, destination, meta_data):
                 pdf.multi_cell(0, 6, clean_line)
                 pdf.ln(1)
 
-    # --- PAGINA PARTNER FINALE RIORGANIZZATA ---
+    # --- PAGINA PARTNER ---
     pdf.add_page()
     
     def make_sponsor_box(title, subtitle, link, highlight=False):
@@ -594,4 +578,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
