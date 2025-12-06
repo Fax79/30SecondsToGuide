@@ -459,14 +459,22 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 🆕 CTA WIZARD (VERSIONE HIGH VISIBILITY)
+# 🆕 CTA WIZARD (MOBILE FRIENDLY)
 # ==========================================
 st.write("") 
-# Usiamo st.info per creare un "blocco" colorato visivamente distinto
-with st.info("🧙‍♂️ **VUOI DI PIÙ? Prova l'ITINERARY WIZARD**", icon="✨"):
-    st.write("Hai date fisse e un budget da rispettare? Abbiamo creato uno strumento avanzato per pianificare ogni dettaglio.")
-    # Pulsante con icona freccia e testo maiuscolo per massima visibilità
-    st.page_link("pages/itinerari.py", label="👉 CLICCA QUI PER APRIRE IL WIZARD AVANZATO", icon="🚀", use_container_width=True)
+
+# 1. Testo descrittivo "Gradient Style"
+st.markdown("""
+<div style="background-color: #f0f2f6; border-radius: 10px; padding: 15px; margin-bottom: 15px; text-align: center; border: 1px solid #dcdcdc;">
+    <h3 style="margin: 0; color: #4A00E0; font-size: 1.2em;">🧙‍♂️ Serve un piano complesso?</h3>
+    <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #333;">
+        Budget personalizzato, tappe multiple e gestione spese.
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+# 2. Bottone con Etichetta CORTA (Anti-Troncamento)
+st.page_link("pages/itinerari.py", label="APRI ITINERARY WIZARD ✨", use_container_width=True)
 
 st.write("") 
 
