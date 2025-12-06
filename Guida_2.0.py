@@ -459,27 +459,18 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 🆕 CTA WIZARD GRADIENT (NUOVA AGGIUNTA)
+# 🆕 CTA WIZARD (VERSIONE STABILE)
 # ==========================================
+st.divider()
 st.markdown("""
-<a href="/itinerari" target="_self" style="text-decoration: none;">
-    <div style="
-        background: linear-gradient(90deg, #8E2DE2 0%, #4A00E0 100%);
-        padding: 15px;
-        border-radius: 10px;
-        color: white;
-        text-align: center;
-        font-weight: bold;
-        font-family: sans-serif;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        margin: 10px 0 25px 0;
-        transition: transform 0.2s;
-    " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1.0)'">
-        🧙‍♂️ Hai bisogno di un piano complesso e budget personalizzato? <br>
-        <span style="font-size: 1.1em; text-decoration: underline;">CLICCA QUI PER L'ITINERARY WIZARD ➜</span>
-    </div>
-</a>
+<div style="text-align: center; font-weight: bold; margin-bottom: 10px; color: #4A00E0;">
+    🧙‍♂️ Hai bisogno di un piano complesso e budget personalizzato?
+</div>
 """, unsafe_allow_html=True)
+
+# Sostituito l'HTML rotto con il componente nativo robusto
+st.page_link("pages/itinerari.py", label="ACCEDI ALL'ITINERARY WIZARD ✨", icon="🔮", use_container_width=True)
+st.divider()
 
 st.write("") 
 
@@ -653,4 +644,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
