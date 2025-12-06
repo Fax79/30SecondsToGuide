@@ -69,7 +69,7 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v4.3 DYNAMIC"
+# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v5.0 (FINAL)"
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
@@ -100,7 +100,6 @@ def create_complex_pdf(text, destination, meta_data):
         return "".join(output)
 
     dest_clean = clean_text_for_pdf(destination)
-    # Recupero mese in sicurezza
     month_clean = clean_text_for_pdf(meta_data.get('month_name', ''))
 
     class WizardPDF(FPDF):
@@ -154,26 +153,42 @@ def create_complex_pdf(text, destination, meta_data):
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE COLORATO ---
-    def make_box(pdf_obj, text, link, color="blue"):
+    # --- BOX CONTESTUALE STILE MAGAZINE (NUOVO DESIGN) ---
+    def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
-        colors = {
-            "blue": (230, 240, 255),    # Blu Expedia
-            "green": (235, 255, 235),   # Verde Saily/Kiwi
-            "yellow": (255, 250, 225),  # Giallo Heymondo
-            "orange": (255, 240, 230),  # Arancio Tiqets
-            "purple": (245, 235, 255)   # Viola Omio/Auto/Welcome
+        
+        # Palette Colori: (R, G, B) per Sfondo Chiaro e Accento Scuro
+        palettes = {
+            "blue":   {"bg": (240, 248, 255), "accent": (0, 102, 204)}, # Expedia Blue
+            "green":  {"bg": (240, 255, 240), "accent": (0, 153, 76)},  # Kiwi Green
+            "yellow": {"bg": (255, 253, 240), "accent": (204, 153, 0)}, # Heymondo Gold
+            "purple": {"bg": (248, 240, 255), "accent": (102, 0, 153)}, # Welcome Purple
+            "orange": {"bg": (255, 245, 235), "accent": (230, 90, 0)}   # Tiqets Orange
         }
-        r, g, b = colors.get(color, (230, 240, 255))
-        pdf_obj.ln(3)
-        pdf_obj.set_fill_color(r, g, b)
-        pdf_obj.set_draw_color(r-10, g-10, b-10)
-        pdf_obj.rect(10, pdf_obj.get_y(), 190, 12, 'DF')
-        pdf_obj.set_xy(15, pdf_obj.get_y() + 3)
+        
+        chosen = palettes.get(style, palettes["blue"])
+        bg_r, bg_g, bg_b = chosen["bg"]
+        ac_r, ac_g, ac_b = chosen["accent"]
+        
+        pdf_obj.ln(4)
+        
+        # 1. Sfondo Chiaro (Tutta la larghezza)
+        current_y = pdf_obj.get_y()
+        pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
+        pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
+        pdf_obj.rect(10, current_y, 190, 14, 'DF')
+        
+        # 2. Barra di Accento a Sinistra (Larghezza 2mm, Colore Forte)
+        pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
+        pdf_obj.rect(10, current_y, 2, 14, 'F')
+        
+        # 3. Testo
+        pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        pdf_obj.cell(180, 6, f"> {text}", link=link)
-        pdf_obj.ln(14)
+        pdf_obj.cell(180, 6, f"{text} >", link=link)
+        
+        pdf_obj.ln(12)
 
     lines = text.split('\n')
     
@@ -260,7 +275,7 @@ def create_complex_pdf(text, destination, meta_data):
                 pdf.multi_cell(0, 6, clean_line)
                 pdf.ln(1)
 
-    # --- PAGINA PARTNER ---
+    # --- PAGINA PARTNER FINALE RIORGANIZZATA ---
     pdf.add_page()
     
     def make_sponsor_box(title, subtitle, link, highlight=False):
