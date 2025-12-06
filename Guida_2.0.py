@@ -517,7 +517,7 @@ def reset_app():
     st.session_state.city_input = ""
 
 # Collegamento variabile input
-city_name = st.text_input("Inserisci la destinazione:", placeholder="Es. Parigi, Tokyo, New York...", key="city_input")
+city_name = st.text_input("Se vuoi generare la guida di una città inserisci QUI la destinazione:", placeholder="Es. Parigi, Tokyo, New York...", key="city_input")
 
 # --- GENERAZIONE GUIDA ---
 with st.container():
@@ -653,3 +653,4 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
