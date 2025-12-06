@@ -69,7 +69,7 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v5.0 (FINAL)"
+# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v7.0 (PAGE BREAK FIX)"
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
@@ -153,32 +153,37 @@ def create_complex_pdf(text, destination, meta_data):
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE STILE MAGAZINE (NUOVO DESIGN) ---
+    # --- BOX CONTESTUALE (CON CONTROLLO PAGINA) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
-        # Palette Colori: (R, G, B) per Sfondo Chiaro e Accento Scuro
         palettes = {
-            "blue":   {"bg": (240, 248, 255), "accent": (0, 102, 204)}, # Expedia Blue
-            "green":  {"bg": (240, 255, 240), "accent": (0, 153, 76)},  # Kiwi Green
-            "yellow": {"bg": (255, 253, 240), "accent": (204, 153, 0)}, # Heymondo Gold
-            "purple": {"bg": (248, 240, 255), "accent": (102, 0, 153)}, # Welcome Purple
-            "orange": {"bg": (255, 245, 235), "accent": (230, 90, 0)}   # Tiqets Orange
+            "blue":   {"bg": (240, 248, 255), "accent": (0, 102, 204)}, 
+            "green":  {"bg": (240, 255, 240), "accent": (0, 153, 76)},  
+            "yellow": {"bg": (255, 253, 240), "accent": (204, 153, 0)}, 
+            "purple": {"bg": (248, 240, 255), "accent": (102, 0, 153)}, 
+            "orange": {"bg": (255, 245, 235), "accent": (230, 90, 0)}   
         }
         
         chosen = palettes.get(style, palettes["blue"])
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
+        # --- FIX PAGE BREAK ---
+        # Controlliamo se c'è spazio sufficiente (25mm) prima del footer
+        if pdf_obj.get_y() > 250: # Se siamo sotto i 250mm (A4 è 297mm)
+             pdf_obj.add_page()   # Nuova pagina per non spezzare il banner
+        # ----------------------
+
         pdf_obj.ln(4)
         
-        # 1. Sfondo Chiaro (Tutta la larghezza)
+        # 1. Sfondo
         current_y = pdf_obj.get_y()
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
         pdf_obj.rect(10, current_y, 190, 14, 'DF')
         
-        # 2. Barra di Accento a Sinistra (Larghezza 2mm, Colore Forte)
+        # 2. Barra di Accento
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
         pdf_obj.rect(10, current_y, 2, 14, 'F')
         
@@ -192,7 +197,7 @@ def create_complex_pdf(text, destination, meta_data):
 
     lines = text.split('\n')
     
-    # Flags per gestione link a fine capitolo
+    # Flags
     inserted_ch1 = False
     inserted_ch2 = False
     inserted_ch3 = False
@@ -202,32 +207,28 @@ def create_complex_pdf(text, destination, meta_data):
         clean_line = clean_text_for_pdf(line)
         line_upper = clean_line.upper()
         
-        # --- LOGICA BLINDATA LINK A FINE CAPITOLO ---
+        # --- LOGICA BLINDATA LINK ---
         
-        # Fine Capitolo 1
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
             # === BANNER DINAMICO ===
-            banner_text = f"Voli per {month_clean}? Verifica tariffe migliori per {dest_clean} su Kiwi.com"
+            banner_text = f"I biglietti dei voli in {month_clean} aumentano? Blocca le tariffe migliori su Kiwi.com"
             make_box(pdf, banner_text, FLIGHT_LINK, "green")
             # =======================
-            make_box(pdf, "eSim Saily: Internet immediato all'arrivo", ESIM_LINK, "green")
-            make_box(pdf, "Assicurazione Sanitaria: Sconto 10% Heymondo", INSURANCE_LINK, "yellow")
+            make_box(pdf, "eSim Saily: Internet immediato all'arrivo senza acquisto di SIM locali", ESIM_LINK, "yellow")
+            make_box(pdf, "MAI senza Assicurazione Sanitaria: Approfitta QUI dello sconto 10% con Heymondo", INSURANCE_LINK, "green")
             inserted_ch1 = True
             
-        # Fine Capitolo 2
         elif "## CAPITOLO 3" in line_upper and not inserted_ch2:
-            make_box(pdf, f"Verifica offerte Hotel a {dest_clean} su Expedia", HOTEL_LINK, "blue")
+            make_box(pdf, f"Le stanze in Hotel si esauriscono velocemente in {month_clean}, verifica disponibilità e prezzi su Expedia", HOTEL_LINK, "blue")
             make_box(pdf, "Transfer privati ad un prezzo WOW! da e per l'aeroporto", TRANSF_LINK, "purple")
             inserted_ch2 = True
 
-        # Fine Capitolo 3
         elif "## CAPITOLO 4" in line_upper and not inserted_ch3:
-            make_box(pdf, f"Biglietti Attrazioni a {dest_clean} su Tiqets", TIQETS_LINK, "orange")
-            make_box(pdf, "Noleggio Auto: Migliori tariffe con Auto Europe", RENTAL_LINK, "purple")
+            make_box(pdf, f"Biglietti Attrazioni saltando la fila per il tuo tour in {dest_clean} su Tiqets", TIQETS_LINK, "orange")
+            make_box(pdf, "Viaggia in libertà e noleggia un auto: Tariffe esclusive con Auto Europe", RENTAL_LINK, "purple")
             make_box(pdf, "Treni e Bus: Prenota su Omio", TRAIN_LINK, "purple")
             inserted_ch3 = True
             
-        # Fine Capitolo 4
         elif "## CAPITOLO 5" in line_upper and not inserted_ch4:
             make_box(pdf, "Ristoranti: Leggi le recensioni su TripAdvisor", RESTAURANT_LINK, "green")
             inserted_ch4 = True
@@ -260,7 +261,8 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_x(15)
             pdf.cell(5, 6, chr(149), 0, 0)
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            pdf.multi_cell(0, 6, content)
+            # FIX "NOT ENOUGH SPACE": Larghezza fissa invece di 0
+            pdf.multi_cell(170, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
@@ -275,7 +277,7 @@ def create_complex_pdf(text, destination, meta_data):
                 pdf.multi_cell(0, 6, clean_line)
                 pdf.ln(1)
 
-    # --- PAGINA PARTNER FINALE RIORGANIZZATA ---
+    # --- PAGINA PARTNER ---
     pdf.add_page()
     
     def make_sponsor_box(title, subtitle, link, highlight=False):
@@ -400,7 +402,7 @@ with st.container():
     # RIGA 1
     c_dest, c_bud = st.columns([2, 1])
     with c_dest:
-        destination = st.text_input("Destinazione (Regione/Paese)", placeholder="Es. Giappone...")
+        destination = st.text_input("Destinazione (Città/Regione/Paese)", placeholder="Es. New York,  Provenza,  Giappone...")
     with c_bud:
         budget = st.number_input("Budget Totale (€)", min_value=500, value=3000, step=100)
     
@@ -455,7 +457,9 @@ with st.container():
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
                     prompt = f"""
-                    Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi il sogno di una vita. 
+                    Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi il sogno di una vita.
+                    Razionalizza il tempo, visita quanti più posti possibili con {duration} notti a disposizione.
+                    Valuta la densità degli impegni giornalieri perché siano fattibili. Presta attenzione ad essere razionale negli spostamenti per massimizzare il tempo a disposizione.
                     Crea un "Travel Plan" esclusivo per: {destination}.
                     
                     DATI:
@@ -470,7 +474,8 @@ with st.container():
                     4. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
                     5. VIETATO USARE LISTE ANNIDATE.
                     6. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
-                    
+                    7. USA IL CALCOLO DELLA DURATA {duration}, NON RICALCOLARE.
+                    8. NON SCRIVERE I TUOI PENSIERI INTERNI ("HO SBAGLIATO", "DEVO USARE QUESTA REGOLA", "RICALCOLO") E SCRIVI SOLO LA VERSIONE FINALE.                    
                     STRUTTURA TITOLI (Usa ESATTAMENTE questi):
                     # {destination.upper()}: [Sottotitolo]
                     **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
@@ -593,3 +598,4 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
