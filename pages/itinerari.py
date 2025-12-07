@@ -69,7 +69,7 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE (PAGINATION FIX)
+# 🧙‍♂️ PDF ENGINE (SAFE MODE v8.1)
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
@@ -148,21 +148,15 @@ def create_complex_pdf(text, destination, meta_data):
             self.set_font('Helvetica', '', 10)
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
+    # --- CONFIGURAZIONE MARGINI E PAGINA ---
     pdf = WizardPDF()
-    # Importante: Disabilitiamo l'auto page break di default per gestirlo manualmente meglio
-    pdf.set_auto_page_break(auto=False)
+    pdf.set_margins(15, 15, 15)  # Margini: Sinistra, Alto, Destra (15mm)
+    pdf.set_auto_page_break(auto=True, margin=25) # Break automatico a 25mm dal fondo
+    
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=20) # Riattiviamo con margine sicuro
     
-    # --- FUNZIONE CONTROLLO SPAZIO ---
-    def check_space(pdf_obj, height_needed):
-        """Se non c'è abbastanza spazio per l'elemento, aggiunge una pagina."""
-        # Il footer inizia a 285mm, lasciamo un margine di sicurezza a 270mm
-        if pdf_obj.get_y() + height_needed > 270:
-            pdf_obj.add_page()
-
-    # --- BOX CONTESTUALE ---
+    # --- BOX CONTESTUALE (SAFE) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -178,24 +172,24 @@ def create_complex_pdf(text, destination, meta_data):
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
-        # Controllo Spazio per il Box (Altezza ca. 20mm)
-        check_space(pdf_obj, 25)
+        if pdf_obj.get_y() > 250: 
+             pdf_obj.add_page()   
 
         pdf_obj.ln(4)
         
         current_y = pdf_obj.get_y()
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
-        pdf_obj.rect(10, current_y, 190, 14, 'DF')
+        pdf_obj.rect(15, current_y, 180, 14, 'DF') # Box width 180mm
         
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
-        pdf_obj.rect(10, current_y, 2, 14, 'F')
+        pdf_obj.rect(15, current_y, 2, 14, 'F')
         
-        pdf_obj.set_xy(15, current_y + 4) 
+        pdf_obj.set_xy(20, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
         
-        pdf_obj.cell(170, 6, f"{text} >", link=link)
+        pdf_obj.cell(170, 6, f"{text} >", link=link) # Text width 170mm
         
         pdf_obj.ln(12)
 
@@ -235,59 +229,53 @@ def create_complex_pdf(text, destination, meta_data):
 
         # --- FORMATTAZIONE TESTO ---
         if line.strip().startswith('# '): 
-            check_space(pdf, 20) # Spazio per titolo grande
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
             pdf.set_text_color(44, 62, 80)
-            pdf.multi_cell(0, 10, clean_line.replace('#', '').strip())
+            pdf.multi_cell(175, 10, clean_line.replace('#', '').strip())
             pdf.ln(5)
             
         elif line.strip().startswith('## '): 
-            check_space(pdf, 15) # Spazio per sottotitolo
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 14)
             pdf.set_text_color(230, 126, 34) 
-            pdf.multi_cell(0, 10, clean_line.replace('##', '').strip())
+            pdf.multi_cell(175, 10, clean_line.replace('##', '').strip())
             
         elif "VERDETTO" in line_upper: 
-            check_space(pdf, 15)
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 12)
             pdf.set_fill_color(220, 220, 220)
             clean_verdict = clean_line.replace('*', '').strip()
-            pdf.multi_cell(190, 8, clean_verdict, border=1, align='C', fill=True)
+            pdf.multi_cell(180, 8, clean_verdict, border=1, align='C', fill=True)
             pdf.ln(5)
             
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
-            # Stima altezza elenco: 1 riga = 6mm, se lungo calcoliamo di più
-            estimated_height = max(6, len(clean_line) // 90 * 6)
-            check_space(pdf, estimated_height)
-            
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
-            pdf.set_x(15)
+            
+            # --- MODIFICA CHIAVE: LISTA COMPATIBILE ---
+            content_raw = re.sub(r'^[\*-]\s*', '', clean_line).strip()
+            content = clean_text_for_pdf(content_raw.replace('*', ''))
+            
+            pdf.set_x(15) 
             pdf.cell(5, 6, chr(149), 0, 0)
-            content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
+            pdf.set_x(22) # Ripristina X per il testo
             
             if content:
-                pdf.multi_cell(155, 6, content) 
+                pdf.multi_cell(0, 6, content) # Larghezza 0: usa il resto dello spazio
+            pdf.ln(1)
         
         elif re.match(r'^\d+\.', line.strip()):
-            check_space(pdf, 10)
             pdf.set_font("Helvetica", 'B', 11)
             pdf.set_text_color(44, 62, 80)
             pdf.ln(2)
-            pdf.multi_cell(0, 6, clean_line)
+            pdf.multi_cell(175, 6, clean_line)
             
         else: 
             if line.strip():
-                # Testo normale
-                estimated_height = max(6, len(clean_line) // 95 * 6)
-                check_space(pdf, estimated_height)
-                
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                pdf.multi_cell(185, 6, clean_line)
+                pdf.multi_cell(175, 6, clean_line)
                 pdf.ln(1)
 
     # --- PAGINA PARTNER ---
@@ -303,16 +291,16 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_fill_color(250, 250, 250) 
             pdf.set_draw_color(220, 220, 220) 
         
-        check_space(pdf, 20) # Check per box sponsor
-        
+        if pdf.get_y() > 250: pdf.add_page()
+
         start_y = pdf.get_y()
-        pdf.rect(10, start_y, 190, 14, 'DF') 
+        pdf.rect(15, start_y, 180, 14, 'DF') 
         pdf.set_y(start_y + 2)
-        pdf.set_x(15)
+        pdf.set_x(20)
         pdf.set_font("Helvetica", 'B', 10) 
         pdf.set_text_color(44, 62, 80)
         pdf.cell(0, 5, title, 0, 1)
-        pdf.set_x(15)
+        pdf.set_x(20)
         pdf.set_font("Helvetica", '', 9)
         pdf.set_text_color(0, 102, 204)
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
@@ -425,9 +413,11 @@ with st.container():
     # RIGA 2
     c_start, c_end = st.columns(2)
     with c_start:
-         start_date = st.date_input("Data Partenza", datetime.date.today() + datetime.timedelta(days=30))
+         start_date = st.date.today() + datetime.timedelta(days=30)
+         start_date = st.date_input("Data Partenza", start_date)
     with c_end:
-         end_date = st.date_input("Data Ritorno", datetime.date.today() + datetime.timedelta(days=37))
+         end_date = start_date + datetime.timedelta(days=7)
+         end_date = st.date_input("Data Ritorno", end_date)
 
     # RIGA 3
     c_ad, c_kids = st.columns(2)
@@ -466,7 +456,7 @@ with st.container():
             mese_partenza = mesi[start_date.month]
             
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            get_shared_logs().append(f"🧙‍♂️ {destination} {budget} ({timestamp})")
+            get_shared_logs().append(f"🧙‍♂️ {destination} ({timestamp})")
             
             with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
                 try:
