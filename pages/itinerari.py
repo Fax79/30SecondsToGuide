@@ -69,7 +69,7 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE (SAFE MODE v8.1)
+# 🧙‍♂️ PDF ENGINE (SAFE MODE v8.0)
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
@@ -172,11 +172,13 @@ def create_complex_pdf(text, destination, meta_data):
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
+        # Controllo manuale solo per i box per non spezzarli
         if pdf_obj.get_y() > 250: 
              pdf_obj.add_page()   
 
         pdf_obj.ln(4)
         
+        # Larghezza box fissa a 180mm (entro i margini di 15mm)
         current_y = pdf_obj.get_y()
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
@@ -189,6 +191,7 @@ def create_complex_pdf(text, destination, meta_data):
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
         
+        # Cella testo: 170mm (sicura)
         pdf_obj.cell(170, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
@@ -228,6 +231,8 @@ def create_complex_pdf(text, destination, meta_data):
             inserted_ch4 = True
 
         # --- FORMATTAZIONE TESTO ---
+        # NOTA: Qui usiamo larghezze conservative (175mm su 210mm totali)
+        
         if line.strip().startswith('# '): 
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
@@ -246,24 +251,20 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_font("Helvetica", 'B', 12)
             pdf.set_fill_color(220, 220, 220)
             clean_verdict = clean_line.replace('*', '').strip()
+            # Box verdetto: 180mm (pieno margine)
             pdf.multi_cell(180, 8, clean_verdict, border=1, align='C', fill=True)
             pdf.ln(5)
             
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
-            
-            # --- LISTA: USA LA LOGICA A LARGHEZZA ZERO ---
-            content_raw = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            content = clean_text_for_pdf(content_raw.replace('*', ''))
-            
-            pdf.set_x(15) 
+            pdf.set_x(20) # Rientro 20mm
             pdf.cell(5, 6, chr(149), 0, 0)
-            pdf.set_x(22) # Spostamento esplicito (essenziale per la larghezza 0)
+            content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
             
+            # Larghezza molto sicura: 160mm
             if content:
-                pdf.multi_cell(0, 6, content) # Larghezza 0: usa il resto dello spazio
-            pdf.ln(1)
+                pdf.multi_cell(160, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
@@ -275,6 +276,7 @@ def create_complex_pdf(text, destination, meta_data):
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
+                # Testo normale: 175mm (massima sicurezza)
                 pdf.multi_cell(175, 6, clean_line)
                 pdf.ln(1)
 
@@ -291,6 +293,7 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_fill_color(250, 250, 250) 
             pdf.set_draw_color(220, 220, 220) 
         
+        # Check spazio manuale solo qui
         if pdf.get_y() > 250: pdf.add_page()
 
         start_y = pdf.get_y()
@@ -403,9 +406,7 @@ with st.container():
         9: "Settembre", 10: "Ottobre", 11: "Novembre", 12: "Dicembre"
     }
 
-    # --- CALCOLO DATE E FIX ATTRIBUTE ERROR ---
-    data_default_partenza = datetime.date.today() + datetime.timedelta(days=30)
-    
+    # RIGA 1
     c_dest, c_bud = st.columns([2, 1])
     with c_dest:
         destination = st.text_input("Destinazione (Città/Regione/Paese)", placeholder="Es. New York,  Provenza,  Giappone...")
@@ -415,13 +416,9 @@ with st.container():
     # RIGA 2
     c_start, c_end = st.columns(2)
     with c_start:
-         start_date = st.date_input("Data Partenza", data_default_partenza)
-
-    # Impostiamo la data di default di ritorno 7 giorni dopo la data di partenza
-    data_default_ritorno = start_date + datetime.timedelta(days=7)
-
+         start_date = st.date_input("Data Partenza", datetime.date.today() + datetime.timedelta(days=30))
     with c_end:
-         end_date = st.date_input("Data Ritorno", data_default_ritorno)
+         end_date = st.date_input("Data Ritorno", datetime.date.today() + datetime.timedelta(days=37))
 
     # RIGA 3
     c_ad, c_kids = st.columns(2)
