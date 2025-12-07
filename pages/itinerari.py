@@ -230,7 +230,7 @@ def create_complex_pdf(text, destination, meta_data):
             inserted_ch1 = True
             
         elif "## CAPITOLO 3" in line_upper and not inserted_ch2:
-            make_box(pdf, f"Stanze in Hotel quasi esaurite in {month_clean}? Prenota ora su Expedia", HOTEL_LINK, "blue")
+            make_box(pdf, f"Stanze in Hotel esaurite in {month_clean}? Prenota ora su Expedia", HOTEL_LINK, "blue")
             make_box(pdf, "Transfer privati ad un prezzo WOW! da e per l'aeroporto", TRANSF_LINK, "purple")
             inserted_ch2 = True
 
@@ -268,31 +268,43 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_font("Helvetica", 'B', 12)
             pdf.set_text_color(44, 62, 80)
             
-            # Stima delle linee necessarie per il wrapping e calcolo dell'altezza del box.
-            text_len = len(clean_verdict)
-            # Stima cauta: ~70 caratteri per riga a 12pt su 180mm di larghezza
-            required_lines = 1 + (text_len // 70) 
-            
-            # Altezza box: (numero di linee * altezza linea) + padding verticale (4mm)
+            # --- NUOVA LOGICA: CALCOLO ALTEZZA ESATTA TRAMITE dry_run ---
             line_height = 6
-            box_height = (required_lines * line_height) + 4 
+            content_width = 178 # Larghezza fissa per il wrapping
+
+            # 1. Calcola l'altezza necessaria (dry_run=True)
+            # Inizializza x e y prima del dry-run
+            start_x = pdf.get_x()
+            start_y = pdf.get_y()
+            pdf.set_xy(15, start_y + 2) # Posizionamento iniziale (rispetto al rettangolo)
+            
+            # La dry run non sposta il cursore globale, ma calcola le coordinate
+            # Usa il cursore temporaneo a (15, start_y + 2) con larghezza 178
+            required_height = pdf.multi_cell(
+                w=content_width, 
+                h=line_height, 
+                text=clean_verdict, 
+                border=0, 
+                align='C', 
+                fill=False,
+                dry_run=True
+            ).h
+
+            # Calcola l'altezza totale del box (altezza testo + padding verticale 4mm)
+            box_height = required_height + 4
             box_height = max(10, box_height) # Altezza minima 10mm
 
-            # 1. Disegna lo sfondo e il bordo
-            start_y = pdf.get_y()
+            # Ripristina la Y e disegna il rettangolo (sfondo e bordo)
+            pdf.set_y(start_y)
             pdf.set_fill_color(220, 220, 220)
             pdf.set_draw_color(200, 200, 200)
-            
-            # Disegna il rettangolo (bordo e sfondo)
             pdf.rect(10, start_y, 190, box_height, 'DF')
 
-            # 2. Posiziona il cursore per il testo avvolto
-            # Sposta a x=15 (10 + 5mm padding) e abbassa di 2mm (padding superiore)
+            # 2. Posiziona il cursore per il testo effettivo
             pdf.set_xy(15, start_y + 2)
             
-            # 3. Usa multi_cell per il wrapping e centraggio
-            # Larghezza 178mm, padding 5mm a sx e 7mm a dx (rispetto a 190mm totali)
-            pdf.multi_cell(178, line_height, clean_verdict, 0, 'C', False) 
+            # 3. Usa multi_cell per la stampa (fill=False, non riempie la cella singola)
+            pdf.multi_cell(content_width, line_height, clean_verdict, 0, 'C', False) 
 
             # 4. Sposta il cursore dopo il box
             pdf.set_y(start_y + box_height)
@@ -498,7 +510,7 @@ with st.container():
             mese_partenza = mesi[start_date.month]
             
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            get_shared_logs().append(f"🧙‍♂️ {destination} {budget} ({timestamp})")
+            get_shared_logs().append(f"🧙‍♂️ {destination} ({timestamp})")
             
             with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
                 try:
