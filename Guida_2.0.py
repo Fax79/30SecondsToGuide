@@ -500,7 +500,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 2. Bottone con Etichetta CORTA (Anti-Troncamento)
-st.page_link("pages/itinerari.py", label="APRI ITINERARY WIZARD ✨", use_container_width=True)
+st.page_link("pages/itinerari.py", label="➡️ APRI ITINERARY WIZARD ✨ ⬅️", use_container_width=True)
 
 st.write("") 
 
@@ -566,7 +566,7 @@ with st.container():
                     3. Usa ESATTAMENTE la struttura seguente.
                     4. Scrivi paragrafi ricchi e lunghi.
                     5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
-                    6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso ma sintetico, non usare la struttura della guida.
+                    6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso ma sintetico, non usare la struttura della guida. Se viene chiesta una nazionale, regione o area geografica suggerisci di utilizzare L'"ITINERARY WIZARD".
                     
                     MODELLO:
                     {TESTO_MODELLO}
@@ -674,3 +674,4 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
