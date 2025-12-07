@@ -1,6 +1,8 @@
 import streamlit as st
 import google.generativeai as genai
-from fpdf import FPDF, set_global # Importo set_global per i font
+from fpdf import FPDF 
+# *** HO MODIFICATO QUESTA RIGA: Importazione diretta di set_global dal modulo interno fpdf2 ***
+from fpdf2.fpdf import set_global 
 import base64
 import datetime
 import unicodedata
@@ -286,8 +288,7 @@ def create_complex_pdf(text, destination, meta_data):
                 
                 pdf.set_x(18) # Inizio proiettile
                 
-                # Disegna il punto elenco (chr(149) è il punto, chr(110) è il quadrato in ZapfDingbats)
-                # Ho usato chr(149) come nel tuo codice funzionante per coerenza, se FPDF non lo trova userà un carattere generico
+                # Disegna il punto elenco 
                 pdf.cell(3, line_height, chr(149), 0, 0, 'L') 
                 
                 # Posiziona l'inizio del testo dopo il proiettile (18 + 5 = 23)
