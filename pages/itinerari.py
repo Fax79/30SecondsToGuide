@@ -69,7 +69,7 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v10.0 (DYNAMIC WIDTHS)"
+# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v11.0 (BUNKER EDITION)"
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
@@ -149,11 +149,13 @@ def create_complex_pdf(text, destination, meta_data):
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
     pdf = WizardPDF()
+    # --- SAFETY: Impostiamo margini espliciti per evitare il "drift" ---
+    pdf.set_margins(15, 20, 15) 
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (SAFE) ---
+    # --- BOX CONTESTUALE (FIX WIDTH: 175mm Rect, 160mm Text) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -169,28 +171,31 @@ def create_complex_pdf(text, destination, meta_data):
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
+        # --- FIX PAGE BREAK ---
         if pdf_obj.get_y() > 250: 
              pdf_obj.add_page()   
 
         pdf_obj.ln(4)
         
         current_y = pdf_obj.get_y()
+        
+        # Sfondo (Larghezza fissa 175mm)
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
+        pdf_obj.set_x(15) # Forziamo l'inizio
+        pdf_obj.rect(15, current_y, 175, 14, 'DF')
         
-        # Larghezza Sicura per il Box: 175mm (A4=210, Margini default 10+10=20. Spazio=190. 175 è OK)
-        box_w = 175
-        pdf_obj.rect(10, current_y, box_w, 14, 'DF')
-        
+        # Accent
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
-        pdf_obj.rect(10, current_y, 2, 14, 'F')
+        pdf_obj.rect(15, current_y, 2, 14, 'F')
         
-        pdf_obj.set_xy(15, current_y + 4) 
+        # Testo
+        pdf_obj.set_xy(20, current_y + 4) # Spostiamo il cursore dentro
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
         
-        # Larghezza Testo nel Box: 165mm
-        pdf_obj.cell(165, 6, f"{text} >", link=link)
+        # Larghezza Testo Sicura: 160mm
+        pdf_obj.cell(160, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
@@ -207,7 +212,6 @@ def create_complex_pdf(text, destination, meta_data):
         line_upper = clean_line.upper()
         
         # --- LOGICA BLINDATA LINK ---
-        
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
             banner_text = f"I biglietti dei voli in {month_clean} aumentano? Blocca le tariffe migliori su Kiwi.com"
             make_box(pdf, banner_text, FLIGHT_LINK, "green")
@@ -235,7 +239,7 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
             pdf.set_text_color(44, 62, 80)
-            # w=0 significa "fino al margine destro"
+            # w=0 occupa tutto lo spazio disponibile fino al margine destro
             pdf.multi_cell(0, 10, clean_line.replace('#', '').strip())
             pdf.ln(5)
             
@@ -250,27 +254,31 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_font("Helvetica", 'B', 12)
             pdf.set_fill_color(220, 220, 220)
             clean_verdict = clean_line.replace('*', '').strip()
-            # w=0 è sicuro qui
             pdf.cell(0, 10, clean_verdict, 1, 1, 'C', fill=True)
             pdf.ln(5)
             
+        # --- FIX DEFINITIVO BULLET POINTS ---
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
             
-            # CALCOLO DINAMICO PER EVITARE CRASH
-            indent = 15
-            bullet_w = 5
-            pdf.set_x(indent)
-            pdf.cell(bullet_w, 6, chr(149), 0, 0)
+            # 1. Salviamo la Y corrente
+            current_y = pdf.get_y()
+            
+            # 2. Stampiamo il Bullet a sinistra (X=15)
+            pdf.set_xy(15, current_y)
+            pdf.cell(5, 6, chr(149), 0, 0) # Width 5
+            
+            # 3. Stampiamo il Testo spostato (X=22)
+            # Indentiamo di 7mm dal margine sinistro (15+7=22)
+            pdf.set_xy(22, current_y)
             
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
             
-            # SAFETY CALCULATION
-            # Page W (210) - Right Margin (10) - Current X (20) = Available Space (180)
-            # Usiamo 170 per stare tranquilli.
-            safe_width = 170 
-            pdf.multi_cell(safe_width, 6, content) 
+            # 4. Larghezza ultra-safe: 160mm
+            # 22 (inizio) + 160 (testo) = 182mm. Margine destro è a 195mm (210-15).
+            # Abbiamo 13mm di sicurezza. IMPOSSIBILE CHE CRASHI.
+            pdf.multi_cell(160, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
@@ -282,7 +290,6 @@ def create_complex_pdf(text, destination, meta_data):
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                # w=0 usa tutto lo spazio disponibile in modo sicuro
                 pdf.multi_cell(0, 6, clean_line)
                 pdf.ln(1)
 
@@ -298,15 +305,20 @@ def create_complex_pdf(text, destination, meta_data):
         else:
             pdf.set_fill_color(250, 250, 250) 
             pdf.set_draw_color(220, 220, 220) 
+        
         start_y = pdf.get_y()
-        # Larghezza box partner: 175
-        pdf.rect(10, start_y, 175, 14, 'DF') 
-        pdf.set_y(start_y + 2)
+        
+        # Forziamo X e Width
         pdf.set_x(15)
+        pdf.rect(15, start_y, 175, 14, 'DF') 
+        
+        pdf.set_y(start_y + 2)
+        pdf.set_x(20)
         pdf.set_font("Helvetica", 'B', 10) 
         pdf.set_text_color(44, 62, 80)
         pdf.cell(0, 5, title, 0, 1)
-        pdf.set_x(15)
+        
+        pdf.set_x(20)
         pdf.set_font("Helvetica", '', 9)
         pdf.set_text_color(0, 102, 204)
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
