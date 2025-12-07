@@ -69,7 +69,7 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE (SAFE MODE v8.0)
+# 🧙‍♂️ PDF ENGINE (SAFE MODE v8.1)
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
@@ -78,8 +78,8 @@ def create_complex_pdf(text, destination, meta_data):
         if not text_input: return ""
         text_input = text_input.replace("**", "") 
         replacements = {
-            "€": "EUR", "â¬": "EUR", "$": "USD", "£": "GBP",
-            "'": "'", "'": "'", """: '"', """: '"', "–": "-", "—": "-", "…": "..."
+            "€": "EUR", "â¬": "EUR", "$": "USD", "£": "GBP",
+            "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "..."
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
@@ -150,8 +150,8 @@ def create_complex_pdf(text, destination, meta_data):
 
     # --- CONFIGURAZIONE MARGINI E PAGINA ---
     pdf = WizardPDF()
-    pdf.set_margins(15, 15, 15)
-    pdf.set_auto_page_break(auto=True, margin=25)
+    pdf.set_margins(15, 15, 15)  # Margini: Sinistra, Alto, Destra (15mm)
+    pdf.set_auto_page_break(auto=True, margin=25) # Break automatico a 25mm dal fondo
     
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
@@ -188,6 +188,7 @@ def create_complex_pdf(text, destination, meta_data):
         pdf_obj.set_xy(20, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
+        
         pdf_obj.cell(170, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
@@ -227,52 +228,54 @@ def create_complex_pdf(text, destination, meta_data):
             inserted_ch4 = True
 
         # --- FORMATTAZIONE TESTO ---
-        # Larghezza effettiva disponibile: 210mm - 15mm (sx) - 15mm (dx) = 180mm
-        
         if line.strip().startswith('# '): 
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
             pdf.set_text_color(44, 62, 80)
-            pdf.multi_cell(0, 10, clean_line.replace('#', '').strip())
+            pdf.multi_cell(175, 10, clean_line.replace('#', '').strip())
             pdf.ln(5)
             
         elif line.strip().startswith('## '): 
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 14)
             pdf.set_text_color(230, 126, 34) 
-            pdf.multi_cell(0, 10, clean_line.replace('##', '').strip())
+            pdf.multi_cell(175, 10, clean_line.replace('##', '').strip())
             
         elif "VERDETTO" in line_upper: 
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 12)
             pdf.set_fill_color(220, 220, 220)
             clean_verdict = clean_line.replace('*', '').strip()
-            pdf.multi_cell(0, 8, clean_verdict, border=1, align='C', fill=True)
+            pdf.multi_cell(180, 8, clean_verdict, border=1, align='C', fill=True)
             pdf.ln(5)
             
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
-            pdf.set_x(20)
+            
+            # --- LISTA: USA LA LOGICA A LARGHEZZA ZERO ---
+            content_raw = re.sub(r'^[\*-]\s*', '', clean_line).strip()
+            content = clean_text_for_pdf(content_raw.replace('*', ''))
+            
+            pdf.set_x(15) 
             pdf.cell(5, 6, chr(149), 0, 0)
-            content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
+            pdf.set_x(22) # Spostamento esplicito (essenziale per la larghezza 0)
             
             if content:
-                # Larghezza per bullet: 180mm - 5mm (rientro da 15 a 20) - 5mm (bullet) = 170mm
-                pdf.multi_cell(170, 6, content) 
+                pdf.multi_cell(0, 6, content) # Larghezza 0: usa il resto dello spazio
+            pdf.ln(1)
         
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
             pdf.set_text_color(44, 62, 80)
             pdf.ln(2)
-            pdf.multi_cell(0, 6, clean_line)
+            pdf.multi_cell(175, 6, clean_line)
             
         else: 
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                # Usa 0 per sfruttare tutta la larghezza disponibile tra i margini
-                pdf.multi_cell(0, 6, clean_line)
+                pdf.multi_cell(175, 6, clean_line)
                 pdf.ln(1)
 
     # --- PAGINA PARTNER ---
@@ -400,7 +403,9 @@ with st.container():
         9: "Settembre", 10: "Ottobre", 11: "Novembre", 12: "Dicembre"
     }
 
-    # RIGA 1
+    # --- CALCOLO DATE E FIX ATTRIBUTE ERROR ---
+    data_default_partenza = datetime.date.today() + datetime.timedelta(days=30)
+    
     c_dest, c_bud = st.columns([2, 1])
     with c_dest:
         destination = st.text_input("Destinazione (Città/Regione/Paese)", placeholder="Es. New York,  Provenza,  Giappone...")
@@ -410,9 +415,13 @@ with st.container():
     # RIGA 2
     c_start, c_end = st.columns(2)
     with c_start:
-         start_date = st.date_input("Data Partenza", datetime.date.today() + datetime.timedelta(days=30))
+         start_date = st.date_input("Data Partenza", data_default_partenza)
+
+    # Impostiamo la data di default di ritorno 7 giorni dopo la data di partenza
+    data_default_ritorno = start_date + datetime.timedelta(days=7)
+
     with c_end:
-         end_date = st.date_input("Data Ritorno", datetime.date.today() + datetime.timedelta(days=37))
+         end_date = st.date_input("Data Ritorno", data_default_ritorno)
 
     # RIGA 3
     c_ad, c_kids = st.columns(2)
@@ -526,79 +535,6 @@ with st.container():
             file_name=f"Itinerario_{destination.replace(' ', '_')}.pdf",
             mime="application/pdf",
             use_container_width=True,
-            on_click=reset_app
-        )
-
-# =========================================================
-# 🏨 TRAVEL HUB
-# =========================================================
-st.markdown("---")
-st.subheader("✈️ I migliori strumenti per il tuo viaggio")
-
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.caption("✈️ **Voli**")
-    partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
-with c2:
-    st.caption("🏨 **Hotel**")
-    partner_button("Expedia", HOTEL_LINK, "btn_booking.png") 
-with c3:
-    st.caption("🚘 **Transfer**")
-    partner_button("Welcome Pickups", TRANSF_LINK, "btn_wp.png")
-
-st.write("") 
-
-c4, c5, c6 = st.columns(3)
-with c4:
-    st.caption("🎟️ **Tour**")
-    partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png") 
-with c5:
-    st.caption("🚗 **Auto**")
-    partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
-with c6:
-    st.caption("🎒 **Bagagli**")
-    partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
-
-st.write("") 
-
-c7, c8, c9 = st.columns(3)
-with c7:
-    st.caption("📲 **Dati**")
-    partner_button("eSim Saily", ESIM_LINK, "btn_saily.png")
-with c8:
-    st.caption("🛡️ **Polizza**")
-    partner_button("Assicuraz.", INSURANCE_LINK, "btn_heymondo.png")
-with c9:
-    st.caption("💸 **Risarcim.**")
-    partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
-
-st.write("") 
-
-c10, c11, c12 = st.columns(3)
-with c10:
-    st.caption("🚆 **Treni**")
-    partner_button("Omio", TRAIN_LINK, "btn_omio.png")
-with c11:
-    st.caption("🍴 **Ristoranti**")
-    partner_button("Tripadvisor", RESTAURANT_LINK, "btn_tripadv.png")
-with c12:
-    st.caption("🚖 **Taxi**")
-    partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
-
-st.markdown("---")
-st.markdown("""
-<div style="text-align: justify; color: #555;">
-    <h3>Come funziona Itinerary Wizard?</h3>
-    <p>
-        Questo strumento avanzato di <strong>30SecondsToGuide</strong> pianifica viaggi complessi analizzando il tuo budget.
-        Inserisci destinazione, date, composizione del gruppo e budget massimo: l'AI genererà un 
-        <strong>Travel Plan</strong> completo con strategie di spesa, itinerari giornalieri e consigli logistici.
-    </p>
-    <p>
-        Il servizio è <strong>gratuito al 100%</strong>.
-    </p>
-</div>
-""", unsafe_allow_html=True)
             on_click=reset_app
         )
 
