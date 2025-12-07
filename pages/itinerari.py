@@ -69,24 +69,42 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD FPDF2 COMPLIANT"
+# 🧙‍♂️ PDF ENGINE (ALLINEATO AD APP.PY)
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
-    # --- CLEANER (Essenziale per i font standard) ---
+    # --- FUNZIONE SPAZZINO (COPIATA DA APP.PY) ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
+        
+        # 1. Normalizzazione NFC
+        text_input = unicodedata.normalize('NFC', text_input)
+        
+        # 2. Sostituzioni caratteri speciali
         replacements = {
-            "€": "EUR", "â¬": "EUR", "$": "USD", "£": "GBP", "¥": "JPY",
             "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
-            "«": '"', "»": '"', "•": "-"
+            "€": "EUR", "$": "USD", "£": "GBP"
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
+            
+        output = []
+        for char in text_input:
+            try:
+                # 3. Test Latin-1
+                char.encode('latin-1')
+                output.append(char)
+            except UnicodeEncodeError:
+                # 4. Fallback (NFD) - Se fallisce qui, il carattere viene ignorato (comportamento app.py)
+                decomposed = unicodedata.normalize('NFD', char)
+                stripped = "".join(c for c in decomposed if unicodedata.category(c) != 'Mn')
+                try:
+                    stripped.encode('latin-1')
+                    output.append(stripped)
+                except:
+                    pass # Se è un Kanji o simbolo strano, viene saltato senza crashare
         
-        text_input = unicodedata.normalize('NFKD', text_input)
-        # Encoding Latin-1 Ignore: Cancella tutto ciò che FPDF2 non può stampare (Kanji, Emoji)
-        return text_input.encode('latin-1', 'ignore').decode('latin-1')
+        return "".join(output)
 
     dest_clean = clean_text_for_pdf(destination)
     month_clean = clean_text_for_pdf(meta_data.get('month_name', ''))
@@ -95,7 +113,6 @@ def create_complex_pdf(text, destination, meta_data):
         def header(self):
             if self.page_no() == 1: return
             self.set_fill_color(44, 62, 80) 
-            # FPDF2 usa larghezza pagina dinamica
             self.rect(0, 0, 210, 15, 'F')
             self.set_font('Helvetica', 'B', 8)
             self.set_text_color(255, 255, 255)
@@ -139,13 +156,11 @@ def create_complex_pdf(text, destination, meta_data):
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
     pdf = WizardPDF()
-    # 1. Impostiamo margini espliciti (10mm) per FPDF2
-    pdf.set_margins(10, 20, 10)
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (ADATTIVO FPDF2) ---
+    # --- BOX CONTESTUALE (ALLINEATO AD APP.PY) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -161,29 +176,27 @@ def create_complex_pdf(text, destination, meta_data):
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
+        # Controllo Page Break
         if pdf_obj.get_y() > 250: 
              pdf_obj.add_page()   
 
         pdf_obj.ln(4)
+        
+        # 1. Sfondo (Misure da app.py: X=15, W=180)
         current_y = pdf_obj.get_y()
-        
-        # In FPDF2, usiamo la larghezza effettiva disponibile
-        # Page W (210) - Margin Left (10) - Margin Right (10) = 190
-        available_w = 190 
-        
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
-        pdf_obj.rect(10, current_y, available_w, 14, 'DF')
+        pdf_obj.rect(15, current_y, 180, 14, 'DF')
         
+        # 2. Barra di Accento
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
-        pdf_obj.rect(10, current_y, 2, 14, 'F')
+        pdf_obj.rect(15, current_y, 2, 14, 'F')
         
-        pdf_obj.set_xy(15, current_y + 4) 
+        # 3. Testo (Misure da app.py: X=20, W=170)
+        pdf_obj.set_xy(20, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        
-        # w=0 occupa tutto lo spazio fino al margine destro
-        pdf_obj.cell(0, 6, f"{text} >", link=link)
+        pdf_obj.cell(170, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
@@ -199,7 +212,8 @@ def create_complex_pdf(text, destination, meta_data):
         clean_line = clean_text_for_pdf(line)
         line_upper = clean_line.upper()
         
-        # --- LOGICA LINK ---
+        # --- LOGICA BLINDATA LINK ---
+        
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
             banner_text = f"I biglietti dei voli in {month_clean} aumentano? Blocca le tariffe migliori su Kiwi.com"
             make_box(pdf, banner_text, FLIGHT_LINK, "green")
@@ -227,7 +241,7 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
             pdf.set_text_color(44, 62, 80)
-            # w=0: Usa tutto lo spazio disponibile (SAFE per FPDF2)
+            # w=0 (Usiamo la logica di app.py)
             pdf.multi_cell(0, 10, clean_line.replace('#', '').strip())
             pdf.ln(5)
             
@@ -245,24 +259,20 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.cell(0, 10, clean_verdict, 1, 1, 'C', fill=True)
             pdf.ln(5)
             
-        # --- BULLET POINTS (FPDF2 COMPLIANT) ---
+        # --- ELENCHI PUNTATI (Allineati ad app.py) ---
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
             
-            # Reset X per sicurezza (margine sinistro)
-            pdf.set_x(10)
-            
-            # Spostiamo per l'indentazione del bullet (15mm)
+            # Usiamo le stesse coordinate di app.py (X=15)
             pdf.set_x(15)
-            pdf.cell(5, 6, chr(149), 0, 0) # Bullet
+            pdf.cell(5, 6, chr(149), 0, 0)
             
-            # Il cursore ora è a X=20
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
             
-            # w=0: "Scrivi da X=20 fino al margine destro (200)"
-            # Questo è il trucco. Non calcoliamo la larghezza (170/160), 
-            # lasciamo fare a FPDF2.
+            # X=22 per il testo, come in app.py
+            pdf.set_x(22)
+            # w=0 (Auto-Width) come in app.py
             pdf.multi_cell(0, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
@@ -275,6 +285,7 @@ def create_complex_pdf(text, destination, meta_data):
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
+                # w=0 come in app.py
                 pdf.multi_cell(0, 6, clean_line)
                 pdf.ln(1)
 
@@ -290,8 +301,9 @@ def create_complex_pdf(text, destination, meta_data):
         else:
             pdf.set_fill_color(250, 250, 250) 
             pdf.set_draw_color(220, 220, 220) 
+        
         start_y = pdf.get_y()
-        # Larghezza rettangolo 190 (Tutta pagina interna)
+        # Misure da app.py (X=10, W=190)
         pdf.rect(10, start_y, 190, 14, 'DF') 
         pdf.set_y(start_y + 2)
         pdf.set_x(15)
@@ -458,7 +470,7 @@ with st.container():
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
-                    # Prompt corazzato + Regole Anti-Crash
+                    # PROMPT ANTI-CRASH (MANTENUTO)
                     prompt = f"""
                     Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi il sogno di una vita.
                     Razionalizza il tempo, visita quanti più posti possibili con {duration} notti a disposizione.
@@ -474,7 +486,7 @@ with st.container():
                     1. Usa SOLO l'alfabeto Latino/Italiano esteso. È VIETATO usare ideogrammi, Kanji, Cirillico o Emoji.
                     2. TRASLITTERA TASSATIVAMENTE i nomi locali in caratteri Latini (es. scrivi "Shinjuku", MAI "新宿").
                     3. Se non puoi traslitterare, usa il nome in Inglese o Italiano.
-                    4. Simboli Valute: scrivi "EUR", "USD", "JPY" (MAI simboli grafici come ¥).
+                    4. Simboli Valute: scrivi "EUR", "USD", "JPY" (MAI simboli grafici).
                     5. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
                     6. VIETATO USARE LISTE ANNIDATE.
                     7. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
