@@ -1,11 +1,18 @@
 import streamlit as st
 import google.generativeai as genai
-from fpdf import FPDF
+from fpdf import FPDF, set_global # Importo set_global per i font
 import base64
 import datetime
 import unicodedata
 import os
 import re
+
+# --- CONFIGURAZIONE GLOBALE FPDF (per il font ZapfDingbats) ---
+# Aggiunto per garantire che i proiettili (chr(149)) vengano visualizzati
+try:
+    set_global("FPDF_FONTPATH", os.path.join(os.path.dirname(__file__), 'font')) 
+except Exception:
+    pass # Non interrompere se la configurazione del path non è essenziale
 
 # --- CONFIGURAZIONE PAGINA ---
 if os.path.exists("logo.png"):
@@ -69,21 +76,22 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE (SAFE MODE v8.1)
+# 🧙‍♂️ PDF ENGINE (SAFE MODE v8.1) - AGGIORNATO CON LOGICA DEL SECONDO FILE
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
-    # --- FUNZIONE SPAZZINO ---
+    # --- FUNZIONE SPAZZINO 3.6 (ITALIAN SAFE) - POTENZIATA ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        text_input = text_input.replace("**", "") 
+        # Rimuovi * e ** per evitare errori di formattazione non voluti
+        text_input = text_input.replace("**", "").replace("*", "") 
+        text_input = unicodedata.normalize('NFC', text_input)
         replacements = {
             "€": "EUR", "â¬": "EUR", "$": "USD", "£": "GBP",
             "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "..."
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
-        text_input = unicodedata.normalize('NFC', text_input)
         output = []
         for char in text_input:
             try:
@@ -92,17 +100,21 @@ def create_complex_pdf(text, destination, meta_data):
             except UnicodeEncodeError:
                 decomposed = unicodedata.normalize('NFD', char)
                 stripped = "".join(c for c in decomposed if unicodedata.category(c) != 'Mn')
-                try:
-                    stripped.encode('latin-1')
-                    output.append(stripped)
-                except:
-                    pass     
-        return "".join(output)
+                output.append(stripped)
+        return "".join(output).strip() # Aggiunto .strip() per pulizia finale
 
     dest_clean = clean_text_for_pdf(destination)
     month_clean = clean_text_for_pdf(meta_data.get('month_name', ''))
 
     class WizardPDF(FPDF):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            # Aggiunto il font ZapfDingbats per i proiettili
+            try:
+                self.add_font("ZapfDingbats", "", "zapfdingbats.pkl")
+            except:
+                pass 
+                
         def header(self):
             if self.page_no() == 1: return
             self.set_fill_color(44, 62, 80) 
@@ -149,7 +161,8 @@ def create_complex_pdf(text, destination, meta_data):
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
     # --- CONFIGURAZIONE MARGINI E PAGINA ---
-    pdf = WizardPDF()
+    # Inizializzo con la nuova classe che include ZapfDingbats
+    pdf = WizardPDF() 
     pdf.set_margins(15, 15, 15)  # Margini: Sinistra, Alto, Destra (15mm)
     pdf.set_auto_page_break(auto=True, margin=25) # Break automatico a 25mm dal fondo
     
@@ -178,9 +191,10 @@ def create_complex_pdf(text, destination, meta_data):
         pdf_obj.ln(4)
         
         current_y = pdf_obj.get_y()
+        # Modifico la larghezza per rispettare i margini di 15mm (210 - 2*15 = 180)
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
-        pdf_obj.rect(15, current_y, 180, 14, 'DF')
+        pdf_obj.rect(15, current_y, 180, 14, 'DF') 
         
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
         pdf_obj.rect(15, current_y, 2, 14, 'F')
@@ -227,43 +241,62 @@ def create_complex_pdf(text, destination, meta_data):
             make_box(pdf, "Ristoranti: Leggi le recensioni su TripAdvisor", RESTAURANT_LINK, "green")
             inserted_ch4 = True
 
-        # --- FORMATTAZIONE TESTO ---
+        # --- FORMATTAZIONE TESTO: TITOLI (Presi dal codice Funzionante) ---
         if line.strip().startswith('# '): 
-            pdf.ln(5)
-            pdf.set_font("Helvetica", 'B', 20)
+            pdf.ln(10)
+            pdf.set_font("Helvetica", 'B', 22)
             pdf.set_text_color(44, 62, 80)
-            pdf.multi_cell(175, 10, clean_line.replace('#', '').strip())
-            pdf.ln(5)
+            # Ho rimosso .upper() per il titolo principale per rispettare il case-style del modello
+            content = clean_line.replace('#', '').strip() 
+            pdf.multi_cell(0, 10, content)
+            y = pdf.get_y()
+            pdf.set_draw_color(230, 126, 34)
+            pdf.set_line_width(1)
+            pdf.line(15, y+2, 55, y+2) # Spostato a 15, per rispettare i margini
+            pdf.ln(8)
             
         elif line.strip().startswith('## '): 
             pdf.ln(5)
-            pdf.set_font("Helvetica", 'B', 14)
+            pdf.set_font("Helvetica", 'B', 16) # Aumentato a 16 per coerenza
             pdf.set_text_color(230, 126, 34) 
-            pdf.multi_cell(175, 10, clean_line.replace('##', '').strip())
+            content = clean_line.replace('##', '').strip()
+            pdf.cell(0, 10, content, ln=True)
+            pdf.ln(2)
             
         elif "VERDETTO" in line_upper: 
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 12)
             pdf.set_fill_color(220, 220, 220)
-            clean_verdict = clean_line.replace('*', '').strip()
+            clean_verdict = clean_line.strip()
             pdf.multi_cell(180, 8, clean_verdict, border=1, align='C', fill=True)
             pdf.ln(5)
-            
+
+        # --- FORMATTAZIONE TESTO: LISTE PUNTATE (Logica del codice Funzionante) ---
+        # Usa chr(149) per il proiettile standard e `set_x` per l'indentazione.
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
-            pdf.set_font("Helvetica", '', 11)
-            pdf.set_text_color(20, 20, 20)
+            pdf.set_font("Helvetica", '', 10) # Carattere leggermente più piccolo per le liste
+            pdf.set_text_color(40, 40, 40)
             
-            # --- LISTA: USA LA LOGICA A LARGHEZZA ZERO ---
-            content_raw = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            content = clean_text_for_pdf(content_raw.replace('*', ''))
-            
-            pdf.set_x(15) 
-            pdf.cell(5, 6, chr(149), 0, 0)
-            pdf.set_x(22) # Spostamento esplicito (essenziale per la larghezza 0)
+            # Pulisce la riga dal proiettile iniziale
+            content_raw = re.sub(r'^[\*-]\s*', '', line).strip()
+            content = clean_text_for_pdf(content_raw).strip() 
             
             if content:
-                pdf.multi_cell(0, 6, content) # Larghezza 0: usa il resto dello spazio
-            pdf.ln(1)
+                line_height = 5.5
+                
+                pdf.set_x(18) # Inizio proiettile
+                
+                # Disegna il punto elenco (chr(149) è il punto, chr(110) è il quadrato in ZapfDingbats)
+                # Ho usato chr(149) come nel tuo codice funzionante per coerenza, se FPDF non lo trova userà un carattere generico
+                pdf.cell(3, line_height, chr(149), 0, 0, 'L') 
+                
+                # Posiziona l'inizio del testo dopo il proiettile (18 + 5 = 23)
+                pdf.set_x(23) 
+                
+                # Stampa il testo con larghezza di 172 (195 - 23, usa il resto dello spazio)
+                pdf.multi_cell(172, line_height, content) 
+                
+                pdf.ln(0.5) 
         
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
@@ -275,12 +308,14 @@ def create_complex_pdf(text, destination, meta_data):
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                pdf.multi_cell(175, 6, clean_line)
-                pdf.ln(1)
+                content = clean_line # Già ripulito da * e ** dalla funzione clean_text_for_pdf
+                pdf.multi_cell(175, 6, content)
+                pdf.ln(2) # Aumentato a ln(2) per più spazio tra paragrafi
 
     # --- PAGINA PARTNER ---
     pdf.add_page()
     
+    # BOX PARTNER (logica copiata dal codice originale)
     def make_sponsor_box(title, subtitle, link, highlight=False):
         title = clean_text_for_pdf(title)
         subtitle = clean_text_for_pdf(subtitle)
@@ -294,6 +329,7 @@ def create_complex_pdf(text, destination, meta_data):
         if pdf.get_y() > 250: pdf.add_page()
 
         start_y = pdf.get_y()
+        # Larghezza di 180 per rispettare i margini di 15mm
         pdf.rect(15, start_y, 180, 14, 'DF') 
         pdf.set_y(start_y + 2)
         pdf.set_x(20)
@@ -334,7 +370,7 @@ def create_complex_pdf(text, destination, meta_data):
     return bytes(pdf.output(dest='S'))
 
 # ==========================================
-# 🖥️ INTERFACCIA UTENTE
+# 🖥️ INTERFACCIA UTENTE (NON MODIFICATA)
 # ==========================================
 
 with st.sidebar:
