@@ -69,7 +69,7 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v7.0 (FPDF2 FIX)"
+# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v7.1 (SAFE WIDTH)"
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
@@ -146,7 +146,6 @@ def create_complex_pdf(text, destination, meta_data):
             self.cell(0, 6, f"Budget Target: {clean_budget}", 0, 1, 'C')
             self.set_y(260)
             self.set_font('Helvetica', '', 10)
-            # In fpdf2 link è un parametro keyword
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
     pdf = WizardPDF()
@@ -154,7 +153,7 @@ def create_complex_pdf(text, destination, meta_data):
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (CON CONTROLLO PAGINA) ---
+    # --- BOX CONTESTUALE (SAFE MODE) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -170,7 +169,6 @@ def create_complex_pdf(text, destination, meta_data):
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
-        # --- FIX PAGE BREAK ---
         if pdf_obj.get_y() > 250: 
              pdf_obj.add_page()   
 
@@ -187,8 +185,9 @@ def create_complex_pdf(text, destination, meta_data):
         pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        # Importante: link deve essere passato esplicitamente come keyword in fpdf2 se ci sono altri argomenti
-        pdf_obj.cell(180, 6, f"{text} >", link=link)
+        
+        # FIX LARGHEZZA TESTO BOX (Ridotto a 170 per sicurezza)
+        pdf_obj.cell(170, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
@@ -204,7 +203,6 @@ def create_complex_pdf(text, destination, meta_data):
         clean_line = clean_text_for_pdf(line)
         line_upper = clean_line.upper()
         
-        # --- LOGICA BLINDATA LINK ---
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
             banner_text = f"In {month_clean} i prezzi aumentano? Prenota ora su Kiwi.com"
             make_box(pdf, banner_text, FLIGHT_LINK, "green")
@@ -246,7 +244,8 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_font("Helvetica", 'B', 12)
             pdf.set_fill_color(220, 220, 220)
             clean_verdict = clean_line.replace('*', '').strip()
-            pdf.cell(0, 10, clean_verdict, border=1, ln=1, align='C', fill=True)
+            # FIX LARGHEZZA VERDETTO
+            pdf.cell(190, 10, clean_verdict, border=1, ln=1, align='C', fill=True)
             pdf.ln(5)
             
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
@@ -255,8 +254,10 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_x(15)
             pdf.cell(5, 6, chr(149), 0, 0)
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            # Fissata larghezza per evitare errori di calcolo in fpdf2
-            pdf.multi_cell(170, 6, content) 
+            
+            # === FIX CRITICO: Ridotto da 170 a 155 ===
+            if content:
+                pdf.multi_cell(155, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
@@ -293,7 +294,6 @@ def create_complex_pdf(text, destination, meta_data):
         pdf.set_x(15)
         pdf.set_font("Helvetica", '', 9)
         pdf.set_text_color(0, 102, 204)
-        # Link keyword esplicito
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
         pdf.ln(4) 
 
@@ -322,7 +322,6 @@ def create_complex_pdf(text, destination, meta_data):
     make_sponsor_box("Rimborsi Voli", "Volo in ritardo? Chiedi risarcimento con AirHelp", REIMB_LINK, highlight=True)
     make_sponsor_box("Taxi Locale", "Kiwitaxi per spostamenti urbani", TAXI_LINK, highlight=True)
 
-    # MODIFICA FONDAMENTALE PER FPDF2: Restituisce bytes direttamente, niente encode latin-1
     return bytes(pdf.output())
 
 # ==========================================
