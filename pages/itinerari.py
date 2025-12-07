@@ -69,11 +69,11 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD EDITION (ORIGINALE SACRO)"
+# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v7.0 (PAGE BREAK FIX)"
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
-    # --- FUNZIONE SPAZZINO ---
+    # --- FUNZIONE SPAZZINO 7.1 ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
         text_input = text_input.replace("**", "") 
@@ -153,7 +153,7 @@ def create_complex_pdf(text, destination, meta_data):
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE ---
+    # --- BOX CONTESTUALE (CON CONTROLLO PAGINA) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -169,9 +169,11 @@ def create_complex_pdf(text, destination, meta_data):
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
-        # FIX PAGE BREAK
-        if pdf_obj.get_y() > 250:
-             pdf_obj.add_page()
+        # --- FIX PAGE BREAK ---
+        # Controlliamo se c'è spazio sufficiente (25mm) prima del footer
+        if pdf_obj.get_y() > 250: # Se siamo sotto i 250mm (A4 è 297mm)
+             pdf_obj.add_page()   # Nuova pagina per non spezzare il banner
+        # ----------------------
 
         pdf_obj.ln(4)
         
@@ -189,7 +191,6 @@ def create_complex_pdf(text, destination, meta_data):
         pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        # Ripristinata larghezza originale
         pdf_obj.cell(180, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
@@ -206,7 +207,7 @@ def create_complex_pdf(text, destination, meta_data):
         clean_line = clean_text_for_pdf(line)
         line_upper = clean_line.upper()
         
-        # --- LOGICA BLINDATA LINK (TESTI ORIGINALI RIPRISTINATI) ---
+        # --- LOGICA BLINDATA LINK ---
         
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
             # === BANNER DINAMICO ===
@@ -260,7 +261,7 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_x(15)
             pdf.cell(5, 6, chr(149), 0, 0)
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            # Ripristinata larghezza originale (170)
+            # FIX "NOT ENOUGH SPACE": Larghezza fissa invece di 0
             pdf.multi_cell(170, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
@@ -449,13 +450,12 @@ with st.container():
             mese_partenza = mesi[start_date.month]
             
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            get_shared_logs().append(f"🧙‍♂️ {destination} | €{budget} ({timestamp})")
+            get_shared_logs().append(f"🧙‍♂️ {destination} ({timestamp})")
             
             with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
-                    # --- PROMPT CORAZZATO PER IL GIAPPONE ---
                     prompt = f"""
                     Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi il sogno di una vita.
                     Razionalizza il tempo, visita quanti più posti possibili con {duration} notti a disposizione.
@@ -467,17 +467,15 @@ with st.container():
                     - Gruppo: {pax_desc}
                     - Budget: € {budget}
                     
-                    REGOLE TASSATIVE (ANTI-CRASH):
-                    1. Usa SOLO l'alfabeto Latino/Italiano esteso. È VIETATO usare ideogrammi, Kanji, Cirillico o Emoji.
-                    2. TRASLITTERA TASSATIVAMENTE i nomi locali in caratteri Latini (es. scrivi "Shinjuku", MAI "新宿").
-                    3. Se non puoi traslitterare, usa il nome in Inglese o Italiano.
-                    4. Simboli Valute: scrivi "EUR", "USD", "JPY" (MAI simboli grafici come ¥).
-                    5. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
-                    6. VIETATO USARE LISTE ANNIDATE.
-                    7. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
-                    8. USA IL CALCOLO DELLA DURATA {duration}, NON RICALCOLARE.
-                    9. NON SCRIVERE I TUOI PENSIERI INTERNI.
-                    
+                    REGOLE TASSATIVE:
+                    1. Usa SOLO l'alfabeto Latino/Italiano esteso. NIENTE Kanji/Cirillico/Emoji.
+                    2. TRASLITTERA i nomi locali.
+                    3. Simboli Valute: scrivi "EUR", "USD".
+                    4. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
+                    5. VIETATO USARE LISTE ANNIDATE.
+                    6. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
+                    7. USA IL CALCOLO DELLA DURATA {duration}, NON RICALCOLARE.
+                    8. NON SCRIVERE I TUOI PENSIERI INTERNI ("HO SBAGLIATO", "DEVO USARE QUESTA REGOLA", "RICALCOLO") E SCRIVI SOLO LA VERSIONE FINALE.                    
                     STRUTTURA TITOLI (Usa ESATTAMENTE questi):
                     # {destination.upper()}: [Sottotitolo]
                     **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
@@ -600,3 +598,4 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
