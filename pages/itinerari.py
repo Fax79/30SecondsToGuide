@@ -273,8 +273,24 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.ln(2)
             pdf.multi_cell(175, 6, clean_line)
             
+        # --- NUOVO BLOCCO: Intestazioni Giorno (GIORNO X:)
+        elif re.match(r'GIORNO\s*\d+:', line_upper):
+            # Forzo l'interruzione di riga prima di un'intestazione GIORNO
+            if pdf.get_x() > 15:
+                pdf.ln(6) 
+
+            pdf.set_font("Helvetica", 'B', 11)
+            pdf.set_text_color(20, 20, 20)
+            pdf.multi_cell(175, 6, clean_line)
+            pdf.ln(1) # Spazio aggiuntivo dopo l'intestazione
+            
         else:
             if line.strip():
+                # Aggiungo un a capo condizionale se il cursore non è a inizio riga (a volte ereditato
+                # dalla riga precedente non formattata)
+                if pdf.get_x() > 15 and pdf.get_y() > 20: 
+                    pdf.ln(1) 
+                    
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
                 # Testo normale: 175mm (massima sicurezza)
