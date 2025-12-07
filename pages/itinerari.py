@@ -1,7 +1,5 @@
 import streamlit as st
 import google.generativeai as genai
-# fpdf2 si installa come 'fpdf', quindi l'importazione rimane la stessa
-# ma si adatta al nuovo standard API.
 from fpdf import FPDF
 import base64
 import datetime
@@ -10,21 +8,15 @@ import os
 import re
 
 # --- CONFIGURAZIONE PAGINA ---
-# Aggiunto controllo per os.path.exists altrimenti Streamlit potrebbe lanciare un errore
-# se il file non esiste.
-try:
-    if os.path.exists("logo.png"):
-        st.set_page_config(page_title="Itinerary Wizard", page_icon="logo.png", layout="centered")
-    else:
-        st.set_page_config(page_title="Itinerary Wizard", page_icon="🧙‍♂️", layout="centered")
-except Exception as e:
-    # Aggiunto un fallback robusto per la configurazione della pagina
+if os.path.exists("logo.png"):
+    st.set_page_config(page_title="Itinerary Wizard", page_icon="logo.png", layout="centered")
+else:
     st.set_page_config(page_title="Itinerary Wizard", page_icon="🧙‍♂️", layout="centered")
 
 # --- MEMORIA & API ---
 @st.cache_resource
 def get_shared_logs():
-    return [] 
+    return []
 
 try:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
@@ -44,7 +36,7 @@ RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"
 TRANSF_LINK = "https://tpx.lt/O5I4OrpX"
 TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"
 TIQETS_LINK = "https://tiqets.tpx.lt/XV1Urbnn"
-INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
+INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkjOn&redirect=TEMPORAL"
 TRAIN_LINK = "https://www.omio.com"
 RESTAURANT_LINK = "https://www.tripadvisor.com"
 HOTEL_LINK = "https://www.expedia.com"
@@ -77,22 +69,20 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v7.0 (fpdf2 Compatible)"
+# 🧙‍♂️ PDF ENGINE (SAFE MODE v8.0)
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
-    # --- FUNZIONE SPAZZINO 7.1 ---
-    # Questa funzione è critica per l'uso dei font Latin-1 standard di fpdf2
+    # --- FUNZIONE SPAZZINO ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        text_input = text_input.replace("**", "") 
+        text_input = text_input.replace("**", "")
         replacements = {
             "€": "EUR", "â¬": "EUR", "$": "USD", "£": "GBP",
             "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "..."
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
-        # Normalizzazione UNICODE e rimozione caratteri non Latin-1
         text_input = unicodedata.normalize('NFC', text_input)
         output = []
         for char in text_input:
@@ -106,7 +96,7 @@ def create_complex_pdf(text, destination, meta_data):
                     stripped.encode('latin-1')
                     output.append(stripped)
                 except:
-                    pass      
+                    pass    
         return "".join(output)
 
     dest_clean = clean_text_for_pdf(destination)
@@ -115,13 +105,13 @@ def create_complex_pdf(text, destination, meta_data):
     class WizardPDF(FPDF):
         def header(self):
             if self.page_no() == 1: return
-            self.set_fill_color(44, 62, 80) 
+            self.set_fill_color(44, 62, 80)
             self.rect(0, 0, 210, 15, 'F')
             self.set_font('Helvetica', 'B', 8)
             self.set_text_color(255, 255, 255)
             self.set_y(6)
-            self.cell(0, 0, f'TRAVEL PLAN: {dest_clean.upper()}', 0, 0, 'R')
-            self.ln(15) 
+            self.cell(0, 0, f'TRAVEL PLAN: {dest_clean.upper()}', border=0, ln=0, align='R')
+            self.ln(15)
             
         def footer(self):
             self.set_draw_color(200, 200, 200)
@@ -133,8 +123,8 @@ def create_complex_pdf(text, destination, meta_data):
 
         def make_cover(self, dest, meta):
             self.add_page()
-            self.set_fill_color(245, 245, 245) 
-            self.rect(0, 0, 210, 297, 'F') 
+            self.set_fill_color(245, 245, 245)
+            self.rect(0, 0, 210, 297, 'F')
             if os.path.exists("logo.png"):
                 self.image("logo.png", x=80, y=30, w=50)
             self.ln(80)
@@ -158,60 +148,56 @@ def create_complex_pdf(text, destination, meta_data):
             self.set_font('Helvetica', '', 10)
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
+    # --- CONFIGURAZIONE MARGINI E PAGINA ---
     pdf = WizardPDF()
-    # Imposta un margine esplicito per la larghezza standard
-    pdf.set_left_margin(10)
-    pdf.set_right_margin(10)
-    pdf.set_auto_page_break(auto=True, margin=20)
+    pdf.set_margins(15, 15, 15)  # Margini: Sinistra, Alto, Destra (15mm)
+    pdf.set_auto_page_break(auto=True, margin=25) # Break automatico a 25mm dal fondo
+    
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (CON CONTROLLO PAGINA) ---
+    # --- BOX CONTESTUALE (SAFE) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
         palettes = {
-            "blue":    {"bg": (240, 248, 255), "accent": (0, 102, 204)}, 
-            "green":   {"bg": (240, 255, 240), "accent": (0, 153, 76)},  
-            "yellow": {"bg": (255, 253, 240), "accent": (204, 153, 0)}, 
-            "purple": {"bg": (248, 240, 255), "accent": (102, 0, 153)}, 
-            "orange": {"bg": (255, 245, 235), "accent": (230, 90, 0)}    
+            "blue":  {"bg": (240, 248, 255), "accent": (0, 102, 204)},
+            "green":  {"bg": (240, 255, 240), "accent": (0, 153, 76)},
+            "yellow": {"bg": (255, 253, 240), "accent": (204, 153, 0)},
+            "purple": {"bg": (248, 240, 255), "accent": (102, 0, 153)},
+            "orange": {"bg": (255, 245, 235), "accent": (230, 90, 0)}
         }
         
         chosen = palettes.get(style, palettes["blue"])
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
-        # --- FIX PAGE BREAK ---
-        # Controlliamo se c'è spazio sufficiente (25mm) prima del footer
-        if pdf_obj.get_y() > 250: # Se siamo sotto i 250mm (A4 è 297mm)
-             pdf_obj.add_page()    # Nuova pagina per non spezzare il banner
-        # ----------------------
+        # Controllo manuale solo per i box per non spezzarli
+        if pdf_obj.get_y() > 250:
+             pdf_obj.add_page()
 
         pdf_obj.ln(4)
         
-        # 1. Sfondo
+        # Larghezza box fissa a 180mm (entro i margini di 15mm)
         current_y = pdf_obj.get_y()
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
-        pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
-        pdf_obj.rect(10, current_y, 190, 14, 'DF')
+        pdf_obj.set_draw_color(bg_r, bg_g, bg_b)
+        pdf_obj.rect(15, current_y, 180, 14, 'DF')
         
-        # 2. Barra di Accento
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
-        pdf_obj.rect(10, current_y, 2, 14, 'F')
+        pdf_obj.rect(15, current_y, 2, 14, 'F')
         
-        # 3. Testo
-        pdf_obj.set_xy(15, current_y + 4) 
+        pdf_obj.set_xy(20, current_y + 4)
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        # Larghezza 178mm per sicurezza sui margini
-        pdf_obj.cell(178, 6, f"{text} >", link=link)
+        
+        # Cella testo: 170mm (sicura)
+        pdf_obj.cell(170, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
     lines = text.split('\n')
     
-    # Flags
     inserted_ch1 = False
     inserted_ch2 = False
     inserted_ch3 = False
@@ -221,13 +207,10 @@ def create_complex_pdf(text, destination, meta_data):
         clean_line = clean_text_for_pdf(line)
         line_upper = clean_line.upper()
         
-        # --- LOGICA BLINDATA LINK ---
-        
+        # --- LOGICA LINK ---
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
-            # === BANNER DINAMICO ===
-            banner_text = f"In {month_clean} i prezzi dei voli aumentano? Prenota ora su Kiwi.com"
+            banner_text = f"In {month_clean} i prezzi aumentano? Prenota ora su Kiwi.com"
             make_box(pdf, banner_text, FLIGHT_LINK, "green")
-            # =======================
             make_box(pdf, "eSim Saily: Internet immediato all'arrivo senza acquisto di SIM locali", ESIM_LINK, "yellow")
             make_box(pdf, "MAI senza Assicurazione Sanitaria: Approfitta QUI dello sconto 10% con Heymondo", INSURANCE_LINK, "green")
             inserted_ch1 = True
@@ -248,102 +231,54 @@ def create_complex_pdf(text, destination, meta_data):
             inserted_ch4 = True
 
         # --- FORMATTAZIONE TESTO ---
-        if line.strip().startswith('# '): 
+        # NOTA: Qui usiamo larghezze conservative (175mm su 210mm totali)
+        
+        if line.strip().startswith('# '):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
             pdf.set_text_color(44, 62, 80)
-            # FIX: Larghezza fissa (190) invece di 0
-            pdf.multi_cell(190, 10, clean_line.replace('#', '').strip())
+            pdf.multi_cell(175, 10, clean_line.replace('#', '').strip())
             pdf.ln(5)
             
-        elif line.strip().startswith('## '): 
+        elif line.strip().startswith('## '):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 14)
-            pdf.set_text_color(230, 126, 34) 
-            # FIX: Larghezza fissa (190) invece di 0
-            pdf.multi_cell(190, 10, clean_line.replace('##', '').strip())
+            pdf.set_text_color(230, 126, 34)
+            pdf.multi_cell(175, 10, clean_line.replace('##', '').strip())
+            pdf.ln(3) # <--- FIX: Aggiunto spazio esplicito dopo il titolo del capitolo
             
-        elif "VERDETTO" in line_upper: 
-            # Inizio blocco Verdetto (Risposta al problema di overflow)
+        elif "VERDETTO" in line_upper:
             pdf.ln(5)
-            
-            clean_verdict = clean_line.replace('*', '').strip()
-            
-            if not clean_verdict:
-                # Se il verdetto è vuoto dopo la pulizia, saltiamo il blocco
-                continue
-                
-            # Imposta font e colore per il calcolo e la stampa
             pdf.set_font("Helvetica", 'B', 12)
-            pdf.set_text_color(44, 62, 80)
-            
-            # --- NUOVA LOGICA: CALCOLO ALTEZZA ESATTA TRAMITE dry_run (FIX CRASH) ---
-            line_height = 6
-            content_width = 178 # Larghezza fissa per il wrapping
-
-            start_y = pdf.get_y()
-            
-            # Imposta la posizione (X + Y iniziali) per la simulazione
-            pdf.set_xy(15, start_y + 2) 
-            
-            # Esegue la dry run e salva il risultato
-            result = pdf.multi_cell(
-                w=content_width, 
-                h=line_height, 
-                text=clean_verdict, 
-                border=0, 
-                align='C', 
-                fill=False,
-                dry_run=True
-            )
-
-            # FIX: Gestisce il caso in cui result sia None (o non abbia .h)
-            required_height = result.h if hasattr(result, 'h') else line_height
-            
-            # Calcola l'altezza totale del box (altezza testo + padding verticale 4mm)
-            box_height = required_height + 4
-            box_height = max(10, box_height) # Altezza minima 10mm
-
-            # Ripristina la Y e disegna il rettangolo (sfondo e bordo)
-            pdf.set_y(start_y)
             pdf.set_fill_color(220, 220, 220)
-            pdf.set_draw_color(200, 200, 200)
-            pdf.rect(10, start_y, 190, box_height, 'DF')
-
-            # 2. Posiziona il cursore per il testo effettivo
-            pdf.set_xy(15, start_y + 2)
-            
-            # 3. Usa multi_cell per la stampa (fill=False, non riempie la cella singola)
-            pdf.multi_cell(content_width, line_height, clean_verdict, 0, 'C', False) 
-
-            # 4. Sposta il cursore dopo il box
-            pdf.set_y(start_y + box_height)
+            clean_verdict = clean_line.replace('*', '').strip()
+            # Box verdetto: 180mm (pieno margine)
+            pdf.multi_cell(180, 8, clean_verdict, border=1, align='C', fill=True)
             pdf.ln(5)
-            # Fine blocco Verdetto
             
-        elif line.strip().startswith('* ') or line.strip().startswith('- '): 
+        elif line.strip().startswith('* ') or line.strip().startswith('- '):
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
-            pdf.set_x(15)
-            # Carattere del punto elenco (Latin-1)
+            pdf.set_x(20) # Rientro 20mm
             pdf.cell(5, 6, chr(149), 0, 0)
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            # Larghezza 168mm, padding 15mm a sx e 27mm a dx (rispetto a 190mm totali)
-            pdf.multi_cell(168, 6, content) 
+            
+            # Larghezza molto sicura: 160mm
+            if content:
+                pdf.multi_cell(160, 6, content)
         
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
             pdf.set_text_color(44, 62, 80)
             pdf.ln(2)
-            # FIX: Larghezza fissa (190) invece di 0
-            pdf.multi_cell(190, 6, clean_line)
+            pdf.multi_cell(175, 6, clean_line)
             
-        else: 
+        else:
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                # FIX: Larghezza fissa (190) invece di 0
-                pdf.multi_cell(190, 6, clean_line)
+                # Testo normale: 175mm (massima sicurezza)
+                pdf.multi_cell(175, 6, clean_line)
                 pdf.ln(1)
 
     # --- PAGINA PARTNER ---
@@ -353,23 +288,27 @@ def create_complex_pdf(text, destination, meta_data):
         title = clean_text_for_pdf(title)
         subtitle = clean_text_for_pdf(subtitle)
         if highlight:
-            pdf.set_fill_color(230, 240, 255) 
-            pdf.set_draw_color(0, 102, 204)    
+            pdf.set_fill_color(230, 240, 255)
+            pdf.set_draw_color(0, 102, 204)
         else:
-            pdf.set_fill_color(250, 250, 250) 
-            pdf.set_draw_color(220, 220, 220) 
+            pdf.set_fill_color(250, 250, 250)
+            pdf.set_draw_color(220, 220, 220)
+        
+        # Check spazio manuale solo qui
+        if pdf.get_y() > 250: pdf.add_page()
+
         start_y = pdf.get_y()
-        pdf.rect(10, start_y, 190, 14, 'DF') 
+        pdf.rect(15, start_y, 180, 14, 'DF')
         pdf.set_y(start_y + 2)
-        pdf.set_x(15)
-        pdf.set_font("Helvetica", 'B', 10) 
+        pdf.set_x(20)
+        pdf.set_font("Helvetica", 'B', 10)
         pdf.set_text_color(44, 62, 80)
         pdf.cell(0, 5, title, 0, 1)
-        pdf.set_x(15)
+        pdf.set_x(20)
         pdf.set_font("Helvetica", '', 9)
         pdf.set_text_color(0, 102, 204)
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
-        pdf.ln(4) 
+        pdf.ln(4)
 
     pdf.set_font("Helvetica", 'B', 14)
     pdf.set_text_color(100, 100, 100)
@@ -377,10 +316,10 @@ def create_complex_pdf(text, destination, meta_data):
     pdf.ln(2)
     
     make_sponsor_box("Expedia", "Hotel e Voli", HOTEL_LINK)
-    make_sponsor_box("Tiqets", "Biglietti musei e attrazioni", TIQETS_LINK) 
-    make_sponsor_box("Welcome Pickups", "Transfer aeroportuali", TRANSF_LINK) 
-    make_sponsor_box("Auto Europe", "Noleggio Auto", RENTAL_LINK)          
-    make_sponsor_box("Omio", "Treni e Bus", TRAIN_LINK)                      
+    make_sponsor_box("Tiqets", "Biglietti musei e attrazioni", TIQETS_LINK)
+    make_sponsor_box("Welcome Pickups", "Transfer aeroportuali", TRANSF_LINK)
+    make_sponsor_box("Auto Europe", "Noleggio Auto", RENTAL_LINK)
+    make_sponsor_box("Omio", "Treni e Bus", TRAIN_LINK)
     make_sponsor_box("Kiwi.com", "Voli low cost", FLIGHT_LINK)
     make_sponsor_box("Heymondo", "Assicurazione viaggio", INSURANCE_LINK)
     make_sponsor_box("Saily", "eSim internazionale", ESIM_LINK)
@@ -388,7 +327,7 @@ def create_complex_pdf(text, destination, meta_data):
 
     pdf.ln(5)
     pdf.set_font("Helvetica", 'B', 16)
-    pdf.set_text_color(44, 62, 80) 
+    pdf.set_text_color(44, 62, 80)
     pdf.cell(0, 10, "ALTRI SERVIZI INDISPENSABILI", 0, 1, 'L')
     pdf.ln(2)
     
@@ -396,9 +335,7 @@ def create_complex_pdf(text, destination, meta_data):
     make_sponsor_box("Rimborsi Voli", "Volo in ritardo? Chiedi risarcimento con AirHelp", REIMB_LINK, highlight=True)
     make_sponsor_box("Taxi Locale", "Kiwitaxi per spostamenti urbani", TAXI_LINK, highlight=True)
 
-    # 🚀 MODIFICA CHIAVE PER fpdf2
-    # fpdf2 restituisce già bytes per dest='S', rimuovendo .encode('latin-1')
-    return pdf.output(dest='S')
+    return bytes(pdf.output(dest='S'))
 
 # ==========================================
 # 🖥️ INTERFACCIA UTENTE
@@ -420,7 +357,7 @@ with st.sidebar:
     partner_button("Taxi (Kiwitaxi)", TAXI_LINK, "btn_taxi.png")
     
     st.caption("🎟️ ESPERIENZE & ALTRO")
-    partner_button("Musei & Ticket (Tiqets)", TIQETS_LINK, "btn_tiqets.png") 
+    partner_button("Musei & Ticket (Tiqets)", TIQETS_LINK, "btn_tiqets.png")
     partner_button("Ristoranti (Tripadvisor)", RESTAURANT_LINK, "btn_tripadv.png")
     
     st.caption("🛠️ SERVIZI UTILI")
@@ -431,7 +368,7 @@ with st.sidebar:
     
     with st.sidebar.expander("🔐 Admin Stats"):
         secret_pwd = st.text_input("Password", type="password")
-        if secret_pwd == "fabio123": 
+        if secret_pwd == "fabio123":
             st.write("### 📊 Ultime Ricerche:")
             logs = get_shared_logs()
             if logs:
@@ -458,7 +395,7 @@ st.markdown("""
     </p>
     """, unsafe_allow_html=True)
 
-st.write("") 
+st.write("")
 
 with st.container():
     st.info("🧙‍♂️ Inserisci i dettagli per ricevere un Travel Plan completo.")
@@ -495,10 +432,9 @@ with st.container():
     kids_ages = []
     if kids > 0:
         st.caption("Età dei ragazzi:")
-        # Uso del modulo per garantire che le colonne non superino il numero di figli
         k_cols = st.columns(min(kids, 4))
         for i in range(kids):
-            with k_cols[i % len(k_cols)]:
+            with k_cols[i % 4]:
                 age = st.number_input(f"Età figlio {i+1}", 0, 17, 10, key=f"kid_{i}")
                 kids_ages.append(str(age))
 
@@ -547,7 +483,8 @@ with st.container():
                     5. VIETATO USARE LISTE ANNIDATE.
                     6. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
                     7. USA IL CALCOLO DELLA DURATA {duration}, NON RICALCOLARE.
-                    8. NON SCRIVERE I TUOI PENSIERI INTERNI ("HO SBAGLIATO", "DEVO USARE QUESTA REGOLA", "RICALCOLO") E SCRIVI SOLO LA VERSIONE FINALE. 
+                    8. NON SCRIVERE I TUOI PENSIERI INTERNI ("HO SBAGLIATO", "DEVO USARE QUESTA REGOLA", "RICALCOLO") E SCRIVI SOLO LA VERSIONE FINALE.
+                    
                     STRUTTURA TITOLI (Usa ESATTAMENTE questi):
                     # {destination.upper()}: [Sottotitolo]
                     **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
@@ -612,17 +549,17 @@ with c1:
     partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
 with c2:
     st.caption("🏨 **Hotel**")
-    partner_button("Expedia", HOTEL_LINK, "btn_booking.png") 
+    partner_button("Expedia", HOTEL_LINK, "btn_booking.png")
 with c3:
     st.caption("🚘 **Transfer**")
     partner_button("Welcome Pickups", TRANSF_LINK, "btn_wp.png")
 
-st.write("") 
+st.write("")
 
 c4, c5, c6 = st.columns(3)
 with c4:
     st.caption("🎟️ **Tour**")
-    partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png") 
+    partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png")
 with c5:
     st.caption("🚗 **Auto**")
     partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
@@ -630,7 +567,7 @@ with c6:
     st.caption("🎒 **Bagagli**")
     partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
 
-st.write("") 
+st.write("")
 
 c7, c8, c9 = st.columns(3)
 with c7:
@@ -643,7 +580,7 @@ with c9:
     st.caption("💸 **Risarcim.**")
     partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
 
-st.write("") 
+st.write("")
 
 c10, c11, c12 = st.columns(3)
 with c10:
@@ -662,7 +599,7 @@ st.markdown("""
     <h3>Come funziona Itinerary Wizard?</h3>
     <p>
         Questo strumento avanzato di <strong>30SecondsToGuide</strong> pianifica viaggi complessi analizzando il tuo budget.
-        Inserisci destinazione, date, composizione del gruppo e budget massimo: l'AI genererà un 
+        Inserisci destinazione, date, composizione del gruppo e budget massimo: l'AI genererà un
         <strong>Travel Plan</strong> completo con strategie di spesa, itinerari giornalieri e consigli logistici.
     </p>
     <p>
