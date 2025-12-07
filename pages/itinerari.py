@@ -456,7 +456,7 @@ with st.container():
             mese_partenza = mesi[start_date.month]
             
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            get_shared_logs().append(f"🧙‍♂️ {destination} ({timestamp})")
+            get_shared_logs().append(f"🧙‍♂️ {destination} {budget} ({timestamp})")
             
             with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
                 try:
