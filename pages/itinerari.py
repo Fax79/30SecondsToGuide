@@ -180,7 +180,7 @@ def create_complex_pdf(text, destination, meta_data):
         current_y = pdf_obj.get_y()
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
-        pdf_obj.rect(15, current_y, 180, 14, 'DF') # Box width 180mm
+        pdf_obj.rect(15, current_y, 180, 14, 'DF')
         
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
         pdf_obj.rect(15, current_y, 2, 14, 'F')
@@ -189,7 +189,7 @@ def create_complex_pdf(text, destination, meta_data):
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
         
-        pdf_obj.cell(170, 6, f"{text} >", link=link) # Text width 170mm
+        pdf_obj.cell(170, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
@@ -253,13 +253,13 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
             
-            # --- MODIFICA CHIAVE: LISTA COMPATIBILE ---
+            # --- LISTA: USA LA LOGICA A LARGHEZZA ZERO ---
             content_raw = re.sub(r'^[\*-]\s*', '', clean_line).strip()
             content = clean_text_for_pdf(content_raw.replace('*', ''))
             
             pdf.set_x(15) 
             pdf.cell(5, 6, chr(149), 0, 0)
-            pdf.set_x(22) # Ripristina X per il testo
+            pdf.set_x(22) # Spostamento esplicito (essenziale per la larghezza 0)
             
             if content:
                 pdf.multi_cell(0, 6, content) # Larghezza 0: usa il resto dello spazio
@@ -403,7 +403,9 @@ with st.container():
         9: "Settembre", 10: "Ottobre", 11: "Novembre", 12: "Dicembre"
     }
 
-    # RIGA 1
+    # --- CALCOLO DATE E FIX ATTRIBUTE ERROR ---
+    data_default_partenza = datetime.date.today() + datetime.timedelta(days=30)
+    
     c_dest, c_bud = st.columns([2, 1])
     with c_dest:
         destination = st.text_input("Destinazione (Città/Regione/Paese)", placeholder="Es. New York,  Provenza,  Giappone...")
@@ -413,11 +415,13 @@ with st.container():
     # RIGA 2
     c_start, c_end = st.columns(2)
     with c_start:
-         start_date = st.date.today() + datetime.timedelta(days=30)
-         start_date = st.date_input("Data Partenza", start_date)
+         start_date = st.date_input("Data Partenza", data_default_partenza)
+
+    # Impostiamo la data di default di ritorno 7 giorni dopo la data di partenza
+    data_default_ritorno = start_date + datetime.timedelta(days=7)
+
     with c_end:
-         end_date = start_date + datetime.timedelta(days=7)
-         end_date = st.date_input("Data Ritorno", end_date)
+         end_date = st.date_input("Data Ritorno", data_default_ritorno)
 
     # RIGA 3
     c_ad, c_kids = st.columns(2)
@@ -456,7 +460,7 @@ with st.container():
             mese_partenza = mesi[start_date.month]
             
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            get_shared_logs().append(f"🧙‍♂️ {destination} {budget} ({timestamp})")
+            get_shared_logs().append(f"🧙‍♂️ {destination} ({timestamp})")
             
             with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
                 try:
