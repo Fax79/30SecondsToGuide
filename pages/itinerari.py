@@ -106,7 +106,7 @@ def create_complex_pdf(text, destination, meta_data):
                     stripped.encode('latin-1')
                     output.append(stripped)
                 except:
-                    pass     
+                    pass      
         return "".join(output)
 
     dest_clean = clean_text_for_pdf(destination)
@@ -168,8 +168,8 @@ def create_complex_pdf(text, destination, meta_data):
         text = clean_text_for_pdf(text)
         
         palettes = {
-            "blue":   {"bg": (240, 248, 255), "accent": (0, 102, 204)}, 
-            "green":  {"bg": (240, 255, 240), "accent": (0, 153, 76)},  
+            "blue":    {"bg": (240, 248, 255), "accent": (0, 102, 204)}, 
+            "green":   {"bg": (240, 255, 240), "accent": (0, 153, 76)},  
             "yellow": {"bg": (255, 253, 240), "accent": (204, 153, 0)}, 
             "purple": {"bg": (248, 240, 255), "accent": (102, 0, 153)}, 
             "orange": {"bg": (255, 245, 235), "accent": (230, 90, 0)}    
@@ -182,7 +182,7 @@ def create_complex_pdf(text, destination, meta_data):
         # --- FIX PAGE BREAK ---
         # Controlliamo se c'è spazio sufficiente (25mm) prima del footer
         if pdf_obj.get_y() > 250: # Se siamo sotto i 250mm (A4 è 297mm)
-             pdf_obj.add_page()   # Nuova pagina per non spezzare il banner
+             pdf_obj.add_page()    # Nuova pagina per non spezzare il banner
         # ----------------------
 
         pdf_obj.ln(4)
@@ -201,7 +201,8 @@ def create_complex_pdf(text, destination, meta_data):
         pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        pdf_obj.cell(180, 6, f"{text} >", link=link)
+        # MODIFICA APPLICATA: Ridotta larghezza cella da 180 a 178 per maggiore sicurezza
+        pdf_obj.cell(178, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
@@ -268,7 +269,6 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_text_color(44, 62, 80)
             
             # Stima delle linee necessarie per il wrapping e calcolo dell'altezza del box.
-            # usiamo una stima basata sulla lunghezza, che è più robusta per i font standard.
             text_len = len(clean_verdict)
             # Stima cauta: ~70 caratteri per riga a 12pt su 180mm di larghezza
             required_lines = 1 + (text_len // 70) 
@@ -291,8 +291,8 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_xy(15, start_y + 2)
             
             # 3. Usa multi_cell per il wrapping e centraggio
-            # w=180 (190 totali - 10mm padding), h=6 (altezza riga)
-            pdf.multi_cell(180, line_height, clean_verdict, 0, 'C', False)
+            # Larghezza 178mm, padding 5mm a sx e 7mm a dx (rispetto a 190mm totali)
+            pdf.multi_cell(178, line_height, clean_verdict, 0, 'C', False) 
 
             # 4. Sposta il cursore dopo il box
             pdf.set_y(start_y + box_height)
@@ -306,8 +306,8 @@ def create_complex_pdf(text, destination, meta_data):
             # Carattere del punto elenco (Latin-1)
             pdf.cell(5, 6, chr(149), 0, 0)
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            # FIX "NOT ENOUGH SPACE": Larghezza fissa invece di 0
-            pdf.multi_cell(170, 6, content) 
+            # Larghezza 168mm, padding 15mm a sx e 27mm a dx (rispetto a 190mm totali)
+            pdf.multi_cell(168, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
@@ -355,7 +355,7 @@ def create_complex_pdf(text, destination, meta_data):
     make_sponsor_box("Expedia", "Hotel e Voli", HOTEL_LINK)
     make_sponsor_box("Tiqets", "Biglietti musei e attrazioni", TIQETS_LINK) 
     make_sponsor_box("Welcome Pickups", "Transfer aeroportuali", TRANSF_LINK) 
-    make_sponsor_box("Auto Europe", "Noleggio Auto", RENTAL_LINK)           
+    make_sponsor_box("Auto Europe", "Noleggio Auto", RENTAL_LINK)          
     make_sponsor_box("Omio", "Treni e Bus", TRAIN_LINK)                      
     make_sponsor_box("Kiwi.com", "Voli low cost", FLIGHT_LINK)
     make_sponsor_box("Heymondo", "Assicurazione viaggio", INSURANCE_LINK)
@@ -498,7 +498,7 @@ with st.container():
             mese_partenza = mesi[start_date.month]
             
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            get_shared_logs().append(f"🧙‍♂️ {destination} ({timestamp})")
+            get_shared_logs().append(f"🧙‍♂️ {destination} {budget} ({timestamp})")
             
             with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
                 try:
