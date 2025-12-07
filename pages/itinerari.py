@@ -69,20 +69,21 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE (VERSIONE SAFE-MODE 170mm)
+# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v7.0 (FPDF2 FIX)"
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
-    # --- SPAZZINO (Preso da app.py) ---
+    # --- FUNZIONE SPAZZINO 7.1 ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        text_input = unicodedata.normalize('NFC', text_input)
+        text_input = text_input.replace("**", "") 
         replacements = {
-            "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
-            "€": "EUR", "$": "USD", "£": "GBP"
+            "€": "EUR", "â¬": "EUR", "$": "USD", "£": "GBP",
+            "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "..."
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
+        text_input = unicodedata.normalize('NFC', text_input)
         output = []
         for char in text_input:
             try:
@@ -95,7 +96,7 @@ def create_complex_pdf(text, destination, meta_data):
                     stripped.encode('latin-1')
                     output.append(stripped)
                 except:
-                    pass 
+                    pass     
         return "".join(output)
 
     dest_clean = clean_text_for_pdf(destination)
@@ -109,7 +110,7 @@ def create_complex_pdf(text, destination, meta_data):
             self.set_font('Helvetica', 'B', 8)
             self.set_text_color(255, 255, 255)
             self.set_y(6)
-            self.cell(0, 0, f'TRAVEL PLAN: {dest_clean.upper()}', 0, 0, 'R')
+            self.cell(0, 0, f'TRAVEL PLAN: {dest_clean.upper()}', border=0, ln=0, align='R')
             self.ln(15) 
             
         def footer(self):
@@ -145,16 +146,15 @@ def create_complex_pdf(text, destination, meta_data):
             self.cell(0, 6, f"Budget Target: {clean_budget}", 0, 1, 'C')
             self.set_y(260)
             self.set_font('Helvetica', '', 10)
+            # In fpdf2 link è un parametro keyword
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
     pdf = WizardPDF()
-    # MARGINI ESPLICITI 10mm
-    pdf.set_margins(10, 20, 10)
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (LARGHEZZA SICURA 170mm) ---
+    # --- BOX CONTESTUALE (CON CONTROLLO PAGINA) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -170,16 +170,16 @@ def create_complex_pdf(text, destination, meta_data):
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
+        # --- FIX PAGE BREAK ---
         if pdf_obj.get_y() > 250: 
              pdf_obj.add_page()   
 
         pdf_obj.ln(4)
-        current_y = pdf_obj.get_y()
         
-        # WIDTH = 170 (Lascia 30mm di spazio a destra)
+        current_y = pdf_obj.get_y()
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
-        pdf_obj.rect(10, current_y, 170, 14, 'DF')
+        pdf_obj.rect(10, current_y, 190, 14, 'DF')
         
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
         pdf_obj.rect(10, current_y, 2, 14, 'F')
@@ -187,9 +187,8 @@ def create_complex_pdf(text, destination, meta_data):
         pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        
-        # Testo dentro box (Largo 160mm)
-        pdf_obj.cell(160, 6, f"{text} >", link=link)
+        # Importante: link deve essere passato esplicitamente come keyword in fpdf2 se ci sono altri argomenti
+        pdf_obj.cell(180, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
@@ -205,7 +204,7 @@ def create_complex_pdf(text, destination, meta_data):
         clean_line = clean_text_for_pdf(line)
         line_upper = clean_line.upper()
         
-        # --- LOGICA LINK ---
+        # --- LOGICA BLINDATA LINK ---
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
             banner_text = f"I biglietti dei voli in {month_clean} aumentano? Blocca le tariffe migliori su Kiwi.com"
             make_box(pdf, banner_text, FLIGHT_LINK, "green")
@@ -233,7 +232,6 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
             pdf.set_text_color(44, 62, 80)
-            # w=0 occupa fino al margine (che ora è 10mm)
             pdf.multi_cell(0, 10, clean_line.replace('#', '').strip())
             pdf.ln(5)
             
@@ -248,20 +246,16 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_font("Helvetica", 'B', 12)
             pdf.set_fill_color(220, 220, 220)
             clean_verdict = clean_line.replace('*', '').strip()
-            pdf.cell(0, 10, clean_verdict, 1, 1, 'C', fill=True)
+            pdf.cell(0, 10, clean_verdict, border=1, ln=1, align='C', fill=True)
             pdf.ln(5)
             
-        # --- ELENCHI PUNTATI (WIDTH SICURA 170mm) ---
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
-            
             pdf.set_x(15)
             pdf.cell(5, 6, chr(149), 0, 0)
-            
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            
-            # w=170mm (Molto più stretto di prima, lontanissimo dal margine destro)
+            # Fissata larghezza per evitare errori di calcolo in fpdf2
             pdf.multi_cell(170, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
@@ -290,8 +284,7 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_fill_color(250, 250, 250) 
             pdf.set_draw_color(220, 220, 220) 
         start_y = pdf.get_y()
-        # WIDTH 170mm
-        pdf.rect(10, start_y, 170, 14, 'DF') 
+        pdf.rect(10, start_y, 190, 14, 'DF') 
         pdf.set_y(start_y + 2)
         pdf.set_x(15)
         pdf.set_font("Helvetica", 'B', 10) 
@@ -300,6 +293,7 @@ def create_complex_pdf(text, destination, meta_data):
         pdf.set_x(15)
         pdf.set_font("Helvetica", '', 9)
         pdf.set_text_color(0, 102, 204)
+        # Link keyword esplicito
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
         pdf.ln(4) 
 
@@ -328,7 +322,8 @@ def create_complex_pdf(text, destination, meta_data):
     make_sponsor_box("Rimborsi Voli", "Volo in ritardo? Chiedi risarcimento con AirHelp", REIMB_LINK, highlight=True)
     make_sponsor_box("Taxi Locale", "Kiwitaxi per spostamenti urbani", TAXI_LINK, highlight=True)
 
-    return pdf.output(dest='S').encode('latin-1')
+    # MODIFICA FONDAMENTALE PER FPDF2: Restituisce bytes direttamente, niente encode latin-1
+    return bytes(pdf.output())
 
 # ==========================================
 # 🖥️ INTERFACCIA UTENTE
@@ -451,7 +446,7 @@ with st.container():
             mese_partenza = mesi[start_date.month]
             
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            get_shared_logs().append(f"🧙‍♂️ {destination} | €{budget} ({timestamp})")
+            get_shared_logs().append(f"🧙‍♂️ {destination} ({timestamp})")
             
             with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
                 try:
@@ -468,16 +463,15 @@ with st.container():
                     - Gruppo: {pax_desc}
                     - Budget: € {budget}
                     
-                    REGOLE TASSATIVE (ANTI-CRASH):
-                    1. Usa SOLO l'alfabeto Latino/Italiano esteso. È VIETATO usare ideogrammi, Kanji, Cirillico o Emoji.
-                    2. TRASLITTERA TASSATIVAMENTE i nomi locali in caratteri Latini (es. scrivi "Shinjuku", MAI "新宿").
-                    3. Se non puoi traslitterare, usa il nome in Inglese o Italiano.
-                    4. Simboli Valute: scrivi "EUR", "USD", "JPY" (MAI simboli grafici).
-                    5. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
-                    6. VIETATO USARE LISTE ANNIDATE.
-                    7. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
-                    8. USA IL CALCOLO DELLA DURATA {duration}, NON RICALCOLARE.
-                    9. NON SCRIVERE I TUOI PENSIERI INTERNI.
+                    REGOLE TASSATIVE:
+                    1. Usa SOLO l'alfabeto Latino/Italiano esteso. NIENTE Kanji/Cirillico/Emoji.
+                    2. TRASLITTERA i nomi locali.
+                    3. Simboli Valute: scrivi "EUR", "USD".
+                    4. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
+                    5. VIETATO USARE LISTE ANNIDATE.
+                    6. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
+                    7. USA IL CALCOLO DELLA DURATA {duration}, NON RICALCOLARE.
+                    8. NON SCRIVERE I TUOI PENSIERI INTERNI ("HO SBAGLIATO", "DEVO USARE QUESTA REGOLA", "RICALCOLO") E SCRIVI SOLO LA VERSIONE FINALE.                    
                     STRUTTURA TITOLI (Usa ESATTAMENTE questi):
                     # {destination.upper()}: [Sottotitolo]
                     **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
