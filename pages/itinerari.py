@@ -69,41 +69,33 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE (ALLINEATO AD APP.PY)
+# 🧙‍♂️ PDF ENGINE (ALLINEATO AD APP.PY - w=0)
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
-    # --- FUNZIONE SPAZZINO (COPIATA DA APP.PY) ---
+    # --- FUNZIONE SPAZZINO (IDENTICA A APP.PY) ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        
-        # 1. Normalizzazione NFC
         text_input = unicodedata.normalize('NFC', text_input)
-        
-        # 2. Sostituzioni caratteri speciali
         replacements = {
             "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
             "€": "EUR", "$": "USD", "£": "GBP"
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
-            
         output = []
         for char in text_input:
             try:
-                # 3. Test Latin-1
                 char.encode('latin-1')
                 output.append(char)
             except UnicodeEncodeError:
-                # 4. Fallback (NFD) - Se fallisce qui, il carattere viene ignorato (comportamento app.py)
                 decomposed = unicodedata.normalize('NFD', char)
                 stripped = "".join(c for c in decomposed if unicodedata.category(c) != 'Mn')
                 try:
                     stripped.encode('latin-1')
                     output.append(stripped)
                 except:
-                    pass # Se è un Kanji o simbolo strano, viene saltato senza crashare
-        
+                    pass 
         return "".join(output)
 
     dest_clean = clean_text_for_pdf(destination)
@@ -160,7 +152,7 @@ def create_complex_pdf(text, destination, meta_data):
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (ALLINEATO AD APP.PY) ---
+    # --- BOX CONTESTUALE (ADAPTIVE w=0) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -176,27 +168,27 @@ def create_complex_pdf(text, destination, meta_data):
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
-        # Controllo Page Break
         if pdf_obj.get_y() > 250: 
              pdf_obj.add_page()   
 
         pdf_obj.ln(4)
-        
-        # 1. Sfondo (Misure da app.py: X=15, W=180)
         current_y = pdf_obj.get_y()
+        
+        # Sfondo (Usiamo 190 che è width standard interna)
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
-        pdf_obj.rect(15, current_y, 180, 14, 'DF')
+        pdf_obj.rect(10, current_y, 190, 14, 'DF')
         
-        # 2. Barra di Accento
+        # Accento
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
-        pdf_obj.rect(15, current_y, 2, 14, 'F')
+        pdf_obj.rect(10, current_y, 2, 14, 'F')
         
-        # 3. Testo (Misure da app.py: X=20, W=170)
-        pdf_obj.set_xy(20, current_y + 4) 
+        # Testo: QUI È IL FIX. w=0
+        pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        pdf_obj.cell(170, 6, f"{text} >", link=link)
+        # w=0 dice a FPDF: "Scrivi fino al margine destro senza lamentarti"
+        pdf_obj.cell(0, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
@@ -212,8 +204,7 @@ def create_complex_pdf(text, destination, meta_data):
         clean_line = clean_text_for_pdf(line)
         line_upper = clean_line.upper()
         
-        # --- LOGICA BLINDATA LINK ---
-        
+        # --- LINK ---
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
             banner_text = f"I biglietti dei voli in {month_clean} aumentano? Blocca le tariffe migliori su Kiwi.com"
             make_box(pdf, banner_text, FLIGHT_LINK, "green")
@@ -236,12 +227,12 @@ def create_complex_pdf(text, destination, meta_data):
             make_box(pdf, "Ristoranti: Leggi le recensioni su TripAdvisor", RESTAURANT_LINK, "green")
             inserted_ch4 = True
 
-        # --- FORMATTAZIONE TESTO ---
+        # --- FORMATTAZIONE ---
         if line.strip().startswith('# '): 
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
             pdf.set_text_color(44, 62, 80)
-            # w=0 (Usiamo la logica di app.py)
+            # w=0 (Auto Width)
             pdf.multi_cell(0, 10, clean_line.replace('#', '').strip())
             pdf.ln(5)
             
@@ -259,20 +250,19 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.cell(0, 10, clean_verdict, 1, 1, 'C', fill=True)
             pdf.ln(5)
             
-        # --- ELENCHI PUNTATI (Allineati ad app.py) ---
+        # --- ELENCHI PUNTATI (w=0 FIX) ---
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
             
-            # Usiamo le stesse coordinate di app.py (X=15)
+            # Reset e Indentazione
             pdf.set_x(15)
             pdf.cell(5, 6, chr(149), 0, 0)
             
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
             
-            # X=22 per il testo, come in app.py
-            pdf.set_x(22)
-            # w=0 (Auto-Width) come in app.py
+            # QUI È IL SEGRETO: w=0 invece di 170
+            # FPDF2 calcola automaticamente lo spazio rimanente.
             pdf.multi_cell(0, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
@@ -285,7 +275,7 @@ def create_complex_pdf(text, destination, meta_data):
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                # w=0 come in app.py
+                # w=0
                 pdf.multi_cell(0, 6, clean_line)
                 pdf.ln(1)
 
@@ -301,9 +291,7 @@ def create_complex_pdf(text, destination, meta_data):
         else:
             pdf.set_fill_color(250, 250, 250) 
             pdf.set_draw_color(220, 220, 220) 
-        
         start_y = pdf.get_y()
-        # Misure da app.py (X=10, W=190)
         pdf.rect(10, start_y, 190, 14, 'DF') 
         pdf.set_y(start_y + 2)
         pdf.set_x(15)
