@@ -69,26 +69,32 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE (ALLINEATO AD APP.PY - w=0)
+# 🧙‍♂️ PDF ENGINE (CLONATO DA APP.PY PER STABILITÀ)
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
-    # --- FUNZIONE SPAZZINO (IDENTICA A APP.PY) ---
+    # --- SPAZZINO (VERSIONE APP.PY) ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
+        # 1. Normalizzazione NFC
         text_input = unicodedata.normalize('NFC', text_input)
+        
+        # 2. Sostituzioni caratteri
         replacements = {
             "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
             "€": "EUR", "$": "USD", "£": "GBP"
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
+            
         output = []
         for char in text_input:
             try:
+                # 3. Test Latin-1
                 char.encode('latin-1')
                 output.append(char)
             except UnicodeEncodeError:
+                # 4. Fallback (NFD) - Se fallisce, il carattere viene ignorato (comportamento app.py)
                 decomposed = unicodedata.normalize('NFD', char)
                 stripped = "".join(c for c in decomposed if unicodedata.category(c) != 'Mn')
                 try:
@@ -152,7 +158,7 @@ def create_complex_pdf(text, destination, meta_data):
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (ADAPTIVE w=0) ---
+    # --- BOX STYLE "MAGAZINE" (Logica Dimensionale di app.py) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -168,26 +174,30 @@ def create_complex_pdf(text, destination, meta_data):
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
+        # Check Page Break
         if pdf_obj.get_y() > 250: 
              pdf_obj.add_page()   
 
         pdf_obj.ln(4)
         current_y = pdf_obj.get_y()
         
-        # Sfondo (Usiamo 190 che è width standard interna)
+        # 1. Sfondo (Geometria app.py: X=10, Width=190)
+        # Nota: in app.py è rect(10...190), quindi usiamo quello.
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
         pdf_obj.rect(10, current_y, 190, 14, 'DF')
         
-        # Accento
+        # 2. Accento
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
         pdf_obj.rect(10, current_y, 2, 14, 'F')
         
-        # Testo: QUI È IL FIX. w=0
+        # 3. Testo (Geometria app.py: X=15, w=0 o width safe)
+        # Usiamo X=15 e cell(0) che significa "fino al margine destro"
         pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        # w=0 dice a FPDF: "Scrivi fino al margine destro senza lamentarti"
+        
+        # w=0 è la chiave per la stabilità in FPDF2
         pdf_obj.cell(0, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
@@ -227,12 +237,11 @@ def create_complex_pdf(text, destination, meta_data):
             make_box(pdf, "Ristoranti: Leggi le recensioni su TripAdvisor", RESTAURANT_LINK, "green")
             inserted_ch4 = True
 
-        # --- FORMATTAZIONE ---
+        # --- FORMATTAZIONE TESTO (TUTTO CON w=0 PER STABILITÀ) ---
         if line.strip().startswith('# '): 
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
             pdf.set_text_color(44, 62, 80)
-            # w=0 (Auto Width)
             pdf.multi_cell(0, 10, clean_line.replace('#', '').strip())
             pdf.ln(5)
             
@@ -250,19 +259,18 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.cell(0, 10, clean_verdict, 1, 1, 'C', fill=True)
             pdf.ln(5)
             
-        # --- ELENCHI PUNTATI (w=0 FIX) ---
+        # --- BULLETS (LOGICA APP.PY: w=0) ---
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
             
-            # Reset e Indentazione
+            # Stessa logica di app.py
             pdf.set_x(15)
             pdf.cell(5, 6, chr(149), 0, 0)
-            
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
             
-            # QUI È IL SEGRETO: w=0 invece di 170
-            # FPDF2 calcola automaticamente lo spazio rimanente.
+            # Qui era il problema: invece di 170 o 160, usiamo 0 (che significa "tutto lo spazio restante")
+            # È questo che rende app.py stabile.
             pdf.multi_cell(0, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
@@ -292,6 +300,7 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_fill_color(250, 250, 250) 
             pdf.set_draw_color(220, 220, 220) 
         start_y = pdf.get_y()
+        # Geometria app.py
         pdf.rect(10, start_y, 190, 14, 'DF') 
         pdf.set_y(start_y + 2)
         pdf.set_x(15)
@@ -458,7 +467,7 @@ with st.container():
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
-                    # PROMPT ANTI-CRASH (MANTENUTO)
+                    # PROMPT RINFORZATO PER EVITARE CARATTERI NON LATINI
                     prompt = f"""
                     Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi il sogno di una vita.
                     Razionalizza il tempo, visita quanti più posti possibili con {duration} notti a disposizione.
@@ -480,6 +489,7 @@ with st.container():
                     7. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
                     8. USA IL CALCOLO DELLA DURATA {duration}, NON RICALCOLARE.
                     9. NON SCRIVERE I TUOI PENSIERI INTERNI.
+                                        
                     STRUTTURA TITOLI (Usa ESATTAMENTE questi):
                     # {destination.upper()}: [Sottotitolo]
                     **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
