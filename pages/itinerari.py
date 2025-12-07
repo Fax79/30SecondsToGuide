@@ -69,35 +69,24 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v7.0 (PAGE BREAK FIX)"
+# 🧙‍♂️ PDF ENGINE "WIZARD FPDF2 COMPLIANT"
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
-    # --- FUNZIONE SPAZZINO 7.1 ---
+    # --- CLEANER (Essenziale per i font standard) ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        text_input = text_input.replace("**", "") 
         replacements = {
-            "€": "EUR", "â¬": "EUR", "$": "USD", "£": "GBP",
-            "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "..."
+            "€": "EUR", "â¬": "EUR", "$": "USD", "£": "GBP", "¥": "JPY",
+            "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
+            "«": '"', "»": '"', "•": "-"
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
-        text_input = unicodedata.normalize('NFC', text_input)
-        output = []
-        for char in text_input:
-            try:
-                char.encode('latin-1')
-                output.append(char)
-            except UnicodeEncodeError:
-                decomposed = unicodedata.normalize('NFD', char)
-                stripped = "".join(c for c in decomposed if unicodedata.category(c) != 'Mn')
-                try:
-                    stripped.encode('latin-1')
-                    output.append(stripped)
-                except:
-                    pass     
-        return "".join(output)
+        
+        text_input = unicodedata.normalize('NFKD', text_input)
+        # Encoding Latin-1 Ignore: Cancella tutto ciò che FPDF2 non può stampare (Kanji, Emoji)
+        return text_input.encode('latin-1', 'ignore').decode('latin-1')
 
     dest_clean = clean_text_for_pdf(destination)
     month_clean = clean_text_for_pdf(meta_data.get('month_name', ''))
@@ -106,6 +95,7 @@ def create_complex_pdf(text, destination, meta_data):
         def header(self):
             if self.page_no() == 1: return
             self.set_fill_color(44, 62, 80) 
+            # FPDF2 usa larghezza pagina dinamica
             self.rect(0, 0, 210, 15, 'F')
             self.set_font('Helvetica', 'B', 8)
             self.set_text_color(255, 255, 255)
@@ -149,11 +139,13 @@ def create_complex_pdf(text, destination, meta_data):
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
     pdf = WizardPDF()
+    # 1. Impostiamo margini espliciti (10mm) per FPDF2
+    pdf.set_margins(10, 20, 10)
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (CON CONTROLLO PAGINA) ---
+    # --- BOX CONTESTUALE (ADATTIVO FPDF2) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -169,29 +161,29 @@ def create_complex_pdf(text, destination, meta_data):
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
-        # --- FIX PAGE BREAK ---
-        # Controlliamo se c'è spazio sufficiente (25mm) prima del footer
-        if pdf_obj.get_y() > 250: # Se siamo sotto i 250mm (A4 è 297mm)
-             pdf_obj.add_page()   # Nuova pagina per non spezzare il banner
-        # ----------------------
+        if pdf_obj.get_y() > 250: 
+             pdf_obj.add_page()   
 
         pdf_obj.ln(4)
-        
-        # 1. Sfondo
         current_y = pdf_obj.get_y()
+        
+        # In FPDF2, usiamo la larghezza effettiva disponibile
+        # Page W (210) - Margin Left (10) - Margin Right (10) = 190
+        available_w = 190 
+        
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
-        pdf_obj.rect(10, current_y, 190, 14, 'DF')
+        pdf_obj.rect(10, current_y, available_w, 14, 'DF')
         
-        # 2. Barra di Accento
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
         pdf_obj.rect(10, current_y, 2, 14, 'F')
         
-        # 3. Testo
         pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        pdf_obj.cell(180, 6, f"{text} >", link=link)
+        
+        # w=0 occupa tutto lo spazio fino al margine destro
+        pdf_obj.cell(0, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
@@ -207,13 +199,10 @@ def create_complex_pdf(text, destination, meta_data):
         clean_line = clean_text_for_pdf(line)
         line_upper = clean_line.upper()
         
-        # --- LOGICA BLINDATA LINK ---
-        
+        # --- LOGICA LINK ---
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
-            # === BANNER DINAMICO ===
             banner_text = f"I biglietti dei voli in {month_clean} aumentano? Blocca le tariffe migliori su Kiwi.com"
             make_box(pdf, banner_text, FLIGHT_LINK, "green")
-            # =======================
             make_box(pdf, "eSim Saily: Internet immediato all'arrivo senza acquisto di SIM locali", ESIM_LINK, "yellow")
             make_box(pdf, "MAI senza Assicurazione Sanitaria: Approfitta QUI dello sconto 10% con Heymondo", INSURANCE_LINK, "green")
             inserted_ch1 = True
@@ -238,6 +227,7 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
             pdf.set_text_color(44, 62, 80)
+            # w=0: Usa tutto lo spazio disponibile (SAFE per FPDF2)
             pdf.multi_cell(0, 10, clean_line.replace('#', '').strip())
             pdf.ln(5)
             
@@ -255,14 +245,25 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.cell(0, 10, clean_verdict, 1, 1, 'C', fill=True)
             pdf.ln(5)
             
+        # --- BULLET POINTS (FPDF2 COMPLIANT) ---
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
+            
+            # Reset X per sicurezza (margine sinistro)
+            pdf.set_x(10)
+            
+            # Spostiamo per l'indentazione del bullet (15mm)
             pdf.set_x(15)
-            pdf.cell(5, 6, chr(149), 0, 0)
+            pdf.cell(5, 6, chr(149), 0, 0) # Bullet
+            
+            # Il cursore ora è a X=20
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            # FIX "NOT ENOUGH SPACE": Larghezza fissa invece di 0
-            pdf.multi_cell(170, 6, content) 
+            
+            # w=0: "Scrivi da X=20 fino al margine destro (200)"
+            # Questo è il trucco. Non calcoliamo la larghezza (170/160), 
+            # lasciamo fare a FPDF2.
+            pdf.multi_cell(0, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
@@ -290,6 +291,7 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_fill_color(250, 250, 250) 
             pdf.set_draw_color(220, 220, 220) 
         start_y = pdf.get_y()
+        # Larghezza rettangolo 190 (Tutta pagina interna)
         pdf.rect(10, start_y, 190, 14, 'DF') 
         pdf.set_y(start_y + 2)
         pdf.set_x(15)
@@ -450,12 +452,13 @@ with st.container():
             mese_partenza = mesi[start_date.month]
             
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            get_shared_logs().append(f"🧙‍♂️ {destination} {budget} ({timestamp})")
+            get_shared_logs().append(f"🧙‍♂️ {destination} | €{budget} ({timestamp})")
             
             with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
+                    # Prompt corazzato + Regole Anti-Crash
                     prompt = f"""
                     Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi il sogno di una vita.
                     Razionalizza il tempo, visita quanti più posti possibili con {duration} notti a disposizione.
@@ -467,15 +470,16 @@ with st.container():
                     - Gruppo: {pax_desc}
                     - Budget: € {budget}
                     
-                    REGOLE TASSATIVE:
-                    1. Usa SOLO l'alfabeto Latino/Italiano esteso. NIENTE Kanji/Cirillico/Emoji.
-                    2. TRASLITTERA i nomi locali.
-                    3. Simboli Valute: scrivi "EUR", "USD".
-                    4. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
-                    5. VIETATO USARE LISTE ANNIDATE.
-                    6. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
-                    7. USA IL CALCOLO DELLA DURATA {duration}, NON RICALCOLARE.
-                    8. NON SCRIVERE I TUOI PENSIERI INTERNI ("HO SBAGLIATO", "DEVO USARE QUESTA REGOLA", "RICALCOLO") E SCRIVI SOLO LA VERSIONE FINALE.                    
+                    REGOLE TASSATIVE (ANTI-CRASH):
+                    1. Usa SOLO l'alfabeto Latino/Italiano esteso. È VIETATO usare ideogrammi, Kanji, Cirillico o Emoji.
+                    2. TRASLITTERA TASSATIVAMENTE i nomi locali in caratteri Latini (es. scrivi "Shinjuku", MAI "新宿").
+                    3. Se non puoi traslitterare, usa il nome in Inglese o Italiano.
+                    4. Simboli Valute: scrivi "EUR", "USD", "JPY" (MAI simboli grafici come ¥).
+                    5. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
+                    6. VIETATO USARE LISTE ANNIDATE.
+                    7. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
+                    8. USA IL CALCOLO DELLA DURATA {duration}, NON RICALCOLARE.
+                    9. NON SCRIVERE I TUOI PENSIERI INTERNI.
                     STRUTTURA TITOLI (Usa ESATTAMENTE questi):
                     # {destination.upper()}: [Sottotitolo]
                     **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
@@ -598,4 +602,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
