@@ -150,26 +150,52 @@ TESTO_MODELLO = """
 # --- FUNZIONE PDF ---
 def create_pdf(text, city):
     
-    # --- FUNZIONE SPAZZINO 3.6 (ITALIAN SAFE) ---
+    # --- FUNZIONE SPAZZINO 4.0 (SUPER ROBUST) ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        text_input = unicodedata.normalize('NFC', text_input)
+        
+        # 1. Mappatura manuale caratteri ostici (Europa orientale, simboli)
+        # Questi caratteri non si "decompongono" con normalize NFD
         replacements = {
-            "’": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
-            "€": "EUR", "$": "USD", "£": "GBP"
+            "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
+            "€": "EUR", "$": "USD", "£": "GBP",
+            # Caratteri Polacchi / Est Europa
+            "ł": "l", "Ł": "L", 
+            "đ": "d", "Đ": "D",
+            "ß": "ss",
+            "ø": "o", "Ø": "O",
+            "æ": "ae", "Æ": "AE",
+            "œ": "oe", "Œ": "OE",
+            "ƒ": "f",
+            "α": "a", "β": "b", # Qualche greco base se capita
+            "©": "(c)", "®": "(r)"
         }
+        
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
+        
+        # 2. Normalizzazione Unicode standard (Gestisce à, è, ö, ñ, etc.)
+        # Trasforma i caratteri composti (es. 'à') in base + accento
+        text_input = unicodedata.normalize('NFD', text_input)
+        
         output = []
         for char in text_input:
-            try:
-                char.encode('latin-1')
-                output.append(char)
-            except UnicodeEncodeError:
-                decomposed = unicodedata.normalize('NFD', char)
-                stripped = "".join(c for c in decomposed if unicodedata.category(c) != 'Mn')
-                output.append(stripped)
-        return "".join(output)
+            # Se è un carattere "base" (non un accento separato) e sta in Latin-1
+            if unicodedata.category(char) != 'Mn':
+                try:
+                    char.encode('latin-1')
+                    output.append(char)
+                except UnicodeEncodeError:
+                    # Se fallisce ancora (es. caratteri cirillici, kanji, o simboli strani)
+                    # proviamo a vedere se è uno spazio o punteggiatura non standard
+                    if char == '\t': output.append(' ')
+                    # Altrimenti lo saltiamo per non rompere il PDF
+                    pass
+                    
+        # 3. Ricostruzione e check finale brutale
+        # encode('latin-1', 'ignore') garantisce al 100% che nessun carattere invalido passi
+        final_string = "".join(output)
+        return final_string.encode('latin-1', 'ignore').decode('latin-1')
 
     city_clean = clean_text_for_pdf(city)
 
@@ -648,4 +674,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
