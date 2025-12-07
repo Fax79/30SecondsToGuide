@@ -201,7 +201,7 @@ def create_complex_pdf(text, destination, meta_data):
         pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        # MODIFICA APPLICATA: Ridotta larghezza cella da 180 a 178 per maggiore sicurezza
+        # Larghezza 178mm per sicurezza sui margini
         pdf_obj.cell(178, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
@@ -230,7 +230,7 @@ def create_complex_pdf(text, destination, meta_data):
             inserted_ch1 = True
             
         elif "## CAPITOLO 3" in line_upper and not inserted_ch2:
-            make_box(pdf, f"Stanze in Hotel esaurite in {month_clean}? Prenota ora su Expedia", HOTEL_LINK, "blue")
+            make_box(pdf, f"Stanze in Hotel quasi esaurite in {month_clean}? Prenota ora su Expedia", HOTEL_LINK, "blue")
             make_box(pdf, "Transfer privati ad un prezzo WOW! da e per l'aeroporto", TRANSF_LINK, "purple")
             inserted_ch2 = True
 
@@ -264,6 +264,10 @@ def create_complex_pdf(text, destination, meta_data):
             
             clean_verdict = clean_line.replace('*', '').strip()
             
+            if not clean_verdict:
+                # Se il verdetto è vuoto dopo la pulizia, saltiamo il blocco
+                continue
+                
             # Imposta font e colore per il calcolo e la stampa
             pdf.set_font("Helvetica", 'B', 12)
             pdf.set_text_color(44, 62, 80)
@@ -273,14 +277,13 @@ def create_complex_pdf(text, destination, meta_data):
             content_width = 178 # Larghezza fissa per il wrapping
 
             # 1. Calcola l'altezza necessaria (dry_run=True)
-            # Inizializza x e y prima del dry-run
-            start_x = pdf.get_x()
             start_y = pdf.get_y()
-            pdf.set_xy(15, start_y + 2) # Posizionamento iniziale (rispetto al rettangolo)
             
-            # La dry run non sposta il cursore globale, ma calcola le coordinate
-            # Usa il cursore temporaneo a (15, start_y + 2) con larghezza 178
-            required_height = pdf.multi_cell(
+            # Imposta la posizione (X + Y iniziali) per la simulazione
+            pdf.set_xy(15, start_y + 2) 
+            
+            # Esegue la dry run e salva il risultato
+            result = pdf.multi_cell(
                 w=content_width, 
                 h=line_height, 
                 text=clean_verdict, 
@@ -288,7 +291,14 @@ def create_complex_pdf(text, destination, meta_data):
                 align='C', 
                 fill=False,
                 dry_run=True
-            ).h
+            )
+
+            # Controllo robusto del risultato della dry_run
+            if result is None:
+                # Fallback: se la dry_run non restituisce un oggetto, usiamo una riga standard.
+                required_height = line_height
+            else:
+                required_height = result.h
 
             # Calcola l'altezza totale del box (altezza testo + padding verticale 4mm)
             box_height = required_height + 4
