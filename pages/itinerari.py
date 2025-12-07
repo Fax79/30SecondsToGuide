@@ -69,7 +69,7 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v8.1 (ANTI-CRASH FIX)"
+# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v9.0 (BULLETPROOF WIDTHS)"
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
@@ -149,11 +149,13 @@ def create_complex_pdf(text, destination, meta_data):
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
     pdf = WizardPDF()
+    # SAFETY: Impostiamo margini destro/sinistro espliciti
+    pdf.set_margins(10, 10, 10) 
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (FIX WIDTH APPLICATO) ---
+    # --- BOX CONTESTUALE (FIX WIDTH: 180mm Rect, 160mm Text) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -178,7 +180,8 @@ def create_complex_pdf(text, destination, meta_data):
         current_y = pdf_obj.get_y()
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
-        pdf_obj.rect(10, current_y, 190, 14, 'DF')
+        # WIDTH RIDOTTA A 180 (Era 190)
+        pdf_obj.rect(10, current_y, 180, 14, 'DF')
         
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
         pdf_obj.rect(10, current_y, 2, 14, 'F')
@@ -186,8 +189,8 @@ def create_complex_pdf(text, destination, meta_data):
         pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        # FIX: Larghezza ridotta a 170 (era 180) per sicurezza margini
-        pdf_obj.cell(170, 6, f"{text} >", link=link)
+        # WIDTH TESTO RIDOTTA A 160 (Era 180/170)
+        pdf_obj.cell(160, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
@@ -255,8 +258,9 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_x(15)
             pdf.cell(5, 6, chr(149), 0, 0)
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            # FIX "NOT ENOUGH SPACE": Larghezza ridotta a 155 (era 170)
-            pdf.multi_cell(155, 6, content) 
+            # FIX WIDTHS: 140mm (SUPER SAFE)
+            # Indent 15 + Bullet 5 + Text 140 = 160mm (Totale disponibile ~190mm)
+            pdf.multi_cell(140, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
@@ -284,7 +288,7 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_fill_color(250, 250, 250) 
             pdf.set_draw_color(220, 220, 220) 
         start_y = pdf.get_y()
-        pdf.rect(10, start_y, 190, 14, 'DF') 
+        pdf.rect(10, start_y, 180, 14, 'DF') # RIDOTTO A 180
         pdf.set_y(start_y + 2)
         pdf.set_x(15)
         pdf.set_font("Helvetica", 'B', 10) 
