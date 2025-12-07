@@ -69,7 +69,7 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE (COMPATIBILE FPDF2 - SAFE MODE)
+# 🧙‍♂️ PDF ENGINE (PAGINATION FIX)
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
@@ -149,10 +149,19 @@ def create_complex_pdf(text, destination, meta_data):
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
     pdf = WizardPDF()
-    pdf.set_auto_page_break(auto=True, margin=20)
+    # Importante: Disabilitiamo l'auto page break di default per gestirlo manualmente meglio
+    pdf.set_auto_page_break(auto=False)
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=20) # Riattiviamo con margine sicuro
     
+    # --- FUNZIONE CONTROLLO SPAZIO ---
+    def check_space(pdf_obj, height_needed):
+        """Se non c'è abbastanza spazio per l'elemento, aggiunge una pagina."""
+        # Il footer inizia a 285mm, lasciamo un margine di sicurezza a 270mm
+        if pdf_obj.get_y() + height_needed > 270:
+            pdf_obj.add_page()
+
     # --- BOX CONTESTUALE ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
@@ -169,8 +178,8 @@ def create_complex_pdf(text, destination, meta_data):
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
-        if pdf_obj.get_y() > 250: 
-             pdf_obj.add_page()   
+        # Controllo Spazio per il Box (Altezza ca. 20mm)
+        check_space(pdf_obj, 25)
 
         pdf_obj.ln(4)
         
@@ -186,7 +195,6 @@ def create_complex_pdf(text, destination, meta_data):
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
         
-        # SAFE: 170mm su 190mm di box
         pdf_obj.cell(170, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
@@ -227,6 +235,7 @@ def create_complex_pdf(text, destination, meta_data):
 
         # --- FORMATTAZIONE TESTO ---
         if line.strip().startswith('# '): 
+            check_space(pdf, 20) # Spazio per titolo grande
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
             pdf.set_text_color(44, 62, 80)
@@ -234,33 +243,37 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.ln(5)
             
         elif line.strip().startswith('## '): 
+            check_space(pdf, 15) # Spazio per sottotitolo
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 14)
             pdf.set_text_color(230, 126, 34) 
             pdf.multi_cell(0, 10, clean_line.replace('##', '').strip())
             
         elif "VERDETTO" in line_upper: 
+            check_space(pdf, 15)
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 12)
             pdf.set_fill_color(220, 220, 220)
             clean_verdict = clean_line.replace('*', '').strip()
-            # SAFE: Usiamo multi_cell qui per evitare errori se la frase è lunga
-            # 190mm di larghezza
             pdf.multi_cell(190, 8, clean_verdict, border=1, align='C', fill=True)
             pdf.ln(5)
             
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
+            # Stima altezza elenco: 1 riga = 6mm, se lungo calcoliamo di più
+            estimated_height = max(6, len(clean_line) // 90 * 6)
+            check_space(pdf, estimated_height)
+            
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
             pdf.set_x(15)
             pdf.cell(5, 6, chr(149), 0, 0)
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
             
-            # SAFE: Larghezza ridotta a 155mm per elenchi puntati (sicurezza massima)
             if content:
                 pdf.multi_cell(155, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
+            check_space(pdf, 10)
             pdf.set_font("Helvetica", 'B', 11)
             pdf.set_text_color(44, 62, 80)
             pdf.ln(2)
@@ -268,9 +281,12 @@ def create_complex_pdf(text, destination, meta_data):
             
         else: 
             if line.strip():
+                # Testo normale
+                estimated_height = max(6, len(clean_line) // 95 * 6)
+                check_space(pdf, estimated_height)
+                
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                # SAFE: 185mm invece di 190 per evitare problemi di margini
                 pdf.multi_cell(185, 6, clean_line)
                 pdf.ln(1)
 
@@ -286,6 +302,9 @@ def create_complex_pdf(text, destination, meta_data):
         else:
             pdf.set_fill_color(250, 250, 250) 
             pdf.set_draw_color(220, 220, 220) 
+        
+        check_space(pdf, 20) # Check per box sponsor
+        
         start_y = pdf.get_y()
         pdf.rect(10, start_y, 190, 14, 'DF') 
         pdf.set_y(start_y + 2)
@@ -324,7 +343,6 @@ def create_complex_pdf(text, destination, meta_data):
     make_sponsor_box("Rimborsi Voli", "Volo in ritardo? Chiedi risarcimento con AirHelp", REIMB_LINK, highlight=True)
     make_sponsor_box("Taxi Locale", "Kiwitaxi per spostamenti urbani", TAXI_LINK, highlight=True)
 
-    # SINTASSI FPDF2 COMPATIBILE CON TUO AMBIENTE
     return bytes(pdf.output(dest='S'))
 
 # ==========================================
