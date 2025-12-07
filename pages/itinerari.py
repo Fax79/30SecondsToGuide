@@ -69,11 +69,11 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v7.1 (SAFE WIDTH)"
+# 🧙‍♂️ PDF ENGINE (COMPATIBILE FPDF2 - SAFE MODE)
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
-    # --- FUNZIONE SPAZZINO 7.1 ---
+    # --- FUNZIONE SPAZZINO ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
         text_input = text_input.replace("**", "") 
@@ -153,7 +153,7 @@ def create_complex_pdf(text, destination, meta_data):
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (SAFE MODE) ---
+    # --- BOX CONTESTUALE ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -186,14 +186,13 @@ def create_complex_pdf(text, destination, meta_data):
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
         
-        # FIX LARGHEZZA TESTO BOX (Ridotto a 170 per sicurezza)
+        # SAFE: 170mm su 190mm di box
         pdf_obj.cell(170, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
     lines = text.split('\n')
     
-    # Flags
     inserted_ch1 = False
     inserted_ch2 = False
     inserted_ch3 = False
@@ -203,6 +202,7 @@ def create_complex_pdf(text, destination, meta_data):
         clean_line = clean_text_for_pdf(line)
         line_upper = clean_line.upper()
         
+        # --- LOGICA LINK ---
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
             banner_text = f"In {month_clean} i prezzi aumentano? Prenota ora su Kiwi.com"
             make_box(pdf, banner_text, FLIGHT_LINK, "green")
@@ -244,8 +244,9 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_font("Helvetica", 'B', 12)
             pdf.set_fill_color(220, 220, 220)
             clean_verdict = clean_line.replace('*', '').strip()
-            # FIX LARGHEZZA VERDETTO
-            pdf.cell(190, 10, clean_verdict, border=1, ln=1, align='C', fill=True)
+            # SAFE: Usiamo multi_cell qui per evitare errori se la frase è lunga
+            # 190mm di larghezza
+            pdf.multi_cell(190, 8, clean_verdict, border=1, align='C', fill=True)
             pdf.ln(5)
             
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
@@ -255,7 +256,7 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.cell(5, 6, chr(149), 0, 0)
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
             
-            # === FIX CRITICO: Ridotto da 170 a 155 ===
+            # SAFE: Larghezza ridotta a 155mm per elenchi puntati (sicurezza massima)
             if content:
                 pdf.multi_cell(155, 6, content) 
         
@@ -269,7 +270,8 @@ def create_complex_pdf(text, destination, meta_data):
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                pdf.multi_cell(0, 6, clean_line)
+                # SAFE: 185mm invece di 190 per evitare problemi di margini
+                pdf.multi_cell(185, 6, clean_line)
                 pdf.ln(1)
 
     # --- PAGINA PARTNER ---
@@ -322,7 +324,8 @@ def create_complex_pdf(text, destination, meta_data):
     make_sponsor_box("Rimborsi Voli", "Volo in ritardo? Chiedi risarcimento con AirHelp", REIMB_LINK, highlight=True)
     make_sponsor_box("Taxi Locale", "Kiwitaxi per spostamenti urbani", TAXI_LINK, highlight=True)
 
-    return bytes(pdf.output())
+    # SINTASSI FPDF2 COMPATIBILE CON TUO AMBIENTE
+    return bytes(pdf.output(dest='S'))
 
 # ==========================================
 # 🖥️ INTERFACCIA UTENTE
