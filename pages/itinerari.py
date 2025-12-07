@@ -272,11 +272,10 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_font("Helvetica", 'B', 12)
             pdf.set_text_color(44, 62, 80)
             
-            # --- NUOVA LOGICA: CALCOLO ALTEZZA ESATTA TRAMITE dry_run ---
+            # --- NUOVA LOGICA: CALCOLO ALTEZZA ESATTA TRAMITE dry_run (FIX CRASH) ---
             line_height = 6
             content_width = 178 # Larghezza fissa per il wrapping
 
-            # 1. Calcola l'altezza necessaria (dry_run=True)
             start_y = pdf.get_y()
             
             # Imposta la posizione (X + Y iniziali) per la simulazione
@@ -293,13 +292,9 @@ def create_complex_pdf(text, destination, meta_data):
                 dry_run=True
             )
 
-            # Controllo robusto del risultato della dry_run
-            if result is None:
-                # Fallback: se la dry_run non restituisce un oggetto, usiamo una riga standard.
-                required_height = line_height
-            else:
-                required_height = result.h
-
+            # FIX: Gestisce il caso in cui result sia None (o non abbia .h)
+            required_height = result.h if hasattr(result, 'h') else line_height
+            
             # Calcola l'altezza totale del box (altezza testo + padding verticale 4mm)
             box_height = required_height + 4
             box_height = max(10, box_height) # Altezza minima 10mm
