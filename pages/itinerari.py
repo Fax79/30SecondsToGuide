@@ -329,3 +329,346 @@ def create_complex_pdf(text, destination, meta_data):
     make_sponsor_box("Taxi Locale", "Kiwitaxi per spostamenti urbani", TAXI_LINK, highlight=True)
 
     return bytes(pdf.output(dest='S'))
+
+# ==========================================
+# 🖥️ INTERFACCIA UTENTE
+# ==========================================
+
+with st.sidebar:
+    if os.path.exists("logo.png"):
+        st.image("logo.png", width=200)
+    else:
+        st.title("⏱️")
+    
+    st.markdown("---")
+    st.caption("✈️ PRENOTAZIONI")
+    partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
+    partner_button("Hotel (Expedia)", HOTEL_LINK, "btn_booking.png")
+    partner_button("Transfers (Welcome)", TRANSF_LINK, "btn_wp.png")
+    partner_button("Auto (Autoeurope)", RENTAL_LINK, "btn_autoe.png")
+    partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
+    partner_button("Taxi (Kiwitaxi)", TAXI_LINK, "btn_taxi.png")
+    
+    st.caption("🎟️ ESPERIENZE & ALTRO")
+    partner_button("Musei & Ticket (Tiqets)", TIQETS_LINK, "btn_tiqets.png") 
+    partner_button("Ristoranti (Tripadvisor)", RESTAURANT_LINK, "btn_tripadv.png")
+    
+    st.caption("🛠️ SERVIZI UTILI")
+    partner_button("eSim (Saily)", ESIM_LINK, "btn_saily.png")
+    partner_button("Bagagli (Radical)", LUGGAGE_LINK, "btn_radical.png")
+    partner_button("Polizza (Heymondo)", INSURANCE_LINK, "btn_heymondo.png")
+    partner_button("Rimborsi (Airhelp)", REIMB_LINK, "btn_airhelp.png")
+    
+    with st.sidebar.expander("🔐 Admin Stats"):
+        secret_pwd = st.text_input("Password", type="password")
+        if secret_pwd == "fabio123": 
+            st.write("### 📊 Ultime Ricerche:")
+            logs = get_shared_logs()
+            if logs:
+                for log in reversed(logs):
+                    st.caption(log)
+            else:
+                st.caption("Nessuna ricerca ancora.")
+            st.write(f"**Totale:** {len(logs)}")
+
+    st.markdown("---")
+    st.caption("© 2025 30SecondsToGuide")
+
+if os.path.exists("logo.png"):
+    col_sp1, col_img, col_sp2 = st.columns([3, 2, 3])
+    with col_img:
+        st.image("logo.png", use_container_width=True)
+
+st.markdown("""
+    <h1 style='text-align: center; color: #2C3E50; margin-bottom: 0; margin-top: -10px;'>
+        Itinerary Wizard
+    </h1>
+    <p style='text-align: center; color: #E67E22; font-size: 1.2em; font-style: italic; margin-top: 5px;'>
+        Il pianificatore di viaggi complessi con analisi del budget.
+    </p>
+    """, unsafe_allow_html=True)
+
+st.write("") 
+
+with st.container():
+    st.info("🧙‍♂️ Inserisci i dettagli per ricevere un Travel Plan completo.")
+    
+    # --- MAPPING MESI ---
+    mesi = {
+        1: "Gennaio", 2: "Febbraio", 3: "Marzo", 4: "Aprile",
+        5: "Maggio", 6: "Giugno", 7: "Luglio", 8: "Agosto",
+        9: "Settembre", 10: "Ottobre", 11: "Novembre", 12: "Dicembre"
+    }
+
+    # RIGA 1
+    c_dest, c_bud = st.columns([2, 1])
+    with c_dest:
+        destination = st.text_input("Destinazione (Città/Regione/Paese)", placeholder="Es. New York,  Provenza,  Giappone...")
+    with c_bud:
+        budget = st.number_input("Budget Totale (€)", min_value=500, value=3000, step=100)
+    
+    # RIGA 2
+    c_start, c_end = st.columns(2)
+    with c_start:
+         start_date = st.date_input("Data Partenza", datetime.date.today() + datetime.timedelta(days=30))
+    with c_end:
+         end_date = st.date_input("Data Ritorno", datetime.date.today() + datetime.timedelta(days=37))
+
+    # RIGA 3
+    c_ad, c_kids = st.columns(2)
+    with c_ad:
+         adults = st.number_input("Numero Adulti", min_value=1, value=2)
+    with c_kids:
+         kids = st.number_input("Numero Minorenni", min_value=0, value=0)
+
+    # Kids Ages
+    kids_ages = []
+    if kids > 0:
+        st.caption("Età dei ragazzi:")
+        k_cols = st.columns(min(kids, 4))
+        for i in range(kids):
+            with k_cols[i % 4]:
+                age = st.number_input(f"Età figlio {i+1}", 0, 17, 10, key=f"kid_{i}")
+                kids_ages.append(str(age))
+
+    st.write("")
+    
+    def reset_app():
+        if 'wizard_pdf' in st.session_state:
+            del st.session_state['wizard_pdf']
+    
+    is_generated = 'wizard_pdf' in st.session_state
+    
+    if st.button("✨ Crea il mio Travel Plan", type="primary", use_container_width=True, disabled=is_generated):
+        if not destination:
+            st.warning("Inserisci una destinazione!")
+        else:
+            duration = (end_date - start_date).days
+            pax_desc = f"{adults} Adulti"
+            if kids > 0: pax_desc += f", {kids} Ragazzi ({', '.join(kids_ages)} anni)"
+            
+            # Recupero nome mese
+            mese_partenza = mesi[start_date.month]
+            
+            timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
+            get_shared_logs().append(f"🧙‍♂️ {destination} ({timestamp})")
+            
+            with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
+                try:
+                    model = genai.GenerativeModel("gemini-2.5-flash")
+                    
+                    prompt = f"""
+                    Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi il sogno di una vita.
+                    Razionalizza il tempo, visita quanti più posti possibili con {duration} notti a disposizione.
+                    Valuta la densità degli impegni giornalieri perché siano fattibili. Presta attenzione ad essere razionale negli spostamenti per massimizzare il tempo a disposizione.
+                    Crea un "Travel Plan" esclusivo per: {destination}.
+                    
+                    DATI:
+                    - Durata: {duration} notti ({start_date} - {end_date})
+                    - Gruppo: {pax_desc}
+                    - Budget: € {budget}
+                    
+                    REGOLE TASSATIVE:
+                    1. Usa SOLO l'alfabeto Latino/Italiano esteso. NIENTE Kanji/Cirillico/Emoji.
+                    2. TRASLITTERA i nomi locali.
+                    3. Simboli Valute: scrivi "EUR", "USD".
+                    4. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
+                    5. VIETATO USARE LISTE ANNIDATE.
+                    6. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
+                    7. USA IL CALCOLO DELLA DURATA {duration}, NON RICALCOLARE.
+                    8. NON SCRIVERE I TUOI PENSIERI INTERNI ("HO SBAGLIATO", "DEVO USARE QUESTA REGOLA", "RICALCOLO") E SCRIVI SOLO LA VERSIONE FINALE.                    
+                    STRUTTURA TITOLI (Usa ESATTAMENTE questi):
+                    # {destination.upper()}: [Sottotitolo]
+                    **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
+                    ## CAPITOLO 1: LA PREPARAZIONE (Voli, eSim, Assicurazione)
+                    [Info voli, eSim Saily, assicurazione Heymondo con sconto 10%]
+                    ## CAPITOLO 2: DOVE DORMIRE (Strategie alloggio)
+                    [Suggerisci alloggi compatibili con il gruppo. Prediligi sistemazioni suggestive]
+                    ## CAPITOLO 3: L'ITINERARIO GIORNO PER GIORNO (Dettagliato)
+                    [Itinerario ottimizzato. Prediligi attrazioni su Tiqets. Scoperta del territorio]
+                    ## CAPITOLO 4: COSA MANGIARE
+                    [Piatti tipici, ristoranti (Tripadvisor), street food]
+                    ## CAPITOLO 5: CALENDARIO CULTURALE
+                    [Festival e ricorrenze]
+                    ## CAPITOLO 6: CONTO ECONOMICO FINALE
+                    ## CAPITOLO 7: INFORMAZIONI PRATICHE
+                    * Sicurezza: [Info]
+                    * Clima: [Info]
+                    * Visti e requisiti: [Info]
+                    * Fuso orario: [Info]
+                    * Consigli utili: [Valuta e prese]
+                    ## CAPITOLO 8: CONCLUSIONE
+                    [Riflessione finale filosofica sul viaggio]
+                    """
+                    
+                    response = model.generate_content(prompt)
+                    text_content = response.text
+                    
+                    meta = {
+                        "dates": f"{start_date.strftime('%d/%m')} - {end_date.strftime('%d/%m/%Y')}",
+                        "pax": f"{adults} Ad + {kids} Bimbi",
+                        "budget": f"EUR {budget}",
+                        "month_name": mese_partenza
+                    }
+                    
+                    pdf_bytes = create_complex_pdf(text_content, destination, meta)
+                    st.session_state['wizard_pdf'] = pdf_bytes
+                    st.rerun()
+                    
+                except Exception as e:
+                    st.error(f"Errore del Mago: {e}")
+
+    if 'wizard_pdf' in st.session_state:
+        st.success("✅ Travel Plan pronto!")
+        st.download_button(
+            label="📥 SCARICA IL TRAVEL PLAN (PDF)",
+            data=st.session_state['wizard_pdf'],
+            file_name=f"Itinerario_{destination.replace(' ', '_')}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+            on_click=reset_app
+        )
+
+# =========================================================
+# 🏨 TRAVEL HUB
+# =========================================================
+st.markdown("---")
+st.subheader("✈️ I migliori strumenti per il tuo viaggio")
+
+c1, c2, c3 = st.columns(3)
+with c1:
+    st.caption("✈️ **Voli**")
+    partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
+with c2:
+    st.caption("🏨 **Hotel**")
+    partner_button("Expedia", HOTEL_LINK, "btn_booking.png") 
+with c3:
+    st.caption("🚘 **Transfer**")
+    partner_button("Welcome Pickups", TRANSF_LINK, "btn_wp.png")
+
+st.write("") 
+
+c4, c5, c6 = st.columns(3)
+with c4:
+    st.caption("🎟️ **Tour**")
+    partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png") 
+with c5:
+    st.caption("🚗 **Auto**")
+    partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
+with c6:
+    st.caption("🎒 **Bagagli**")
+    partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
+
+st.write("") 
+
+c7, c8, c9 = st.columns(3)
+with c7:
+    st.caption("📲 **Dati**")
+    partner_button("eSim Saily", ESIM_LINK, "btn_saily.png")
+with c8:
+    st.caption("🛡️ **Polizza**")
+    partner_button("Assicuraz.", INSURANCE_LINK, "btn_heymondo.png")
+with c9:
+    st.caption("💸 **Risarcim.**")
+    partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
+
+st.write("") 
+
+c10, c11, c12 = st.columns(3)
+with c10:
+    st.caption("🚆 **Treni**")
+    partner_button("Omio", TRAIN_LINK, "btn_omio.png")
+with c11:
+    st.caption("🍴 **Ristoranti**")
+    partner_button("Tripadvisor", RESTAURANT_LINK, "btn_tripadv.png")
+with c12:
+    st.caption("🚖 **Taxi**")
+    partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
+
+st.markdown("---")
+st.markdown("""
+<div style="text-align: justify; color: #555;">
+    <h3>Come funziona Itinerary Wizard?</h3>
+    <p>
+        Questo strumento avanzato di <strong>30SecondsToGuide</strong> pianifica viaggi complessi analizzando il tuo budget.
+        Inserisci destinazione, date, composizione del gruppo e budget massimo: l'AI genererà un 
+        <strong>Travel Plan</strong> completo con strategie di spesa, itinerari giornalieri e consigli logistici.
+    </p>
+    <p>
+        Il servizio è <strong>gratuito al 100%</strong>.
+    </p>
+</div>
+""", unsafe_allow_html=True)
+            on_click=reset_app
+        )
+
+# =========================================================
+# 🏨 TRAVEL HUB
+# =========================================================
+st.markdown("---")
+st.subheader("✈️ I migliori strumenti per il tuo viaggio")
+
+c1, c2, c3 = st.columns(3)
+with c1:
+    st.caption("✈️ **Voli**")
+    partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
+with c2:
+    st.caption("🏨 **Hotel**")
+    partner_button("Expedia", HOTEL_LINK, "btn_booking.png") 
+with c3:
+    st.caption("🚘 **Transfer**")
+    partner_button("Welcome Pickups", TRANSF_LINK, "btn_wp.png")
+
+st.write("") 
+
+c4, c5, c6 = st.columns(3)
+with c4:
+    st.caption("🎟️ **Tour**")
+    partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png") 
+with c5:
+    st.caption("🚗 **Auto**")
+    partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
+with c6:
+    st.caption("🎒 **Bagagli**")
+    partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
+
+st.write("") 
+
+c7, c8, c9 = st.columns(3)
+with c7:
+    st.caption("📲 **Dati**")
+    partner_button("eSim Saily", ESIM_LINK, "btn_saily.png")
+with c8:
+    st.caption("🛡️ **Polizza**")
+    partner_button("Assicuraz.", INSURANCE_LINK, "btn_heymondo.png")
+with c9:
+    st.caption("💸 **Risarcim.**")
+    partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
+
+st.write("") 
+
+c10, c11, c12 = st.columns(3)
+with c10:
+    st.caption("🚆 **Treni**")
+    partner_button("Omio", TRAIN_LINK, "btn_omio.png")
+with c11:
+    st.caption("🍴 **Ristoranti**")
+    partner_button("Tripadvisor", RESTAURANT_LINK, "btn_tripadv.png")
+with c12:
+    st.caption("🚖 **Taxi**")
+    partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
+
+st.markdown("---")
+st.markdown("""
+<div style="text-align: justify; color: #555;">
+    <h3>Come funziona Itinerary Wizard?</h3>
+    <p>
+        Questo strumento avanzato di <strong>30SecondsToGuide</strong> pianifica viaggi complessi analizzando il tuo budget.
+        Inserisci destinazione, date, composizione del gruppo e budget massimo: l'AI genererà un 
+        <strong>Travel Plan</strong> completo con strategie di spesa, itinerari giornalieri e consigli logistici.
+    </p>
+    <p>
+        Il servizio è <strong>gratuito al 100%</strong>.
+    </p>
+</div>
+""", unsafe_allow_html=True)
