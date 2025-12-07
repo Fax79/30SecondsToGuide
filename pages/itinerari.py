@@ -69,7 +69,7 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v7.0 (PAGE BREAK FIX)"
+# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v8.1 (ANTI-CRASH FIX)"
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
@@ -153,7 +153,7 @@ def create_complex_pdf(text, destination, meta_data):
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (CON CONTROLLO PAGINA) ---
+    # --- BOX CONTESTUALE (FIX WIDTH APPLICATO) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -170,28 +170,24 @@ def create_complex_pdf(text, destination, meta_data):
         ac_r, ac_g, ac_b = chosen["accent"]
         
         # --- FIX PAGE BREAK ---
-        # Controlliamo se c'è spazio sufficiente (25mm) prima del footer
-        if pdf_obj.get_y() > 250: # Se siamo sotto i 250mm (A4 è 297mm)
-             pdf_obj.add_page()   # Nuova pagina per non spezzare il banner
-        # ----------------------
+        if pdf_obj.get_y() > 250: 
+             pdf_obj.add_page()   
 
         pdf_obj.ln(4)
         
-        # 1. Sfondo
         current_y = pdf_obj.get_y()
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
         pdf_obj.rect(10, current_y, 190, 14, 'DF')
         
-        # 2. Barra di Accento
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
         pdf_obj.rect(10, current_y, 2, 14, 'F')
         
-        # 3. Testo
         pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        pdf_obj.cell(180, 6, f"{text} >", link=link)
+        # FIX: Larghezza ridotta a 170 (era 180) per sicurezza margini
+        pdf_obj.cell(170, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
@@ -210,10 +206,8 @@ def create_complex_pdf(text, destination, meta_data):
         # --- LOGICA BLINDATA LINK ---
         
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
-            # === BANNER DINAMICO ===
             banner_text = f"I biglietti dei voli in {month_clean} aumentano? Blocca le tariffe migliori su Kiwi.com"
             make_box(pdf, banner_text, FLIGHT_LINK, "green")
-            # =======================
             make_box(pdf, "eSim Saily: Internet immediato all'arrivo senza acquisto di SIM locali", ESIM_LINK, "yellow")
             make_box(pdf, "MAI senza Assicurazione Sanitaria: Approfitta QUI dello sconto 10% con Heymondo", INSURANCE_LINK, "green")
             inserted_ch1 = True
@@ -261,8 +255,8 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_x(15)
             pdf.cell(5, 6, chr(149), 0, 0)
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            # FIX "NOT ENOUGH SPACE": Larghezza fissa invece di 0
-            pdf.multi_cell(170, 6, content) 
+            # FIX "NOT ENOUGH SPACE": Larghezza ridotta a 155 (era 170)
+            pdf.multi_cell(155, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
@@ -450,7 +444,7 @@ with st.container():
             mese_partenza = mesi[start_date.month]
             
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            get_shared_logs().append(f"🧙‍♂️ {destination} | {budget} ({timestamp})")
+            get_shared_logs().append(f"🧙‍♂️ {destination} | €{budget} ({timestamp})")
             
             with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
                 try:
@@ -598,4 +592,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
