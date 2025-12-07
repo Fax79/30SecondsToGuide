@@ -159,6 +159,9 @@ def create_complex_pdf(text, destination, meta_data):
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
     pdf = WizardPDF()
+    # Imposta un margine esplicito per la larghezza standard
+    pdf.set_left_margin(10)
+    pdf.set_right_margin(10)
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
@@ -249,14 +252,16 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
             pdf.set_text_color(44, 62, 80)
-            pdf.multi_cell(0, 10, clean_line.replace('#', '').strip())
+            # FIX: Larghezza fissa (190) invece di 0
+            pdf.multi_cell(190, 10, clean_line.replace('#', '').strip())
             pdf.ln(5)
             
         elif line.strip().startswith('## '): 
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 14)
             pdf.set_text_color(230, 126, 34) 
-            pdf.multi_cell(0, 10, clean_line.replace('##', '').strip())
+            # FIX: Larghezza fissa (190) invece di 0
+            pdf.multi_cell(190, 10, clean_line.replace('##', '').strip())
             
         elif "VERDETTO" in line_upper: 
             # Inizio blocco Verdetto (Risposta al problema di overflow)
@@ -330,13 +335,15 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_font("Helvetica", 'B', 11)
             pdf.set_text_color(44, 62, 80)
             pdf.ln(2)
-            pdf.multi_cell(0, 6, clean_line)
+            # FIX: Larghezza fissa (190) invece di 0
+            pdf.multi_cell(190, 6, clean_line)
             
         else: 
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                pdf.multi_cell(0, 6, clean_line)
+                # FIX: Larghezza fissa (190) invece di 0
+                pdf.multi_cell(190, 6, clean_line)
                 pdf.ln(1)
 
     # --- PAGINA PARTNER ---
