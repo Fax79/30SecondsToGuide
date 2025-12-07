@@ -69,7 +69,7 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v11.0 (BUNKER EDITION)"
+# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v12.0 (AUTO-WIDTH RESTORE)"
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
@@ -149,13 +149,12 @@ def create_complex_pdf(text, destination, meta_data):
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
     pdf = WizardPDF()
-    # --- SAFETY: Impostiamo margini espliciti per evitare il "drift" ---
-    pdf.set_margins(15, 20, 15) 
+    # RIMOSSO SET MARGINS - USIAMO I DEFAULT
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (FIX WIDTH: 175mm Rect, 160mm Text) ---
+    # --- BOX CONTESTUALE ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -171,7 +170,6 @@ def create_complex_pdf(text, destination, meta_data):
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
-        # --- FIX PAGE BREAK ---
         if pdf_obj.get_y() > 250: 
              pdf_obj.add_page()   
 
@@ -179,23 +177,24 @@ def create_complex_pdf(text, destination, meta_data):
         
         current_y = pdf_obj.get_y()
         
-        # Sfondo (Larghezza fissa 175mm)
+        # Disegno Sfondo
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
-        pdf_obj.set_x(15) # Forziamo l'inizio
-        pdf_obj.rect(15, current_y, 175, 14, 'DF')
+        pdf_obj.rect(10, current_y, 190, 14, 'DF')
         
-        # Accent
+        # Disegno Accento
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
-        pdf_obj.rect(15, current_y, 2, 14, 'F')
+        pdf_obj.rect(10, current_y, 2, 14, 'F')
         
         # Testo
-        pdf_obj.set_xy(20, current_y + 4) # Spostiamo il cursore dentro
+        pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
         
-        # Larghezza Testo Sicura: 160mm
-        pdf_obj.cell(160, 6, f"{text} >", link=link)
+        # USIAMO w=0 (Auto-width fino al margine destro)
+        # La cella parte da X=15. Margine dx standard è 10. Quindi 200mm di pagina.
+        # FPDF troncherà automaticamente se troppo lungo, ma non crasherà.
+        pdf_obj.cell(0, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
@@ -239,7 +238,6 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
             pdf.set_text_color(44, 62, 80)
-            # w=0 occupa tutto lo spazio disponibile fino al margine destro
             pdf.multi_cell(0, 10, clean_line.replace('#', '').strip())
             pdf.ln(5)
             
@@ -257,28 +255,20 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.cell(0, 10, clean_verdict, 1, 1, 'C', fill=True)
             pdf.ln(5)
             
-        # --- FIX DEFINITIVO BULLET POINTS ---
+        # --- FIX BULLET POINTS: RITORNO AL CLASSICO (v8.0 Style) ---
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
             
-            # 1. Salviamo la Y corrente
-            current_y = pdf.get_y()
+            # 1. Posiziono Bullet
+            pdf.set_x(15) 
+            pdf.cell(5, 6, chr(149), 0, 0) # Scrive bullet e sposta cursore a destra (X~20)
             
-            # 2. Stampiamo il Bullet a sinistra (X=15)
-            pdf.set_xy(15, current_y)
-            pdf.cell(5, 6, chr(149), 0, 0) # Width 5
-            
-            # 3. Stampiamo il Testo spostato (X=22)
-            # Indentiamo di 7mm dal margine sinistro (15+7=22)
-            pdf.set_xy(22, current_y)
-            
+            # 2. Scrivo testo
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            
-            # 4. Larghezza ultra-safe: 160mm
-            # 22 (inizio) + 160 (testo) = 182mm. Margine destro è a 195mm (210-15).
-            # Abbiamo 13mm di sicurezza. IMPOSSIBILE CHE CRASHI.
-            pdf.multi_cell(160, 6, content) 
+            # w=0 dice a FPDF: "Usa tutto lo spazio da QUI (X=20) fino al margine destro"
+            # Questo evita qualsiasi calcolo manuale e crash.
+            pdf.multi_cell(0, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
@@ -307,18 +297,15 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_draw_color(220, 220, 220) 
         
         start_y = pdf.get_y()
-        
-        # Forziamo X e Width
-        pdf.set_x(15)
-        pdf.rect(15, start_y, 175, 14, 'DF') 
+        pdf.rect(10, start_y, 190, 14, 'DF') 
         
         pdf.set_y(start_y + 2)
-        pdf.set_x(20)
+        pdf.set_x(15)
         pdf.set_font("Helvetica", 'B', 10) 
         pdf.set_text_color(44, 62, 80)
         pdf.cell(0, 5, title, 0, 1)
         
-        pdf.set_x(20)
+        pdf.set_x(15)
         pdf.set_font("Helvetica", '', 9)
         pdf.set_text_color(0, 102, 204)
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
@@ -472,6 +459,8 @@ with st.container():
             mese_partenza = mesi[start_date.month]
             
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
+            
+            # --- AGGIUNTO IL BUDGET AL LOG COME RICHIESTO ---
             get_shared_logs().append(f"🧙‍♂️ {destination} | €{budget} ({timestamp})")
             
             with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
