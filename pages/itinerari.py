@@ -69,29 +69,35 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE "WIZARD EDITION v15.0 (SAFE MARGINS)"
+# 🧙‍♂️ PDF ENGINE "WIZARD EDITION (ORIGINALE SACRO)"
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
-    # --- FUNZIONE SPAZZINO 15.0 (Encoding Brutale) ---
+    # --- FUNZIONE SPAZZINO ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        
-        # 1. Sostituzioni caratteri comuni ma non standard
+        text_input = text_input.replace("**", "") 
         replacements = {
-            "€": "EUR", "â¬": "EUR", "$": "USD", "£": "GBP", "¥": "JPY",
+            "€": "EUR", "â¬": "EUR", "$": "USD", "£": "GBP",
             "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "..."
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
-        
-        # 2. Normalizzazione Unicode
-        text_input = unicodedata.normalize('NFKD', text_input)
-        
-        # 3. ENCODING IGNORE: Il metodo più sicuro al mondo.
-        # Prova a codificare in Latin-1. Se il carattere non esiste (Kanji, Emoji), lo ignora e basta.
-        # Poi decodifica per tornare stringa.
-        return text_input.encode('latin-1', 'ignore').decode('latin-1')
+        text_input = unicodedata.normalize('NFC', text_input)
+        output = []
+        for char in text_input:
+            try:
+                char.encode('latin-1')
+                output.append(char)
+            except UnicodeEncodeError:
+                decomposed = unicodedata.normalize('NFD', char)
+                stripped = "".join(c for c in decomposed if unicodedata.category(c) != 'Mn')
+                try:
+                    stripped.encode('latin-1')
+                    output.append(stripped)
+                except:
+                    pass     
+        return "".join(output)
 
     dest_clean = clean_text_for_pdf(destination)
     month_clean = clean_text_for_pdf(meta_data.get('month_name', ''))
@@ -143,13 +149,11 @@ def create_complex_pdf(text, destination, meta_data):
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
     pdf = WizardPDF()
-    # Margini laterali standard (10mm)
-    pdf.set_margins(10, 20, 10)
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.make_cover(dest_clean, meta_data)
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (WIDTH SICURA 170mm) ---
+    # --- BOX CONTESTUALE ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         
@@ -165,31 +169,28 @@ def create_complex_pdf(text, destination, meta_data):
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
-        if pdf_obj.get_y() > 250: 
-             pdf_obj.add_page()   
+        # FIX PAGE BREAK
+        if pdf_obj.get_y() > 250:
+             pdf_obj.add_page()
 
         pdf_obj.ln(4)
+        
+        # 1. Sfondo
         current_y = pdf_obj.get_y()
-        
-        # Larghezza BOX: 170mm (Margini sicuri)
-        box_width = 170
-        
-        # Centriamo il box nella pagina (A4=210. 210-170=40. Margine SX=20)
-        pdf_obj.set_x(20)
-        
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
-        pdf_obj.rect(20, current_y, box_width, 14, 'DF')
+        pdf_obj.rect(10, current_y, 190, 14, 'DF')
         
+        # 2. Barra di Accento
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
-        pdf_obj.rect(20, current_y, 2, 14, 'F')
+        pdf_obj.rect(10, current_y, 2, 14, 'F')
         
-        pdf_obj.set_xy(25, current_y + 4) 
+        # 3. Testo
+        pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        
-        # Testo dentro il box: 160mm
-        pdf_obj.cell(160, 6, f"{text} >", link=link)
+        # Ripristinata larghezza originale
+        pdf_obj.cell(180, 6, f"{text} >", link=link)
         
         pdf_obj.ln(12)
 
@@ -205,27 +206,30 @@ def create_complex_pdf(text, destination, meta_data):
         clean_line = clean_text_for_pdf(line)
         line_upper = clean_line.upper()
         
-        # --- LOGICA LINK ---
+        # --- LOGICA BLINDATA LINK (TESTI ORIGINALI RIPRISTINATI) ---
+        
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
-            banner_text = f"Prezzi voli in aumento a {month_clean}? Controlla le offerte su Kiwi.com"
+            # === BANNER DINAMICO ===
+            banner_text = f"I biglietti dei voli in {month_clean} aumentano? Blocca le tariffe migliori su Kiwi.com"
             make_box(pdf, banner_text, FLIGHT_LINK, "green")
-            make_box(pdf, "eSim Saily: Internet immediato all'arrivo (Sconto 5%)", ESIM_LINK, "yellow")
-            make_box(pdf, "Assicurazione Sanitaria: Sconto 10% con Heymondo", INSURANCE_LINK, "green")
+            # =======================
+            make_box(pdf, "eSim Saily: Internet immediato all'arrivo senza acquisto di SIM locali", ESIM_LINK, "yellow")
+            make_box(pdf, "MAI senza Assicurazione Sanitaria: Approfitta QUI dello sconto 10% con Heymondo", INSURANCE_LINK, "green")
             inserted_ch1 = True
             
         elif "## CAPITOLO 3" in line_upper and not inserted_ch2:
-            make_box(pdf, f"Disponibilità Hotel limitata in {month_clean}. Verifica su Expedia", HOTEL_LINK, "blue")
-            make_box(pdf, "Transfer Aeroporto > Hotel (Prezzo fisso)", TRANSF_LINK, "purple")
+            make_box(pdf, f"Le stanze in Hotel si esauriscono velocemente in {month_clean}, verifica disponibilità e prezzi su Expedia", HOTEL_LINK, "blue")
+            make_box(pdf, "Transfer privati ad un prezzo WOW! da e per l'aeroporto", TRANSF_LINK, "purple")
             inserted_ch2 = True
 
         elif "## CAPITOLO 4" in line_upper and not inserted_ch3:
-            make_box(pdf, f"Salta la fila: Biglietti attrazioni a {dest_clean} su Tiqets", TIQETS_LINK, "orange")
-            make_box(pdf, "Noleggio Auto: Confronta prezzi su Auto Europe", RENTAL_LINK, "purple")
-            make_box(pdf, "Treni e Bus: Biglietti su Omio", TRAIN_LINK, "purple")
+            make_box(pdf, f"Biglietti Attrazioni saltando la fila per il tuo tour in {dest_clean} su Tiqets", TIQETS_LINK, "orange")
+            make_box(pdf, "Viaggia in libertà e noleggia un auto: Tariffe esclusive con Auto Europe", RENTAL_LINK, "purple")
+            make_box(pdf, "Treni e Bus: Prenota su Omio", TRAIN_LINK, "purple")
             inserted_ch3 = True
             
         elif "## CAPITOLO 5" in line_upper and not inserted_ch4:
-            make_box(pdf, "I migliori Ristoranti? Leggi su TripAdvisor", RESTAURANT_LINK, "green")
+            make_box(pdf, "Ristoranti: Leggi le recensioni su TripAdvisor", RESTAURANT_LINK, "green")
             inserted_ch4 = True
 
         # --- FORMATTAZIONE TESTO ---
@@ -250,22 +254,14 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.cell(0, 10, clean_verdict, 1, 1, 'C', fill=True)
             pdf.ln(5)
             
-        # --- BULLET POINTS SICURI (WIDTH LIMITATA 160mm) ---
         elif line.strip().startswith('* ') or line.strip().startswith('- '): 
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
-            
-            # X Iniziale del Bullet
             pdf.set_x(15)
             pdf.cell(5, 6, chr(149), 0, 0)
-            
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            
-            # Larghezza testo sicura: 160mm
-            # 15 (margin) + 5 (bullet) + 160 (text) = 180mm. 
-            # Il foglio è 210mm. Margine destro 10mm.
-            # 180 < 200. SIAMO DENTRO DI 2CM.
-            pdf.multi_cell(160, 6, content) 
+            # Ripristinata larghezza originale (170)
+            pdf.multi_cell(170, 6, content) 
         
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
@@ -292,20 +288,14 @@ def create_complex_pdf(text, destination, meta_data):
         else:
             pdf.set_fill_color(250, 250, 250) 
             pdf.set_draw_color(220, 220, 220) 
-        
         start_y = pdf.get_y()
-        
-        # WIDTH SAFE: 170mm
-        pdf.set_x(20)
-        pdf.rect(20, start_y, 170, 14, 'DF') 
-        
+        pdf.rect(10, start_y, 190, 14, 'DF') 
         pdf.set_y(start_y + 2)
-        pdf.set_x(25)
+        pdf.set_x(15)
         pdf.set_font("Helvetica", 'B', 10) 
         pdf.set_text_color(44, 62, 80)
         pdf.cell(0, 5, title, 0, 1)
-        
-        pdf.set_x(25)
+        pdf.set_x(15)
         pdf.set_font("Helvetica", '', 9)
         pdf.set_text_color(0, 102, 204)
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
@@ -465,6 +455,7 @@ with st.container():
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
+                    # --- PROMPT CORAZZATO PER IL GIAPPONE ---
                     prompt = f"""
                     Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi il sogno di una vita.
                     Razionalizza il tempo, visita quanti più posti possibili con {duration} notti a disposizione.
@@ -476,15 +467,17 @@ with st.container():
                     - Gruppo: {pax_desc}
                     - Budget: € {budget}
                     
-                    REGOLE TASSATIVE:
-                    1. Usa SOLO l'alfabeto Latino/Italiano esteso. NIENTE Kanji/Cirillico/Emoji.
+                    REGOLE TASSATIVE (ANTI-CRASH):
+                    1. Usa SOLO l'alfabeto Latino/Italiano esteso. È VIETATO usare ideogrammi, Kanji, Cirillico o Emoji.
                     2. TRASLITTERA TASSATIVAMENTE i nomi locali in caratteri Latini (es. scrivi "Shinjuku", MAI "新宿").
-                    3. Simboli Valute: scrivi "EUR", "USD", "JPY".
-                    4. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
-                    5. VIETATO USARE LISTE ANNIDATE.
-                    6. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
-                    7. USA IL CALCOLO DELLA DURATA {duration}, NON RICALCOLARE.
-                    8. NON SCRIVERE I TUOI PENSIERI INTERNI.
+                    3. Se non puoi traslitterare, usa il nome in Inglese o Italiano.
+                    4. Simboli Valute: scrivi "EUR", "USD", "JPY" (MAI simboli grafici come ¥).
+                    5. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
+                    6. VIETATO USARE LISTE ANNIDATE.
+                    7. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
+                    8. USA IL CALCOLO DELLA DURATA {duration}, NON RICALCOLARE.
+                    9. NON SCRIVERE I TUOI PENSIERI INTERNI.
+                    
                     STRUTTURA TITOLI (Usa ESATTAMENTE questi):
                     # {destination.upper()}: [Sottotitolo]
                     **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
