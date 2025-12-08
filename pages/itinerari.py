@@ -463,12 +463,41 @@ with st.container():
     with c_bud:
         budget = st.number_input("Budget Totale (€)", min_value=500, value=3000, step=100)
     
+        # --- LOGICA DATE INTELLIGENTE ---
+    def aggiorna_data_ritorno():
+        """Callback: se cambio la partenza, resetto il ritorno a Partenza + 1"""
+        if st.session_state.start_input:
+            st.session_state.end_input = st.session_state.start_input + datetime.timedelta(days=1)
+
     # RIGA 2
     c_start, c_end = st.columns(2)
+    
     with c_start:
-          start_date = st.date_input("Data Partenza", datetime.date.today() + datetime.timedelta(days=30))
+        # Impostiamo una data di default iniziale (es. tra 30 giorni)
+        default_start = datetime.date.today() + datetime.timedelta(days=30)
+        
+        start_date = st.date_input(
+            "Data Partenza",
+            value=default_start,
+            min_value=datetime.date.today(), # Non si può partire nel passato
+            key="start_input",               # Chiave per session_state
+            on_change=aggiorna_data_ritorno  # Scatena l'aggiornamento automatico
+        )
+
     with c_end:
-          end_date = st.date_input("Data Ritorno", datetime.date.today() + datetime.timedelta(days=37))
+        # Calcoliamo il minimo consentito per il ritorno (Partenza + 1)
+        min_return_date = start_date + datetime.timedelta(days=1)
+        
+        # Se nel session_state non c'è ancora una data di ritorno, la inizializziamo
+        if "end_input" not in st.session_state:
+            st.session_state.end_input = min_return_date
+
+        end_date = st.date_input(
+            "Data Ritorno",
+            value=st.session_state.end_input, # Legge dal session state aggiornato dalla callback
+            min_value=min_return_date,        # Questo "spegne" le date precedenti nel calendario
+            key="end_input"
+        )
 
     # RIGA 3
     c_ad, c_kids = st.columns(2)
