@@ -6,6 +6,7 @@ import datetime
 import unicodedata
 import os
 import re
+import json
 
 # --- CONFIGURAZIONE PAGINA ---
 if os.path.exists("logo.png"):
@@ -13,10 +14,26 @@ if os.path.exists("logo.png"):
 else:
     st.set_page_config(page_title="Itinerary Wizard", page_icon="🧙‍♂️", layout="centered")
 
-# --- MEMORIA & API ---
-@st.cache_resource
-def get_shared_logs():
+# --- MEMORIA LOG (JSON) ---
+LOG_FILE = "admin_stats.json"
+
+def load_logs():
+    """Carica i log dal file JSON."""
+    if os.path.exists(LOG_FILE):
+        try:
+            with open(LOG_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return []
     return []
+
+def add_log(entry):
+    """Aggiunge una nuova ricerca e salva su file."""
+    logs = load_logs()
+    logs.append(entry)
+    if len(logs) > 100: logs = logs[-100:] # Mantieni solo ultimi 100
+    with open(LOG_FILE, "w", encoding="utf-8") as f:
+        json.dump(logs, f, ensure_ascii=False, indent=2)
 
 try:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
@@ -24,6 +41,12 @@ try:
 except Exception:
     st.error("⚠️ Chiave API mancante! Inseriscila nei 'Secrets'.")
     st.stop()
+
+# ==========================================
+# 🌐 CONFIGURAZIONE CROSS-PROMO
+# ==========================================
+GUIDE_APP_URL = "https://www.30secondstoguide.it" 
+PROMO_IMG_GUIDE = "promo_to_guide.jpg" # IMMAGINE 2: Cerchio su "Inserisci destinazione"
 
 # ==========================================
 # 💰 AREA MONETIZZAZIONE
@@ -69,11 +92,10 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE (SAFE MODE v8.0)
+# 🧙‍♂️ PDF ENGINE (CORRETTO)
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
-    # --- FUNZIONE SPAZZINO ---
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
         text_input = text_input.replace("**", "")
@@ -104,7 +126,9 @@ def create_complex_pdf(text, destination, meta_data):
 
     class WizardPDF(FPDF):
         def header(self):
-            if self.page_no() == 1: return
+            # FIX: Salta intestazione su Cover (1) E su Promo (2)
+            if self.page_no() <= 2: return 
+            
             self.set_fill_color(44, 62, 80)
             self.rect(0, 0, 210, 15, 'F')
             self.set_font('Helvetica', 'B', 8)
@@ -148,18 +172,49 @@ def create_complex_pdf(text, destination, meta_data):
             self.set_font('Helvetica', '', 10)
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
-    # --- CONFIGURAZIONE MARGINI E PAGINA ---
+    # --- FUNZIONE PAGINA PROMO ---
+    def add_promo_page(pdf_obj):
+        # Se non c'è l'immagine, non facciamo nulla (evitiamo pagine bianche a caso)
+        if not os.path.exists(PROMO_IMG_GUIDE): return
+
+        pdf_obj.add_page()
+        
+        # 1. Immagine Screenshot
+        # Posizionata in alto (Y=30), larga 180mm
+        pdf_obj.image(PROMO_IMG_GUIDE, x=15, y=30, w=180)
+        
+        # 2. Box CTA
+        box_y = 160 
+        pdf_obj.set_fill_color(230, 126, 34) # Arancione per rimandare alla Guida
+        pdf_obj.set_draw_color(211, 84, 0)
+        pdf_obj.rect(15, box_y, 180, 30, 'DF')
+        
+        # 3. Testo e Link
+        pdf_obj.set_y(box_y + 8)
+        pdf_obj.set_font("Helvetica", 'B', 14)
+        pdf_obj.set_text_color(255, 255, 255) # Testo bianco
+        
+        cta_text = "Approfondisci la conoscenza delle città del tuo itinerario, crea le tue guide qui."
+        pdf_obj.set_x(15)
+        pdf_obj.multi_cell(180, 8, cta_text, align='C', link=GUIDE_APP_URL)
+
+    # --- CONFIGURAZIONE ---
     pdf = WizardPDF()
-    pdf.set_margins(15, 15, 15)  # Margini: Sinistra, Alto, Destra (15mm)
-    pdf.set_auto_page_break(auto=True, margin=25) # Break automatico a 25mm dal fondo
+    pdf.set_margins(15, 15, 15)
+    pdf.set_auto_page_break(auto=True, margin=25)
     
+    # 1. Copertina
     pdf.make_cover(dest_clean, meta_data)
+    
+    # 2. Pagina Promo
+    add_promo_page(pdf)
+    
+    # 3. FIX: Nuova pagina ORA, così l'itinerario parte pulito a pag 3
     pdf.add_page()
     
-    # --- BOX CONTESTUALE (SAFE) ---
+    # --- BOX CONTESTUALE ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
-        
         palettes = {
             "blue":  {"bg": (240, 248, 255), "accent": (0, 102, 204)},
             "green":  {"bg": (240, 255, 240), "accent": (0, 153, 76)},
@@ -167,37 +222,25 @@ def create_complex_pdf(text, destination, meta_data):
             "purple": {"bg": (248, 240, 255), "accent": (102, 0, 153)},
             "orange": {"bg": (255, 245, 235), "accent": (230, 90, 0)}
         }
-        
         chosen = palettes.get(style, palettes["blue"])
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
         
-        # Controllo manuale solo per i box per non spezzarli
-        if pdf_obj.get_y() > 250:
-             pdf_obj.add_page()
-
+        if pdf_obj.get_y() > 250: pdf_obj.add_page()
         pdf_obj.ln(4)
-        
-        # Larghezza box fissa a 180mm (entro i margini di 15mm)
         current_y = pdf_obj.get_y()
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b)
         pdf_obj.rect(15, current_y, 180, 14, 'DF')
-        
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
         pdf_obj.rect(15, current_y, 2, 14, 'F')
-        
         pdf_obj.set_xy(20, current_y + 4)
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
-        
-        # Cella testo: 170mm (sicura)
         pdf_obj.cell(170, 6, f"{text} >", link=link)
-        
         pdf_obj.ln(12)
 
     lines = text.split('\n')
-    
     inserted_ch1 = False
     inserted_ch2 = False
     inserted_ch3 = False
@@ -231,8 +274,6 @@ def create_complex_pdf(text, destination, meta_data):
             inserted_ch4 = True
 
         # --- FORMATTAZIONE TESTO ---
-        # NOTA: Qui usiamo larghezze conservative (175mm su 210mm totali)
-        
         if line.strip().startswith('# '):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
@@ -245,25 +286,22 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_font("Helvetica", 'B', 14)
             pdf.set_text_color(230, 126, 34)
             pdf.multi_cell(175, 10, clean_line.replace('##', '').strip())
-            pdf.ln(3) # <--- FIX: Aggiunto spazio esplicito dopo il titolo del capitolo
+            pdf.ln(3) 
             
         elif "VERDETTO" in line_upper:
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 12)
             pdf.set_fill_color(220, 220, 220)
             clean_verdict = clean_line.replace('*', '').strip()
-            # Box verdetto: 180mm (pieno margine)
             pdf.multi_cell(180, 8, clean_verdict, border=1, align='C', fill=True)
             pdf.ln(5)
             
         elif line.strip().startswith('* ') or line.strip().startswith('- '):
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
-            pdf.set_x(20) # Rientro 20mm
+            pdf.set_x(20) 
             pdf.cell(5, 6, chr(149), 0, 0)
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            
-            # Larghezza molto sicura: 160mm
             if content:
                 pdf.multi_cell(160, 6, content)
         
@@ -273,27 +311,18 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.ln(2)
             pdf.multi_cell(175, 6, clean_line)
             
-        # --- NUOVO BLOCCO: Intestazioni Giorno (GIORNO X:)
         elif re.match(r'GIORNO\s*\d+:', line_upper):
-            # Forzo l'interruzione di riga prima di un'intestazione GIORNO
-            if pdf.get_x() > 15:
-                pdf.ln(6) 
-
+            if pdf.get_x() > 15: pdf.ln(6) 
             pdf.set_font("Helvetica", 'B', 11)
             pdf.set_text_color(20, 20, 20)
             pdf.multi_cell(175, 6, clean_line)
-            pdf.ln(1) # Spazio aggiuntivo dopo l'intestazione
+            pdf.ln(1)
             
         else:
             if line.strip():
-                # Aggiungo un a capo condizionale se il cursore non è a inizio riga (a volte ereditato
-                # dalla riga precedente non formattata)
-                if pdf.get_x() > 15 and pdf.get_y() > 20: 
-                    pdf.ln(1) 
-                    
+                if pdf.get_x() > 15 and pdf.get_y() > 20: pdf.ln(1) 
                 pdf.set_font("Helvetica", '', 11)
                 pdf.set_text_color(40, 40, 40)
-                # Testo normale: 175mm (massima sicurezza)
                 pdf.multi_cell(175, 6, clean_line)
                 pdf.ln(1)
 
@@ -310,7 +339,6 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.set_fill_color(250, 250, 250)
             pdf.set_draw_color(220, 220, 220)
         
-        # Check spazio manuale solo qui
         if pdf.get_y() > 250: pdf.add_page()
 
         start_y = pdf.get_y()
@@ -386,7 +414,7 @@ with st.sidebar:
         secret_pwd = st.text_input("Password", type="password")
         if secret_pwd == "fabio123":
             st.write("### 📊 Ultime Ricerche:")
-            logs = get_shared_logs()
+            logs = load_logs()
             if logs:
                 for log in reversed(logs):
                     st.caption(log)
@@ -474,7 +502,7 @@ with st.container():
             mese_partenza = mesi[start_date.month]
             
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            get_shared_logs().append(f"🧙‍♂️ {destination} {budget}€ ({timestamp})")
+            add_log(f"🧙‍♂️ {destination} ({timestamp})")
             
             with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
                 try:
