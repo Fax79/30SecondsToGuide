@@ -5,6 +5,7 @@ import os
 import base64
 import datetime
 import unicodedata
+import json
 
 # --- 0. CONFIGURAZIONE PAGINA ---
 if os.path.exists("logo.png"):
@@ -12,10 +13,26 @@ if os.path.exists("logo.png"):
 else:
     st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
 
-# --- MEMORIA CONDIVISA (LOG) ---
-@st.cache_resource
-def get_shared_logs():
-    return [] 
+# --- MEMORIA LOG (JSON) ---
+LOG_FILE = "admin_stats.json"
+
+def load_logs():
+    """Carica i log dal file JSON."""
+    if os.path.exists(LOG_FILE):
+        try:
+            with open(LOG_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+def add_log(entry):
+    """Aggiunge una nuova ricerca e salva su file."""
+    logs = load_logs()
+    logs.append(entry)
+    if len(logs) > 100: logs = logs[-100:] # Mantieni solo ultimi 100
+    with open(LOG_FILE, "w", encoding="utf-8") as f:
+        json.dump(logs, f, ensure_ascii=False, indent=2)
 
 # --- CONFIGURAZIONE API ---
 try:
@@ -24,6 +41,12 @@ try:
 except:
     st.error("⚠️ Chiave API mancante! Inseriscila nei 'Secrets'.")
     st.stop()
+
+# ==========================================
+# 🌐 CONFIGURAZIONE CROSS-PROMO
+# ==========================================
+WIZARD_APP_URL = "https://www.30secondstoguide.it" 
+PROMO_IMG_WIZARD = "promo_to_wizard.jpg" # IMMAGINE 1: Cerchio su "APRI ITINERARY WIZARD"
 
 # ==========================================
 # 💰 AREA MONETIZZAZIONE & PARTNER
@@ -46,7 +69,6 @@ INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDST
 TRAIN_LINK = "https://www.omio.com"
 RESTAURANT_LINK = "https://www.tripadvisor.com"
 HOTEL_LINK = "https://www.expedia.com" 
-TOUR_LINK = "https://www.getyourguide.com"
 
 # --- LINK PROMOZIONE ---
 PROMO_LINK = "https://www.30secondstoguide.it" 
@@ -170,18 +192,18 @@ def create_pdf(text, city):
         output = []
         for char in text_input:
             try:
-                # 3. Test: il carattere è supportato nativamente da Latin-1? (Include à, è, ò, ù, ì...)
+                # 3. Test: il carattere è supportato nativamente da Latin-1?
                 char.encode('latin-1')
                 output.append(char)
             except UnicodeEncodeError:
-                # 4. Se fallisce (es. lettere slave/asiatiche), decomponiamo e prendiamo la base
+                # 4. Se fallisce, decomponiamo e prendiamo la base
                 decomposed = unicodedata.normalize('NFD', char)
                 base_char = decomposed[0]
                 try:
                     base_char.encode('latin-1')
                     output.append(base_char)
                 except UnicodeEncodeError:
-                    # 5. Se anche la base non va, lo ignoriamo per evitare crash
+                    # 5. Se anche la base non va, lo ignoriamo
                     pass
                     
         return "".join(output)
@@ -190,7 +212,9 @@ def create_pdf(text, city):
 
     class ModernPDF(FPDF):
         def header(self):
-            if self.page_no() == 1: return
+            # FIX: Salta intestazione su Cover (1) E su Promo (2)
+            if self.page_no() <= 2: return 
+            
             self.set_fill_color(44, 62, 80) 
             self.rect(0, 0, 210, 20, 'F')
             self.set_font('Helvetica', 'B', 10)
@@ -241,9 +265,42 @@ def create_pdf(text, city):
             self.set_text_color(44, 62, 80)
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", link="https://www.30secondstoguide.it")
 
+    # --- FUNZIONE PAGINA PROMO ---
+    def add_promo_page(pdf_obj):
+        # Se non c'è l'immagine, non facciamo nulla (evitiamo pagine bianche a caso)
+        if not os.path.exists(PROMO_IMG_WIZARD): return
+
+        pdf_obj.add_page()
+        
+        # 1. Immagine Screenshot
+        # Posizionata in alto (Y=30), larga 180mm (margini 15mm)
+        pdf_obj.image(PROMO_IMG_WIZARD, x=15, y=30, w=180)
+        
+        # 2. Box CTA
+        box_y = 160 
+        pdf_obj.set_fill_color(155, 89, 182) # Viola per rimandare al Wizard
+        pdf_obj.set_draw_color(142, 68, 173)
+        pdf_obj.rect(15, box_y, 180, 30, 'DF')
+        
+        # 3. Testo e Link
+        pdf_obj.set_y(box_y + 8)
+        pdf_obj.set_font("Helvetica", 'B', 14)
+        pdf_obj.set_text_color(255, 255, 255)
+        
+        cta_text = "Clicca qui se vuoi un itinerario personalizzato in base alla durata e al tuo budget."
+        pdf_obj.set_x(15)
+        pdf_obj.multi_cell(180, 8, cta_text, align='C', link=WIZARD_APP_URL)
+
     pdf = ModernPDF()
     pdf.set_auto_page_break(auto=True, margin=25)
+    
+    # 1. Copertina (Pagina 1)
     pdf.make_cover(city_clean)
+    
+    # 2. Pagina Promo (Pagina 2)
+    add_promo_page(pdf)
+    
+    # 3. FIX: Nuova pagina ORA, così la guida parte pulita a pag 3
     pdf.add_page()
     
     lines = text.split('\n')
@@ -446,7 +503,8 @@ with st.sidebar:
         secret_pwd = st.text_input("Password", type="password")
         if secret_pwd == "fabio123": 
             st.write("### 📊 Ultime Ricerche:")
-            logs = get_shared_logs()
+            # MODIFICA: Uso load_logs()
+            logs = load_logs()
             if logs:
                 for log in reversed(logs):
                     st.caption(log)
@@ -540,7 +598,8 @@ with st.container():
         else:
             # DATA NEL LOG
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            get_shared_logs().append(f"📍 {city_name} ({timestamp})")
+            # MODIFICA: Uso add_log() invece di get_shared_logs()
+            add_log(f"📍 {city_name} ({timestamp})")
             
             with st.spinner("Stiamo scrivendo la tua guida... (non chiudere la pagina)"):
                 try:
@@ -555,8 +614,7 @@ with st.container():
                     3. Usa ESATTAMENTE la struttura seguente.
                     4. Scrivi paragrafi ricchi e lunghi.
                     5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
-                    6. Se viene inserita una nazione, una regione, un'area geografica produci la guida per la città principale, aggiungi una premessa prima del capitolo 1 in cui elenchi eventuali altre città esortando a fare guide separate, suggerisci anche di utilizzare il bottone dell'"ITINERARY WIZARD" che trovano nel sito.            
-                    7. Se viene inserita un parola o una frase che non sono luoghi geografici rispondi in modo scherzoso ma sintetico, non usare la struttura della guida.
+                    6. Se viene inserita un parola che non è una città o una frase rispondi in modo scherzoso ma sintetico, non usare la struttura della guida.
                     
                     MODELLO:
                     {TESTO_MODELLO}
@@ -664,4 +722,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
