@@ -13,11 +13,6 @@ if os.path.exists("logo.png"):
 else:
     st.set_page_config(page_title="Itinerary Wizard", page_icon="🧙‍♂️", layout="centered")
 
-# --- URL PER CROSS-PROMOZIONE ---
-# SOSTITUISCI CON L'URL REALE DELLA TUA HOME/GENERATORE STANDARD
-GUIDE_APP_URL = "https://www.30secondstoguide.it" 
-PROMO_IMG_GUIDE = "promo_to_guide.jpg" # L'immagine rinominata
-
 # --- MEMORIA & API ---
 @st.cache_resource
 def get_shared_logs():
@@ -74,17 +69,16 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE (SAFE MODE v8.0 - Con Promo)
+# 🧙‍♂️ PDF ENGINE (SAFE MODE v8.0)
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
-    # --- FUNZIONE SPAZZINO (Mantieni la tua attuale) ---
+    # --- FUNZIONE SPAZZINO ---
     def clean_text_for_pdf(text_input):
-        # ... (Tieni il tuo codice attuale dello spazzino) ...
         if not text_input: return ""
         text_input = text_input.replace("**", "")
         replacements = {
-            "€": "EUR", "â‚¬": "EUR", "$": "USD", "£": "GBP",
+            "€": "EUR", "â¬": "EUR", "$": "USD", "£": "GBP",
             "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "..."
         }
         for char, replacement in replacements.items():
@@ -109,7 +103,6 @@ def create_complex_pdf(text, destination, meta_data):
     month_clean = clean_text_for_pdf(meta_data.get('month_name', ''))
 
     class WizardPDF(FPDF):
-        # (Header, Footer e Cover rimangono uguali alla tua ultima versione)
         def header(self):
             if self.page_no() == 1: return
             self.set_fill_color(44, 62, 80)
@@ -155,64 +148,208 @@ def create_complex_pdf(text, destination, meta_data):
             self.set_font('Helvetica', '', 10)
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
-    # --- NUOVA FUNZIONE PER LA PAGINA PROMO ---
-    def add_promo_page(pdf_obj):
-        if not os.path.exists(PROMO_IMG_GUIDE): return
-        
-        pdf_obj.add_page()
-        
-        # 1. Immagine Screenshot
-        # Posizionata in alto (Y=30), larga 180mm (margini 15mm)
-        pdf_obj.image(PROMO_IMG_GUIDE, x=15, y=30, w=180)
-        
-        # 2. Box CTA
-        # Posizionato sotto l'immagine (Y=160 circa)
-        box_y = 160 
-        pdf_obj.set_fill_color(230, 126, 34) # Colore Arancione "Guida Standard"
-        pdf_obj.set_draw_color(211, 84, 0)
-        pdf_obj.rect(15, box_y, 180, 30, 'DF')
-        
-        # 3. Testo e Link
-        pdf_obj.set_y(box_y + 8) # Padding interno
-        pdf_obj.set_font("Helvetica", 'B', 14)
-        pdf_obj.set_text_color(255, 255, 255)
-        
-        cta_text = "Approfondisci la conoscenza delle città del tuo itinerario, crea le tue guide qui."
-        # Usiamo multi_cell per centrare e rendere cliccabile l'area
-        pdf_obj.set_x(15)
-        pdf_obj.multi_cell(180, 8, cta_text, align='C', link=GUIDE_APP_URL)
-
     # --- CONFIGURAZIONE MARGINI E PAGINA ---
     pdf = WizardPDF()
-    pdf.set_margins(15, 15, 15)
-    pdf.set_auto_page_break(auto=True, margin=25)
+    pdf.set_margins(15, 15, 15)  # Margini: Sinistra, Alto, Destra (15mm)
+    pdf.set_auto_page_break(auto=True, margin=25) # Break automatico a 25mm dal fondo
     
-    # 1. Copertina
     pdf.make_cover(dest_clean, meta_data)
-    
-    # 2. NUOVO: Pagina Promo (Pagina 2)
-    add_promo_page(pdf)
-
-    # 3. Inizio contenuto itinerario (Pagina 3)
     pdf.add_page()
     
-    # ... (Il resto della funzione create_complex_pdf rimane identico) ...
-    # ... (Incolla qui il resto della tua funzione originale: make_box, loop delle linee, ecc.) ...
-
-    # (Esempio breve del resto per contesto)
     # --- BOX CONTESTUALE (SAFE) ---
     def make_box(pdf_obj, text, link, style="blue"):
-        # ... (codice esistente) ...
-        pass
+        text = clean_text_for_pdf(text)
+        
+        palettes = {
+            "blue":  {"bg": (240, 248, 255), "accent": (0, 102, 204)},
+            "green":  {"bg": (240, 255, 240), "accent": (0, 153, 76)},
+            "yellow": {"bg": (255, 253, 240), "accent": (204, 153, 0)},
+            "purple": {"bg": (248, 240, 255), "accent": (102, 0, 153)},
+            "orange": {"bg": (255, 245, 235), "accent": (230, 90, 0)}
+        }
+        
+        chosen = palettes.get(style, palettes["blue"])
+        bg_r, bg_g, bg_b = chosen["bg"]
+        ac_r, ac_g, ac_b = chosen["accent"]
+        
+        # Controllo manuale solo per i box per non spezzarli
+        if pdf_obj.get_y() > 250:
+             pdf_obj.add_page()
+
+        pdf_obj.ln(4)
+        
+        # Larghezza box fissa a 180mm (entro i margini di 15mm)
+        current_y = pdf_obj.get_y()
+        pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
+        pdf_obj.set_draw_color(bg_r, bg_g, bg_b)
+        pdf_obj.rect(15, current_y, 180, 14, 'DF')
+        
+        pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
+        pdf_obj.rect(15, current_y, 2, 14, 'F')
+        
+        pdf_obj.set_xy(20, current_y + 4)
+        pdf_obj.set_font("Helvetica", 'B', 9)
+        pdf_obj.set_text_color(44, 62, 80)
+        
+        # Cella testo: 170mm (sicura)
+        pdf_obj.cell(170, 6, f"{text} >", link=link)
+        
+        pdf_obj.ln(12)
 
     lines = text.split('\n')
-    # ... (variabili di stato inserted_chX) ...
+    
+    inserted_ch1 = False
+    inserted_ch2 = False
+    inserted_ch3 = False
+    inserted_ch4 = False
 
     for line in lines:
-        # ... (codice esistente del loop) ...
-        pass
+        clean_line = clean_text_for_pdf(line)
+        line_upper = clean_line.upper()
+        
+        # --- LOGICA LINK ---
+        if "## CAPITOLO 2" in line_upper and not inserted_ch1:
+            banner_text = f"In {month_clean} i prezzi aumentano? Prenota ora su Kiwi.com"
+            make_box(pdf, banner_text, FLIGHT_LINK, "green")
+            make_box(pdf, "eSim Saily: Internet immediato all'arrivo senza acquisto di SIM locali", ESIM_LINK, "yellow")
+            make_box(pdf, "MAI senza Assicurazione Sanitaria: Approfitta QUI dello sconto 10% con Heymondo", INSURANCE_LINK, "green")
+            inserted_ch1 = True
+            
+        elif "## CAPITOLO 3" in line_upper and not inserted_ch2:
+            make_box(pdf, f"Stanze in Hotel quasi esaurite in {month_clean}? Prenota ora su Expedia", HOTEL_LINK, "blue")
+            make_box(pdf, "Transfer privati ad un prezzo WOW! da e per l'aeroporto", TRANSF_LINK, "purple")
+            inserted_ch2 = True
 
-    # ... (codice pagina partner finale) ...
+        elif "## CAPITOLO 4" in line_upper and not inserted_ch3:
+            make_box(pdf, f"Biglietti Attrazioni saltando la fila per il tuo tour in {dest_clean} su Tiqets", TIQETS_LINK, "orange")
+            make_box(pdf, "Viaggia in libertà e noleggia un auto: Tariffe esclusive con Auto Europe", RENTAL_LINK, "purple")
+            make_box(pdf, "Treni e Bus: Prenota su Omio", TRAIN_LINK, "purple")
+            inserted_ch3 = True
+            
+        elif "## CAPITOLO 5" in line_upper and not inserted_ch4:
+            make_box(pdf, "Ristoranti: Leggi le recensioni su TripAdvisor", RESTAURANT_LINK, "green")
+            inserted_ch4 = True
+
+        # --- FORMATTAZIONE TESTO ---
+        # NOTA: Qui usiamo larghezze conservative (175mm su 210mm totali)
+        
+        if line.strip().startswith('# '):
+            pdf.ln(5)
+            pdf.set_font("Helvetica", 'B', 20)
+            pdf.set_text_color(44, 62, 80)
+            pdf.multi_cell(175, 10, clean_line.replace('#', '').strip())
+            pdf.ln(5)
+            
+        elif line.strip().startswith('## '):
+            pdf.ln(5)
+            pdf.set_font("Helvetica", 'B', 14)
+            pdf.set_text_color(230, 126, 34)
+            pdf.multi_cell(175, 10, clean_line.replace('##', '').strip())
+            pdf.ln(3) # <--- FIX: Aggiunto spazio esplicito dopo il titolo del capitolo
+            
+        elif "VERDETTO" in line_upper:
+            pdf.ln(5)
+            pdf.set_font("Helvetica", 'B', 12)
+            pdf.set_fill_color(220, 220, 220)
+            clean_verdict = clean_line.replace('*', '').strip()
+            # Box verdetto: 180mm (pieno margine)
+            pdf.multi_cell(180, 8, clean_verdict, border=1, align='C', fill=True)
+            pdf.ln(5)
+            
+        elif line.strip().startswith('* ') or line.strip().startswith('- '):
+            pdf.set_font("Helvetica", '', 11)
+            pdf.set_text_color(20, 20, 20)
+            pdf.set_x(20) # Rientro 20mm
+            pdf.cell(5, 6, chr(149), 0, 0)
+            content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
+            
+            # Larghezza molto sicura: 160mm
+            if content:
+                pdf.multi_cell(160, 6, content)
+        
+        elif re.match(r'^\d+\.', line.strip()):
+            pdf.set_font("Helvetica", 'B', 11)
+            pdf.set_text_color(44, 62, 80)
+            pdf.ln(2)
+            pdf.multi_cell(175, 6, clean_line)
+            
+        # --- NUOVO BLOCCO: Intestazioni Giorno (GIORNO X:)
+        elif re.match(r'GIORNO\s*\d+:', line_upper):
+            # Forzo l'interruzione di riga prima di un'intestazione GIORNO
+            if pdf.get_x() > 15:
+                pdf.ln(6) 
+
+            pdf.set_font("Helvetica", 'B', 11)
+            pdf.set_text_color(20, 20, 20)
+            pdf.multi_cell(175, 6, clean_line)
+            pdf.ln(1) # Spazio aggiuntivo dopo l'intestazione
+            
+        else:
+            if line.strip():
+                # Aggiungo un a capo condizionale se il cursore non è a inizio riga (a volte ereditato
+                # dalla riga precedente non formattata)
+                if pdf.get_x() > 15 and pdf.get_y() > 20: 
+                    pdf.ln(1) 
+                    
+                pdf.set_font("Helvetica", '', 11)
+                pdf.set_text_color(40, 40, 40)
+                # Testo normale: 175mm (massima sicurezza)
+                pdf.multi_cell(175, 6, clean_line)
+                pdf.ln(1)
+
+    # --- PAGINA PARTNER ---
+    pdf.add_page()
+    
+    def make_sponsor_box(title, subtitle, link, highlight=False):
+        title = clean_text_for_pdf(title)
+        subtitle = clean_text_for_pdf(subtitle)
+        if highlight:
+            pdf.set_fill_color(230, 240, 255)
+            pdf.set_draw_color(0, 102, 204)
+        else:
+            pdf.set_fill_color(250, 250, 250)
+            pdf.set_draw_color(220, 220, 220)
+        
+        # Check spazio manuale solo qui
+        if pdf.get_y() > 250: pdf.add_page()
+
+        start_y = pdf.get_y()
+        pdf.rect(15, start_y, 180, 14, 'DF')
+        pdf.set_y(start_y + 2)
+        pdf.set_x(20)
+        pdf.set_font("Helvetica", 'B', 10)
+        pdf.set_text_color(44, 62, 80)
+        pdf.cell(0, 5, title, 0, 1)
+        pdf.set_x(20)
+        pdf.set_font("Helvetica", '', 9)
+        pdf.set_text_color(0, 102, 204)
+        pdf.cell(0, 6, subtitle, 0, 1, link=link)
+        pdf.ln(4)
+
+    pdf.set_font("Helvetica", 'B', 14)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 10, "Già visti nella guida...", 0, 1, 'L')
+    pdf.ln(2)
+    
+    make_sponsor_box("Expedia", "Hotel e Voli", HOTEL_LINK)
+    make_sponsor_box("Tiqets", "Biglietti musei e attrazioni", TIQETS_LINK)
+    make_sponsor_box("Welcome Pickups", "Transfer aeroportuali", TRANSF_LINK)
+    make_sponsor_box("Auto Europe", "Noleggio Auto", RENTAL_LINK)
+    make_sponsor_box("Omio", "Treni e Bus", TRAIN_LINK)
+    make_sponsor_box("Kiwi.com", "Voli low cost", FLIGHT_LINK)
+    make_sponsor_box("Heymondo", "Assicurazione viaggio", INSURANCE_LINK)
+    make_sponsor_box("Saily", "eSim internazionale", ESIM_LINK)
+    make_sponsor_box("TripAdvisor", "Recensioni Ristoranti", RESTAURANT_LINK)
+
+    pdf.ln(5)
+    pdf.set_font("Helvetica", 'B', 16)
+    pdf.set_text_color(44, 62, 80)
+    pdf.cell(0, 10, "ALTRI SERVIZI INDISPENSABILI", 0, 1, 'L')
+    pdf.ln(2)
+    
+    make_sponsor_box("Deposito Bagagli", "Libera le mani con Radical Storage", LUGGAGE_LINK, highlight=True)
+    make_sponsor_box("Rimborsi Voli", "Volo in ritardo? Chiedi risarcimento con AirHelp", REIMB_LINK, highlight=True)
+    make_sponsor_box("Taxi Locale", "Kiwitaxi per spostamenti urbani", TAXI_LINK, highlight=True)
 
     return bytes(pdf.output(dest='S'))
 
