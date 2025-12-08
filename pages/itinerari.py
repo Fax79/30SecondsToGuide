@@ -282,12 +282,19 @@ def create_complex_pdf(text, destination, meta_data):
             pdf.multi_cell(175, 10, clean_line.replace('#', '').strip())
             pdf.ln(5)
             
-        elif line.strip().startswith('## '):
+        # Rileva "CAPITOLO" + spazio + numero + DUE PUNTI (es. "## CAPITOLO 1:")
+        # Questa regex scarta qualsiasi frase che non abbia i due punti dopo il numero
+        elif re.match(r'^[\*#\s]*CAPITOLO\s+\d+\s*:', line_upper):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 14)
             pdf.set_text_color(230, 126, 34)
-            pdf.multi_cell(175, 10, clean_line.replace('##', '').strip())
-            pdf.ln(3) 
+            
+            # Pulisce i simboli iniziali (* o #) ma mantiene "CAPITOLO 1: Titolo..."
+            title_text = re.sub(r'^[\*#\s]*', '', clean_line).strip()
+            
+            pdf.multi_cell(175, 10, title_text)
+            pdf.ln(3)
+ 
             
         elif "VERDETTO" in line_upper:
             pdf.ln(5)
