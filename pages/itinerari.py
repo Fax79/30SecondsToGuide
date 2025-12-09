@@ -586,7 +586,7 @@ with st.container():
                     # {destination.upper()}: [Sottotitolo]
                     **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
                     ## CAPITOLO 1: LA PREPARAZIONE (Voli, eSim, Assicurazione)
-                    [Info voli, eSim Saily, assicurazione Heymondo con sconto 10%]
+                    [Info voli, eSim Saily (da non proporre per viaggi in Italia ed UE, richiama la normativa "roaming like at home"), assicurazione Heymondo con sconto 10%]
                     ## CAPITOLO 2: DOVE DORMIRE (Strategie alloggio)
                     [Suggerisci alloggi compatibili con il gruppo. Prediligi sistemazioni suggestive]
                     ## CAPITOLO 3: L'ITINERARIO GIORNO PER GIORNO (Dettagliato)
