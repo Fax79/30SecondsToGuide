@@ -539,9 +539,9 @@ st.write("")
 # 1. Testo descrittivo "Gradient Style"
 st.markdown("""
 <div style="background-color: #f0f2f6; border-radius: 10px; padding: 15px; margin-bottom: 15px; text-align: center; border: 1px solid #dcdcdc;">
-    <h3 style="margin: 0; color: #4A00E0; font-size: 1.2em;">🧙‍♂️ Vuoi organizzare un viaggio personalizzato?</h3>
+    <h3 style="margin: 0; color: #4A00E0; font-size: 1.2em;">🧙‍♂️ Vuoi chiedere al nostro Wizard di organizzare il tuo viaggio personalizzato?</h3>
     <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #333;">
-        Verifica il tuo budget, crea il tuo itinerario su misura, tutto in un click.
+        Verifica il tuo budget, crea il tuo itinerario su misura, interroga qui sotto il nostro mago.
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -724,6 +724,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
