@@ -547,7 +547,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 2. Bottone con Etichetta CORTA (Anti-Troncamento)
-st.page_link("pages/itinerari.py", label="APRI ITINERARY WIZARD ✨", use_container_width=True)
+with st.container(border=True):
+    st.page_link("pages/itinerari.py", label="✨ APRI ITINERARY WIZARD", use_container_width=True)
 
 st.write("") 
 
@@ -723,4 +724,5 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
