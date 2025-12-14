@@ -562,7 +562,7 @@ with st.container():
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
                     prompt = f"""
-                    Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi il sogno di una vita.
+                    Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi un viaggio su misura che massimizza il valore del budget.
                     Razionalizza il tempo, visita quanti più posti possibili con {duration} notti a disposizione.
                     Valuta la densità degli impegni giornalieri perché siano fattibili. Presta attenzione ad essere razionale negli spostamenti per massimizzare il tempo a disposizione.
                     Crea un "Travel Plan" esclusivo per: {destination}.
@@ -586,7 +586,7 @@ with st.container():
                     # {destination.upper()}: [Sottotitolo]
                     **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
                     ## CAPITOLO 1: LA PREPARAZIONE (Voli, eSim, Assicurazione)
-                    [Info voli, eSim Saily (da non proporre per viaggi in Italia ed UE, richiama la normativa "roaming like at home"), assicurazione Heymondo con sconto 10%]
+                    [Info voli se la destinazione è raggiungibile via terra/mare ed il budget non consente l'acquisto di un volo proponi l'alternativa, eSim Saily (da non proporre per viaggi in Italia ed UE, richiama la normativa "roaming like at home"), assicurazione Heymondo con sconto 10%]
                     ## CAPITOLO 2: DOVE DORMIRE (Strategie alloggio)
                     [Suggerisci alloggi compatibili con il gruppo. Prediligi sistemazioni suggestive]
                     ## CAPITOLO 3: L'ITINERARIO GIORNO PER GIORNO (Dettagliato)
