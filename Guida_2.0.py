@@ -63,7 +63,7 @@ TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"          # Taxi
 TIQETS_LINK = "https://tiqets.tpx.lt/XV1Urbnn"          # Biglietti Musei
 
 # LINK HEYMONDO (Affiliato)
-INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
+INSURANCE_LINK = "https://heymondo.it?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 
 # 2. LINK GENERICI (Statici)
 TRAIN_LINK = "https://www.omio.com"
@@ -71,7 +71,7 @@ RESTAURANT_LINK = "https://www.tripadvisor.com"
 HOTEL_LINK = "https://www.expedia.com" 
 
 # --- LINK PROMOZIONE ---
-PROMO_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL" 
+PROMO_LINK = "https://heymondo.it?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL" 
 
 # --- Funzione Helper per Bottoni con Logo ---
 def get_base64_of_bin_file(bin_file):
@@ -724,6 +724,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
