@@ -239,7 +239,7 @@ def create_complex_pdf(text, destination, meta_data):
             make_box(pdf, "Transfer privati ad un prezzo WOW! da e per l'aeroporto", TRANSF_LINK, "purple")
             inserted_ch2 = True
         elif "## CAPITOLO 4" in line_upper and not inserted_ch3:
-            make_box(pdf, f"Biglietti Attrazioni saltando la fila per il tuo tour in {dest_clean} su Tiqets", TIQETS_LINK, "orange")
+            make_box(pdf, f"Non rischiare il tutto esaurito a {dest_clean}. Assicurati il posto e le migliori offerte su Tiqets", TIQETS_LINK, "orange")
             make_box(pdf, "Viaggia in libertà e noleggia un auto: Tariffe esclusive con Auto Europe", RENTAL_LINK, "purple")
             make_box(pdf, "Treni e Bus: Prenota su Omio", TRAIN_LINK, "purple")
             inserted_ch3 = True
