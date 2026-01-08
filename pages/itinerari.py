@@ -485,7 +485,7 @@ with st.container():
                     2. TRASLITTERA i nomi locali. 3. Simboli Valute: EUR, USD.
                     4. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
                     5. VIETATO USARE LISTE ANNIDATE. 6. PREZZI IN EURO CON SEPARATORE MIGLIAIA.
-                    7. USA DURATA {duration_check}. 8. SOLO VERSIONE FINALE.
+                    7. USA DURATA {duration_check}, non ricalcolare. 8. NON SCRIVERE I TUOI PENSIERI INTERNI ("HO SBAGLIATO", "DEVO USARE QUESTA REGOLA", "RICALCOLO" E SCRIVI SOLO LA VERSIONE FINALE.
                     
                     STRUTTURA TITOLI (Usa ESATTAMENTE questi):
                     # {destination.upper()}: [Sottotitolo]
