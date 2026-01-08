@@ -524,7 +524,17 @@ with st.container():
                 kids_ages.append(str(age))
 
     st.write("")
+    duration_check = (end_date - start_date).days
+    if duration_check == 1: st.warning("⚠️ Hai scelto un periodo di una sola notte, verifica se è corretta la Data Ritorno.")
     
+    def reset_app():
+        if 'wizard_pdf' in st.session_state: del st.session_state['wizard_pdf']
+    
+    is_generated = 'wizard_pdf' in st.session_state
+    
+    if st.button("✨ Crea il mio Travel Plan", type="primary", use_container_width=True, disabled=is_generated):
+        if duration_check > 40:
+            st.error(f"⚠️ Il viaggio è troppo lungo ({duration_check} notti). Il limite massimo è di 40 notti.")
     def reset_app():
         if 'wizard_pdf' in st.session_state:
             del st.session_state['wizard_pdf']
