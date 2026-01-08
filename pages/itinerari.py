@@ -49,7 +49,7 @@ except Exception:
 # 🌐 CONFIGURAZIONE CROSS-PROMO
 # ==========================================
 GUIDE_APP_URL = "https://www.30secondstoguide.it" 
-PROMO_IMG_GUIDE = "promo_to_guide.jpg" # IMMAGINE 2: Cerchio su "Inserisci destinazione"
+PROMO_IMG_GUIDE = "promo_to_guide.jpg" 
 
 # ==========================================
 # 💰 AREA MONETIZZAZIONE
@@ -95,7 +95,7 @@ def partner_button(label, link, image_file):
         st.link_button(label, link, use_container_width=True)
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE (CORRETTO & PROMO)
+# 🧙‍♂️ PDF ENGINE
 # ==========================================
 def create_complex_pdf(text, destination, meta_data):
     
@@ -129,9 +129,7 @@ def create_complex_pdf(text, destination, meta_data):
 
     class WizardPDF(FPDF):
         def header(self):
-            # FIX: Salta intestazione su Cover (1) E su Promo (2)
             if self.page_no() <= 2: return 
-            
             self.set_fill_color(44, 62, 80)
             self.rect(0, 0, 210, 15, 'F')
             self.set_font('Helvetica', 'B', 8)
@@ -175,45 +173,28 @@ def create_complex_pdf(text, destination, meta_data):
             self.set_font('Helvetica', '', 10)
             self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", 0, 0, 'C', link="https://www.30secondstoguide.it")
 
-    # --- FUNZIONE PAGINA PROMO ---
     def add_promo_page(pdf_obj):
         if not os.path.exists(PROMO_IMG_GUIDE): return
-
         pdf_obj.add_page()
-        
-        # 1. Immagine Screenshot
         pdf_obj.image(PROMO_IMG_GUIDE, x=15, y=30, w=180)
-        
-        # 2. Box CTA
         box_y = 160 
         pdf_obj.set_fill_color(230, 126, 34) 
         pdf_obj.set_draw_color(211, 84, 0)
         pdf_obj.rect(15, box_y, 180, 30, 'DF')
-        
-        # 3. Testo e Link
         pdf_obj.set_y(box_y + 8)
         pdf_obj.set_font("Helvetica", 'B', 14)
         pdf_obj.set_text_color(255, 255, 255)
-        
         cta_text = "Approfondisci la conoscenza delle città del tuo itinerario, crea le tue guide qui."
         pdf_obj.set_x(15)
         pdf_obj.multi_cell(180, 8, cta_text, align='C', link=GUIDE_APP_URL)
 
-    # --- CONFIGURAZIONE ---
     pdf = WizardPDF()
     pdf.set_margins(15, 15, 15)
     pdf.set_auto_page_break(auto=True, margin=25)
-    
-    # 1. Copertina
     pdf.make_cover(dest_clean, meta_data)
-    
-    # 2. Pagina Promo
     add_promo_page(pdf)
-    
-    # 3. FIX: Nuova pagina ORA, così l'itinerario parte pulito a pag 3
     pdf.add_page()
     
-    # --- BOX CONTESTUALE ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
         palettes = {
@@ -226,7 +207,6 @@ def create_complex_pdf(text, destination, meta_data):
         chosen = palettes.get(style, palettes["blue"])
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
-        
         if pdf_obj.get_y() > 250: pdf_obj.add_page()
         pdf_obj.ln(4)
         current_y = pdf_obj.get_y()
@@ -242,60 +222,44 @@ def create_complex_pdf(text, destination, meta_data):
         pdf_obj.ln(12)
 
     lines = text.split('\n')
-    inserted_ch1 = False
-    inserted_ch2 = False
-    inserted_ch3 = False
-    inserted_ch4 = False
+    inserted_ch1 = inserted_ch2 = inserted_ch3 = inserted_ch4 = False
 
     for line in lines:
         clean_line = clean_text_for_pdf(line)
         line_upper = clean_line.upper()
         
-        # --- LOGICA LINK ---
         if "## CAPITOLO 2" in line_upper and not inserted_ch1:
             banner_text = f"In {month_clean} i prezzi aumentano? Prenota ora su Kiwi.com"
             make_box(pdf, banner_text, FLIGHT_LINK, "green")
             make_box(pdf, "eSim Saily: Internet immediato all'arrivo senza acquisto di SIM locali", ESIM_LINK, "yellow")
             make_box(pdf, "MAI senza Assicurazione Sanitaria: Approfitta QUI dello sconto 10% con Heymondo", INSURANCE_LINK, "green")
             inserted_ch1 = True
-            
         elif "## CAPITOLO 3" in line_upper and not inserted_ch2:
             make_box(pdf, f"Stanze in Hotel quasi esaurite in {month_clean}? Prenota ora su Expedia", HOTEL_LINK, "blue")
             make_box(pdf, "Transfer privati ad un prezzo WOW! da e per l'aeroporto", TRANSF_LINK, "purple")
             inserted_ch2 = True
-
         elif "## CAPITOLO 4" in line_upper and not inserted_ch3:
             make_box(pdf, f"Biglietti Attrazioni saltando la fila per il tuo tour in {dest_clean} su Tiqets", TIQETS_LINK, "orange")
             make_box(pdf, "Viaggia in libertà e noleggia un auto: Tariffe esclusive con Auto Europe", RENTAL_LINK, "purple")
             make_box(pdf, "Treni e Bus: Prenota su Omio", TRAIN_LINK, "purple")
             inserted_ch3 = True
-            
         elif "## CAPITOLO 5" in line_upper and not inserted_ch4:
             make_box(pdf, "Ristoranti: Leggi le recensioni su TripAdvisor", RESTAURANT_LINK, "green")
             inserted_ch4 = True
 
-        # --- FORMATTAZIONE TESTO ---
         if line.strip().startswith('# '):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 20)
             pdf.set_text_color(44, 62, 80)
             pdf.multi_cell(175, 10, clean_line.replace('#', '').strip())
             pdf.ln(5)
-            
-        # Rileva "CAPITOLO" + spazio + numero + DUE PUNTI (es. "## CAPITOLO 1:")
-        # Questa regex scarta qualsiasi frase che non abbia i due punti dopo il numero
         elif re.match(r'^[\*#\s]*CAPITOLO\s+\d+\s*:', line_upper):
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 14)
             pdf.set_text_color(230, 126, 34)
-            
-            # Pulisce i simboli iniziali (* o #) ma mantiene "CAPITOLO 1: Titolo..."
             title_text = re.sub(r'^[\*#\s]*', '', clean_line).strip()
-            
             pdf.multi_cell(175, 10, title_text)
             pdf.ln(3)
- 
-            
         elif "VERDETTO" in line_upper:
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 12)
@@ -303,29 +267,24 @@ def create_complex_pdf(text, destination, meta_data):
             clean_verdict = clean_line.replace('*', '').strip()
             pdf.multi_cell(180, 8, clean_verdict, border=1, align='C', fill=True)
             pdf.ln(5)
-            
         elif line.strip().startswith('* ') or line.strip().startswith('- '):
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(20, 20, 20)
             pdf.set_x(20) 
             pdf.cell(5, 6, chr(149), 0, 0)
             content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            if content:
-                pdf.multi_cell(160, 6, content)
-        
+            if content: pdf.multi_cell(160, 6, content)
         elif re.match(r'^\d+\.', line.strip()):
             pdf.set_font("Helvetica", 'B', 11)
             pdf.set_text_color(44, 62, 80)
             pdf.ln(2)
             pdf.multi_cell(175, 6, clean_line)
-            
         elif re.match(r'GIORNO\s*\d+:', line_upper):
             if pdf.get_x() > 15: pdf.ln(6) 
             pdf.set_font("Helvetica", 'B', 11)
             pdf.set_text_color(20, 20, 20)
             pdf.multi_cell(175, 6, clean_line)
             pdf.ln(1)
-            
         else:
             if line.strip():
                 if pdf.get_x() > 15 and pdf.get_y() > 20: pdf.ln(1) 
@@ -334,9 +293,7 @@ def create_complex_pdf(text, destination, meta_data):
                 pdf.multi_cell(175, 6, clean_line)
                 pdf.ln(1)
 
-    # --- PAGINA PARTNER ---
     pdf.add_page()
-    
     def make_sponsor_box(title, subtitle, link, highlight=False):
         title = clean_text_for_pdf(title)
         subtitle = clean_text_for_pdf(subtitle)
@@ -346,9 +303,7 @@ def create_complex_pdf(text, destination, meta_data):
         else:
             pdf.set_fill_color(250, 250, 250)
             pdf.set_draw_color(220, 220, 220)
-        
         if pdf.get_y() > 250: pdf.add_page()
-
         start_y = pdf.get_y()
         pdf.rect(15, start_y, 180, 14, 'DF')
         pdf.set_y(start_y + 2)
@@ -366,7 +321,6 @@ def create_complex_pdf(text, destination, meta_data):
     pdf.set_text_color(100, 100, 100)
     pdf.cell(0, 10, "Già visti nella guida...", 0, 1, 'L')
     pdf.ln(2)
-    
     make_sponsor_box("Expedia", "Hotel e Voli", HOTEL_LINK)
     make_sponsor_box("Tiqets", "Biglietti musei e attrazioni", TIQETS_LINK)
     make_sponsor_box("Welcome Pickups", "Transfer aeroportuali", TRANSF_LINK)
@@ -376,17 +330,14 @@ def create_complex_pdf(text, destination, meta_data):
     make_sponsor_box("Heymondo", "Assicurazione viaggio", INSURANCE_LINK)
     make_sponsor_box("Saily", "eSim internazionale", ESIM_LINK)
     make_sponsor_box("TripAdvisor", "Recensioni Ristoranti", RESTAURANT_LINK)
-
     pdf.ln(5)
     pdf.set_font("Helvetica", 'B', 16)
     pdf.set_text_color(44, 62, 80)
     pdf.cell(0, 10, "ALTRI SERVIZI INDISPENSABILI", 0, 1, 'L')
     pdf.ln(2)
-    
     make_sponsor_box("Deposito Bagagli", "Libera le mani con Radical Storage", LUGGAGE_LINK, highlight=True)
     make_sponsor_box("Rimborsi Voli", "Volo in ritardo? Chiedi risarcimento con AirHelp", REIMB_LINK, highlight=True)
     make_sponsor_box("Taxi Locale", "Kiwitaxi per spostamenti urbani", TAXI_LINK, highlight=True)
-
     return bytes(pdf.output(dest='S'))
 
 # ==========================================
@@ -398,7 +349,6 @@ with st.sidebar:
         st.image("logo.png", width=200)
     else:
         st.title("⏱️")
-    
     st.markdown("---")
     st.caption("✈️ PRENOTAZIONI")
     partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
@@ -407,17 +357,14 @@ with st.sidebar:
     partner_button("Auto (Autoeurope)", RENTAL_LINK, "btn_autoe.png")
     partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
     partner_button("Taxi (Kiwitaxi)", TAXI_LINK, "btn_taxi.png")
-    
     st.caption("🎟️ ESPERIENZE & ALTRO")
     partner_button("Musei & Ticket (Tiqets)", TIQETS_LINK, "btn_tiqets.png")
     partner_button("Ristoranti (Tripadvisor)", RESTAURANT_LINK, "btn_tripadv.png")
-    
     st.caption("🛠️ SERVIZI UTILI")
     partner_button("eSim (Saily)", ESIM_LINK, "btn_saily.png")
     partner_button("Bagagli (Radical)", LUGGAGE_LINK, "btn_radical.png")
     partner_button("Polizza (Heymondo)", INSURANCE_LINK, "btn_heymondo.png")
     partner_button("Rimborsi (Airhelp)", REIMB_LINK, "btn_airhelp.png")
-    
     with st.sidebar.expander("🔐 Admin Stats"):
         secret_pwd = st.text_input("Password", type="password")
         if secret_pwd == "fabio123":
@@ -425,7 +372,6 @@ with st.sidebar:
             logs = load_logs()
             if logs:
                 for log in reversed(logs):
-                    # Gestione sia per vecchi log (stringhe) che nuovi (dizionari)
                     if isinstance(log, dict):
                         st.caption(f"🧙‍♂️ **{log['destination']}**\n{log['timestamp']} | € {log['budget']} | {log['nights']} notti | {log['adults']} ad + {log['minors']} min")
                     else:
@@ -433,14 +379,12 @@ with st.sidebar:
             else:
                 st.caption("Nessuna ricerca ancora.")
             st.write(f"**Totale:** {len(logs)}")
-
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
 
 if os.path.exists("logo.png"):
     col_sp1, col_img, col_sp2 = st.columns([3, 2, 3])
-    with col_img:
-        st.image("logo.png", use_container_width=True)
+    with col_img: st.image("logo.png", use_container_width=True)
 
 st.markdown("""
     <h1 style='text-align: center; color: #2C3E50; margin-bottom: 0; margin-top: -10px;'>
@@ -453,67 +397,40 @@ st.markdown("""
 
 st.write("")
 
+# --- CSS HACK PER IL LINK ---
+st.markdown("""
+<style>
+div[data-testid="stPageLink-NavLink"] {
+    background-color: #E67E22; border: 1px solid #d35400; border-radius: 8px;
+    padding: 10px; text-align: center; transition: all 0.3s ease;
+}
+div[data-testid="stPageLink-NavLink"]:hover { background-color: #d35400; transform: scale(1.01); }
+div[data-testid="stPageLink-NavLink"] p { color: white !important; font-weight: bold; }
+</style>
+""", unsafe_allow_html=True)
+
 with st.container():
     st.info("🧙‍♂️ Inserisci i dettagli per ricevere un Travel Plan completo.")
-    
-    # --- MAPPING MESI ---
-    mesi = {
-        1: "Gennaio", 2: "Febbraio", 3: "Marzo", 4: "Aprile",
-        5: "Maggio", 6: "Giugno", 7: "Luglio", 8: "Agosto",
-        9: "Settembre", 10: "Ottobre", 11: "Novembre", 12: "Dicembre"
-    }
+    mesi = {1: "Gennaio", 2: "Febbraio", 3: "Marzo", 4: "Aprile", 5: "Maggio", 6: "Giugno", 7: "Luglio", 8: "Agosto", 9: "Settembre", 10: "Ottobre", 11: "Novembre", 12: "Dicembre"}
 
-    # RIGA 1
     c_dest, c_bud = st.columns([2, 1])
-    with c_dest:
-        destination = st.text_input("Destinazione (Città/Regione/Paese)", placeholder="Es. New York, Provenza, Giappone...")
-    with c_bud:
-        budget = st.number_input("Budget Totale (€)", min_value=500, value=3000, step=100)
+    with c_dest: destination = st.text_input("Destinazione (Città/Regione/Paese)", placeholder="Es. New York, Provenza, Giappone...")
+    with c_bud: budget = st.number_input("Budget Totale (€)", min_value=500, value=3000, step=100)
     
-        # --- LOGICA DATE INTELLIGENTE ---
     def aggiorna_data_ritorno():
-        """Callback: se cambio la partenza, resetto il ritorno a Partenza + 1"""
-        if st.session_state.start_input:
-            st.session_state.end_input = st.session_state.start_input + datetime.timedelta(days=1)
+        if st.session_state.start_input: st.session_state.end_input = st.session_state.start_input + datetime.timedelta(days=1)
 
-    # RIGA 2
     c_start, c_end = st.columns(2)
-    
-    with c_start:
-        # Impostiamo una data di default iniziale (es. tra 30 giorni)
-        default_start = datetime.date.today() + datetime.timedelta(days=30)
-        
-        start_date = st.date_input(
-            "Data Partenza",
-            value=default_start,
-            min_value=datetime.date.today(), # Non si può partire nel passato
-            key="start_input",               # Chiave per session_state
-            on_change=aggiorna_data_ritorno  # Scatena l'aggiornamento automatico
-        )
-
+    with c_start: start_date = st.date_input("Data Partenza", value=datetime.date.today() + datetime.timedelta(days=30), min_value=datetime.date.today(), key="start_input", on_change=aggiorna_data_ritorno)
     with c_end:
-        # Calcoliamo il minimo consentito per il ritorno (Partenza + 1)
         min_return_date = start_date + datetime.timedelta(days=1)
-        
-        # Se nel session_state non c'è ancora una data di ritorno, la inizializziamo
-        if "end_input" not in st.session_state:
-            st.session_state.end_input = min_return_date
+        if "end_input" not in st.session_state: st.session_state.end_input = min_return_date
+        end_date = st.date_input("Data Ritorno", value=st.session_state.end_input, min_value=min_return_date, key="end_input")
 
-        end_date = st.date_input(
-            "Data Ritorno",
-            value=st.session_state.end_input, # Legge dal session state aggiornato dalla callback
-            min_value=min_return_date,        # Questo "spegne" le date precedenti nel calendario
-            key="end_input"
-        )
-
-    # RIGA 3
     c_ad, c_kids = st.columns(2)
-    with c_ad:
-          adults = st.number_input("Numero Adulti", min_value=1, value=2)
-    with c_kids:
-          kids = st.number_input("Numero Minorenni", min_value=0, value=0)
+    with c_ad: adults = st.number_input("Numero Adulti", min_value=1, value=2)
+    with c_kids: kids = st.number_input("Numero Minorenni", min_value=0, value=0)
 
-    # Kids Ages
     kids_ages = []
     if kids > 0:
         st.caption("Età dei ragazzi:")
@@ -524,6 +441,8 @@ with st.container():
                 kids_ages.append(str(age))
 
     st.write("")
+    travel_desc = st.text_area("Descrizione del viaggio (Opzionale)", placeholder="Es. Partenza da Milano, voglio fare scalo a Dubai. Mi interessano musei e trekking...", help="Dettagli extra per l'AI.")
+
     duration_check = (end_date - start_date).days
     if duration_check == 1: st.warning("⚠️ Hai scelto un periodo di una sola notte, verifica se è corretta la Data Ritorno.")
     
@@ -535,182 +454,88 @@ with st.container():
     if st.button("✨ Crea il mio Travel Plan", type="primary", use_container_width=True, disabled=is_generated):
         if duration_check > 40:
             st.error(f"⚠️ Il viaggio è troppo lungo ({duration_check} notti). Il limite massimo è di 40 notti.")
-    def reset_app():
-        if 'wizard_pdf' in st.session_state:
-            del st.session_state['wizard_pdf']
-    
-    is_generated = 'wizard_pdf' in st.session_state
-    
-    if st.button("✨ Crea il mio Travel Plan", type="primary", use_container_width=True, disabled=is_generated):
+            st.stop()
         if not destination:
             st.warning("Inserisci una destinazione!")
         else:
-            duration = (end_date - start_date).days
             pax_desc = f"{adults} Adulti"
             if kids > 0: pax_desc += f", {kids} Ragazzi ({', '.join(kids_ages)} anni)"
-            
-            # Recupero nome mese
             mese_partenza = mesi[start_date.month]
-            
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            
-            # --- SALVATAGGIO STATISTICHE DETTAGLIATE ---
-            log_entry = {
-                "timestamp": timestamp,
-                "destination": destination,
-                "budget": budget,
-                "nights": duration,
-                "adults": adults,
-                "minors": kids,
-                "minors_ages": kids_ages
-            }
-            add_log(log_entry)
-            # -------------------------------------------
+            add_log({"timestamp": timestamp, "destination": destination, "budget": budget, "nights": duration_check, "adults": adults, "minors": kids, "minors_ages": kids_ages})
             
             with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
-                    
                     prompt = f"""
                     Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi un viaggio su misura che massimizza il valore del budget.
-                    Razionalizza il tempo, visita quanti più posti possibili con {duration} notti a disposizione.
+                    Razionalizza il tempo, visita quanti più posti possibili con {duration_check} notti a disposizione.
                     Valuta la densità degli impegni giornalieri perché siano fattibili. Presta attenzione ad essere razionale negli spostamenti per massimizzare il tempo a disposizione.
+                    Tieni conto delle NOTE UTENTE per personalizzare l'esperienza, ma NON ripeterle esplicitamente.
                     Crea un "Travel Plan" esclusivo per: {destination}.
                     
                     DATI:
-                    - Durata: {duration} notti ({start_date} - {end_date})
+                    - Durata: {duration_check} notti ({start_date} - {end_date})
                     - Gruppo: {pax_desc}
                     - Budget: € {budget}
+                    - NOTE UTENTE: {travel_desc if travel_desc else "Nessuna nota"}
                     
                     REGOLE TASSATIVE:
-                    1. Usa SOLO l'alfabeto Latino/Italiano esteso. NIENTE Kanji/Cirillico/Emoji.
-                    2. TRASLITTERA i nomi locali.
-                    3. Simboli Valute: scrivi "EUR", "USD".
+                    1. Usa SOLO l'alfabeto Latino/Italiano. NIENTE Kanji/Cirillico/Emoji.
+                    2. TRASLITTERA i nomi locali. 3. Simboli Valute: EUR, USD.
                     4. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
-                    5. VIETATO USARE LISTE ANNIDATE.
-                    6. INDICA TUTTI I PREZZI IN EURO. USA SEPARATORE MIGLIAIA.
-                    7. USA IL CALCOLO DELLA DURATA {duration}, NON RICALCOLARE.
-                    8. NON SCRIVERE I TUOI PENSIERI INTERNI ("HO SBAGLIATO", "DEVO USARE QUESTA REGOLA", "RICALCOLO") E SCRIVI SOLO LA VERSIONE FINALE.
+                    5. VIETATO USARE LISTE ANNIDATE. 6. PREZZI IN EURO CON SEPARATORE MIGLIAIA.
+                    7. USA DURATA {duration_check}. 8. SOLO VERSIONE FINALE.
                     
                     STRUTTURA TITOLI (Usa ESATTAMENTE questi):
                     # {destination.upper()}: [Sottotitolo]
                     **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
                     ## CAPITOLO 1: LA PREPARAZIONE (Voli, eSim, Assicurazione)
-                    [Info voli se la destinazione è raggiungibile via terra/mare ed il budget non consente l'acquisto di un volo proponi l'alternativa, eSim Saily (da non proporre per viaggi in Italia ed UE, richiama la normativa "roaming like at home"), assicurazione Heymondo con sconto 10%]
+                    [Info trasporti, eSim Saily (NO per Italia/UE), assicurazione Heymondo sconto 10%]
                     ## CAPITOLO 2: DOVE DORMIRE (Strategie alloggio)
-                    [Suggerisci alloggi compatibili con il gruppo. Prediligi sistemazioni suggestive]
                     ## CAPITOLO 3: L'ITINERARIO GIORNO PER GIORNO (Dettagliato)
-                    [Itinerario ottimizzato. Prediligi attrazioni su Tiqets. Scoperta del territorio]
                     ## CAPITOLO 4: COSA MANGIARE
-                    [Piatti tipici, ristoranti (Tripadvisor), street food]
                     ## CAPITOLO 5: CALENDARIO CULTURALE
-                    [Festival e ricorrenze]
                     ## CAPITOLO 6: CONTO ECONOMICO FINALE
                     ## CAPITOLO 7: INFORMAZIONI PRATICHE
-                    * Sicurezza: [Info]
-                    * Clima: [Info]
-                    * Visti e requisiti: [Info]
-                    * Fuso orario: [Info]
-                    * Consigli utili: [Valuta e prese]
                     ## CAPITOLO 8: CONCLUSIONE
-                    [Riflessione finale filosofica sul viaggio]
                     """
-                    
                     response = model.generate_content(prompt)
-                    text_content = response.text
-                    
-                    meta = {
-                        "dates": f"{start_date.strftime('%d/%m')} - {end_date.strftime('%d/%m/%Y')}",
-                        "pax": f"{adults} Ad + {kids} Bimbi",
-                        "budget": f"EUR {budget}",
-                        "month_name": mese_partenza
-                    }
-                    
-                    pdf_bytes = create_complex_pdf(text_content, destination, meta)
+                    pdf_bytes = create_complex_pdf(response.text, destination, {"dates": f"{start_date.strftime('%d/%m')} - {end_date.strftime('%d/%m/%Y')}", "pax": pax_desc, "budget": f"EUR {budget}", "month_name": mese_partenza})
                     st.session_state['wizard_pdf'] = pdf_bytes
                     st.rerun()
-                    
-                except Exception as e:
-                    st.error(f"Errore del Mago: {e}")
+                except Exception as e: st.error(f"Errore: {e}")
 
     if 'wizard_pdf' in st.session_state:
         st.success("✅ Travel Plan pronto!")
-        st.download_button(
-            label="📥 SCARICA IL TRAVEL PLAN (PDF)",
-            data=st.session_state['wizard_pdf'],
-            file_name=f"Itinerario_{destination.replace(' ', '_')}.pdf",
-            mime="application/pdf",
-            use_container_width=True,
-            on_click=reset_app
-        )
+        st.download_button(label="📥 SCARICA IL TRAVEL PLAN (PDF)", data=st.session_state['wizard_pdf'], file_name=f"Itinerario_{destination.replace(' ', '_')}.pdf", mime="application/pdf", use_container_width=True, on_click=reset_app)
 
-# =========================================================
-# 🏨 TRAVEL HUB
-# =========================================================
 st.markdown("---")
 st.subheader("✈️ I migliori strumenti per il tuo viaggio")
-
 c1, c2, c3 = st.columns(3)
-with c1:
-    st.caption("✈️ **Voli**")
-    partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
-with c2:
-    st.caption("🏨 **Hotel**")
-    partner_button("Expedia", HOTEL_LINK, "btn_booking.png")
-with c3:
-    st.caption("🚘 **Transfer**")
-    partner_button("Welcome Pickups", TRANSF_LINK, "btn_wp.png")
-
+with c1: partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
+with c2: partner_button("Expedia", HOTEL_LINK, "btn_booking.png")
+with c3: partner_button("Transfer", TRANSF_LINK, "btn_wp.png")
 st.write("")
-
 c4, c5, c6 = st.columns(3)
-with c4:
-    st.caption("🎟️ **Tour**")
-    partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png")
-with c5:
-    st.caption("🚗 **Auto**")
-    partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
-with c6:
-    st.caption("🎒 **Bagagli**")
-    partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
-
+with c4: partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png")
+with c5: partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
+with c6: partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
 st.write("")
-
 c7, c8, c9 = st.columns(3)
-with c7:
-    st.caption("📲 **Dati**")
-    partner_button("eSim Saily", ESIM_LINK, "btn_saily.png")
-with c8:
-    st.caption("🛡️ **Polizza**")
-    partner_button("Assicuraz.", INSURANCE_LINK, "btn_heymondo.png")
-with c9:
-    st.caption("💸 **Risarcim.**")
-    partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
-
+with c7: partner_button("eSim Saily", ESIM_LINK, "btn_saily.png")
+with c8: partner_button("Assicuraz.", INSURANCE_LINK, "btn_heymondo.png")
+with c9: partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
 st.write("")
-
 c10, c11, c12 = st.columns(3)
-with c10:
-    st.caption("🚆 **Treni**")
-    partner_button("Omio", TRAIN_LINK, "btn_omio.png")
-with c11:
-    st.caption("🍴 **Ristoranti**")
-    partner_button("Tripadvisor", RESTAURANT_LINK, "btn_tripadv.png")
-with c12:
-    st.caption("🚖 **Taxi**")
-    partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
+with c10: partner_button("Omio", TRAIN_LINK, "btn_omio.png")
+with c11: partner_button("Tripadvisor", RESTAURANT_LINK, "btn_tripadv.png")
+with c12: partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
 
 st.markdown("---")
 st.markdown("""
 <div style="text-align: justify; color: #555;">
     <h3>Come funziona Itinerary Wizard?</h3>
-    <p>
-        Questo strumento avanzato di <strong>30SecondsToGuide</strong> pianifica viaggi complessi analizzando il tuo budget.
-        Inserisci destinazione, date, composizione del gruppo e budget massimo: l'AI genererà un
-        <strong>Travel Plan</strong> completo con strategie di spesa, itinerari giornalieri e consigli logistici.
-    </p>
-    <p>
-        Il servizio è <strong>gratuito al 100%</strong>.
-    </p>
+    <p>Strumento di <strong>30SecondsToGuide</strong> per pianificare viaggi complessi analizzando il budget. Gratuito al 100%.</p>
 </div>
 """, unsafe_allow_html=True)
