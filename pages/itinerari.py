@@ -8,35 +8,73 @@ import os
 import re
 import json
 
+# --- NUOVE IMPORTAZIONI PER GOOGLE SHEETS ---
+import gspread
+from google.oauth2.service_account import Credentials
+
 # --- CONFIGURAZIONE PAGINA ---
 if os.path.exists("logo.png"):
     st.set_page_config(page_title="Itinerary Wizard", page_icon="logo.png", layout="centered")
 else:
     st.set_page_config(page_title="Itinerary Wizard", page_icon="🧙‍♂️", layout="centered")
 
-# --- MEMORIA LOG (JSON STRUTTURATO) ---
-LOG_FILE = "admin_stats.json"
+# --- CONFIGURAZIONE GOOGLE SHEETS ---
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
+SHEET_NAME = "30Seconds_Stats"  # ASSICURATI CHE IL FOGLIO SI CHIAMI COSÌ
+
+def get_db_connection():
+    """Connette a Google Sheets usando i Secrets."""
+    try:
+        if "gcp_service_account" not in st.secrets:
+            return None
+        
+        # Crea credenziali dal dizionario nei secrets
+        creds = Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"], scopes=SCOPES
+        )
+        client = gspread.authorize(creds)
+        # Apre il foglio di lavoro
+        sheet = client.open(SHEET_NAME).sheet1
+        return sheet
+    except Exception as e:
+        # In produzione evitiamo di mostrare l'errore all'utente finale se il DB fallisce
+        # st.error(f"Errore DB: {e}") 
+        return None
 
 def load_logs():
-    """Carica i log dal file JSON."""
-    if os.path.exists(LOG_FILE):
+    """Carica i log da Google Sheets per l'admin panel."""
+    sheet = get_db_connection()
+    if sheet:
         try:
-            with open(LOG_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if data and isinstance(data[0], str): # Compatibilità vecchi log stringa
-                    return [] 
-                return data
+            # Prende tutti i record come lista di dizionari
+            return sheet.get_all_records()
         except:
             return []
     return []
 
 def add_log(entry_data):
-    """Aggiunge una nuova entry (dizionario) e salva su file."""
-    logs = load_logs()
-    logs.append(entry_data)
-    if len(logs) > 100: logs = logs[-100:] 
-    with open(LOG_FILE, "w", encoding="utf-8") as f:
-        json.dump(logs, f, ensure_ascii=False, indent=2)
+    """Aggiunge una nuova entry su Google Sheets."""
+    sheet = get_db_connection()
+    if sheet:
+        try:
+            # Convertiamo il dizionario in una lista ordinata per le colonne
+            # Ordine atteso: Timestamp, Destination, Budget, Nights, Adults, Minors, Ages
+            row = [
+                entry_data.get("timestamp", ""),
+                entry_data.get("destination", ""),
+                entry_data.get("budget", 0),
+                entry_data.get("nights", 0),
+                entry_data.get("adults", 0),
+                entry_data.get("minors", 0),
+                str(entry_data.get("minors_ages", []))
+            ]
+            sheet.append_row(row)
+        except Exception as e:
+            # Fallimento silenzioso per non bloccare l'utente se il foglio non risponde
+            print(f"Errore salvataggio log: {e}")
 
 try:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
@@ -103,7 +141,7 @@ def create_complex_pdf(text, destination, meta_data):
         if not text_input: return ""
         text_input = text_input.replace("**", "")
         replacements = {
-            "€": "EUR", "â¬": "EUR", "$": "USD", "£": "GBP",
+            "€": "EUR", "â‚¬": "EUR", "$": "USD", "£": "GBP",
             "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "..."
         }
         for char, replacement in replacements.items():
@@ -371,14 +409,12 @@ with st.sidebar:
             st.write("### 📊 Ultime Ricerche:")
             logs = load_logs()
             if logs:
-                for log in reversed(logs):
-                    if isinstance(log, dict):
-                        st.caption(f"🧙‍♂️ **{log['destination']}**\n{log['timestamp']} | € {log['budget']} | {log['nights']} notti | {log['adults']} ad + {log['minors']} min")
-                    else:
-                        st.caption(log)
+                # Per i log da Sheets, sono dizionari con chiavi uguali agli header
+                for log in list(reversed(logs))[:10]: # Mostriamo solo gli ultimi 10
+                    st.caption(f"🧙‍♂️ **{log.get('Destination', 'N/A')}**\n{log.get('Timestamp', '')} | € {log.get('Budget', 0)} | {log.get('Nights', 0)} notti")
             else:
-                st.caption("Nessuna ricerca ancora.")
-            st.write(f"**Totale:** {len(logs)}")
+                st.caption("Nessuna ricerca ancora o DB disconnesso.")
+            # st.write(f"**Totale:** {len(logs)}") # Disabilitato per evitare letture troppo pesanti se il foglio cresce
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
 
@@ -462,7 +498,17 @@ with st.container():
             if kids > 0: pax_desc += f", {kids} Ragazzi ({', '.join(kids_ages)} anni)"
             mese_partenza = mesi[start_date.month]
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            add_log({"timestamp": timestamp, "destination": destination, "budget": budget, "nights": duration_check, "adults": adults, "minors": kids, "minors_ages": kids_ages})
+            
+            # --- AGGIORNAMENTO LOGGING ---
+            add_log({
+                "timestamp": timestamp, 
+                "destination": destination, 
+                "budget": budget, 
+                "nights": duration_check, 
+                "adults": adults, 
+                "minors": kids, 
+                "minors_ages": kids_ages
+            })
             
             with st.spinner(f"🧙‍♂️ Sto elaborando il Travel Plan per {destination}..."):
                 try:
