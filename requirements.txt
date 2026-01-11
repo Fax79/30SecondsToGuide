@@ -1,4 +1,5 @@
 streamlit
 google-generativeai
 fpdf2
-
+gspread
+google-auth
