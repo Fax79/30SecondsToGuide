@@ -7,32 +7,68 @@ import datetime
 import unicodedata
 import json
 
+# --- NUOVE IMPORTAZIONI PER GOOGLE SHEETS ---
+import gspread
+from google.oauth2.service_account import Credentials
+
 # --- 0. CONFIGURAZIONE PAGINA ---
 if os.path.exists("logo.png"):
     st.set_page_config(page_title="30SecondsToGuide", page_icon="logo.png", layout="centered")
 else:
     st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
 
-# --- MEMORIA LOG (JSON) ---
-LOG_FILE = "admin_stats.json"
+# --- CONFIGURAZIONE GOOGLE SHEETS ---
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
+SHEET_NAME = "30Seconds_Stats" # Stesso DB dell'altra app
+
+def get_db_connection():
+    """Connette a Google Sheets usando i Secrets."""
+    try:
+        if "gcp_service_account" not in st.secrets:
+            return None
+        creds = Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"], scopes=SCOPES
+        )
+        client = gspread.authorize(creds)
+        sheet = client.open(SHEET_NAME).sheet1
+        return sheet
+    except Exception as e:
+        return None
 
 def load_logs():
-    """Carica i log dal file JSON."""
-    if os.path.exists(LOG_FILE):
+    """Carica i log da Google Sheets."""
+    sheet = get_db_connection()
+    if sheet:
         try:
-            with open(LOG_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+            return sheet.get_all_records()
         except:
             return []
     return []
 
-def add_log(entry):
-    """Aggiunge una nuova ricerca e salva su file."""
-    logs = load_logs()
-    logs.append(entry)
-    if len(logs) > 100: logs = logs[-100:] # Mantieni solo ultimi 100
-    with open(LOG_FILE, "w", encoding="utf-8") as f:
-        json.dump(logs, f, ensure_ascii=False, indent=2)
+def add_log(city_name):
+    """Aggiunge una nuova ricerca nel DB condiviso."""
+    sheet = get_db_connection()
+    if sheet:
+        try:
+            timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
+            # Mappiamo i dati sulle colonne esistenti del foglio creato col Wizard
+            # Struttura: Timestamp, Destination, Budget, Nights, Adults, Minors, Ages
+            # Usiamo "GUIDE_ONLY" nel budget per distinguere la fonte del lead
+            row = [
+                timestamp,
+                city_name,
+                "GUIDE_ONLY", # Marker per capire che viene da questa app
+                "-",
+                "-",
+                "-",
+                "-"
+            ]
+            sheet.append_row(row)
+        except Exception as e:
+            print(f"Errore log: {e}")
 
 # --- CONFIGURAZIONE API ---
 try:
@@ -503,14 +539,22 @@ with st.sidebar:
         secret_pwd = st.text_input("Password", type="password")
         if secret_pwd == "fabio123": 
             st.write("### 📊 Ultime Ricerche:")
-            # MODIFICA: Uso load_logs()
+            # MODIFICA: Uso load_logs() adattato per gspread
             logs = load_logs()
             if logs:
-                for log in reversed(logs):
-                    st.caption(log)
+                # Limitiamo a 10 per non rallentare
+                for log in list(reversed(logs))[:10]:
+                    if isinstance(log, dict):
+                         # Recuperiamo i dati. Se è una guida semplice, il budget sarà "GUIDE_ONLY"
+                        dest = log.get('Destination', 'N/A')
+                        ts = log.get('Timestamp', '')
+                        note = log.get('Budget', '') 
+                        st.caption(f"📍 {dest} | {ts} [{note}]")
+                    else:
+                         st.caption(log)
             else:
                 st.caption("Nessuna ricerca ancora.")
-            st.write(f"**Totale:** {len(logs)}")
+            # st.write(f"**Totale:** {len(logs)}")
 
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
@@ -597,10 +641,9 @@ with st.container():
         if not city_name:
             st.warning("Inserisci una città.")
         else:
-            # DATA NEL LOG
-            timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            # MODIFICA: Uso add_log() invece di get_shared_logs()
-            add_log(f"📍 {city_name} ({timestamp})")
+            # DATA NEL LOG - Modificata per usare gspread
+            # timestamp = datetime.datetime.now().strftime("%d/%m %H:%M") -> Spostato dentro add_log
+            add_log(city_name)
             
             with st.spinner("Stiamo scrivendo la tua guida... (non chiudere la pagina)"):
                 try:
@@ -724,10 +767,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
-
-
-
-
-
-
