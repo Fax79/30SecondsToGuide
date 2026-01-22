@@ -6,8 +6,6 @@ import base64
 import datetime
 import unicodedata
 import json
-
-# --- NUOVE IMPORTAZIONI PER GOOGLE SHEETS ---
 import gspread
 from google.oauth2.service_account import Credentials
 
@@ -22,7 +20,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
-SHEET_NAME = "30Seconds_Stats" # Stesso DB dell'altra app
+SHEET_NAME = "30Seconds_Stats"
 
 def get_db_connection():
     """Connette a Google Sheets usando i Secrets."""
@@ -54,13 +52,10 @@ def add_log(city_name):
     if sheet:
         try:
             timestamp = datetime.datetime.now().strftime("%d/%m %H:%M")
-            # Mappiamo i dati sulle colonne esistenti del foglio creato col Wizard
-            # Struttura: Timestamp, Destination, Budget, Nights, Adults, Minors, Ages
-            # Usiamo "GUIDE_ONLY" nel budget per distinguere la fonte del lead
             row = [
                 timestamp,
                 city_name,
-                "GUIDE_ONLY", # Marker per capire che viene da questa app
+                "GUIDE_ONLY", 
                 "-",
                 "-",
                 "-",
@@ -75,70 +70,84 @@ try:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
     genai.configure(api_key=API_KEY)
 except:
-    st.error("⚠️ Chiave API mancante! Inseriscila nei 'Secrets'.")
+    st.error("⚠️ API Key missing! Check 'Secrets'.")
     st.stop()
 
 # ==========================================
-# 🌐 CONFIGURAZIONE CROSS-PROMO
+# 🌐 CONFIGURAZIONE CROSS-PROMO & MONETIZZAZIONE
 # ==========================================
 WIZARD_APP_URL = "https://www.30secondstoguide.it" 
-PROMO_IMG_WIZARD = "promo_to_wizard.jpg" # IMMAGINE 1: Cerchio su "APRI ITINERARY WIZARD"
+PROMO_IMG_WIZARD = "promo_to_wizard.jpg"
 
-# ==========================================
-# 💰 AREA MONETIZZAZIONE & PARTNER
-# ==========================================
-
-# 1. LINK TRACCIATI (Attivi)
-FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"            # Voli
-LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW" # Bagagli
-REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"          # Rimborsi
-ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"             # eSim
-RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"      # Auto Europe
-TRANSF_LINK = "https://tpx.lt/O5I4OrpX"                 # Transfer / NCC
-TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"          # Taxi
-TIQETS_LINK = "https://tiqets.tpx.lt/XV1Urbnn"          # Biglietti Musei
-
-# LINK HEYMONDO (Affiliato)
+# LINK TRACCIATI
+FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"
+LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW"
+REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"
+ESIM_LINK = "https://saily.tpx.lt/Myxhqmox"
+RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"
+TRANSF_LINK = "https://tpx.lt/O5I4OrpX"
+TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"
+TIQETS_LINK = "https://tiqets.tpx.lt/XV1Urbnn"
 INSURANCE_LINK = "https://heymondo.it?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 
-# 2. LINK GENERICI (Statici)
+# LINK GENERICI
 TRAIN_LINK = "https://www.omio.com"
 RESTAURANT_LINK = "https://www.tripadvisor.com"
 HOTEL_LINK = "https://www.expedia.com" 
+PROMO_LINK = INSURANCE_LINK 
 
-# --- LINK PROMOZIONE ---
-PROMO_LINK = "https://heymondo.it?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL" 
+# --- DIZIONARI LINGUA ---
+LANGUAGES = {
+    "IT": {
+        "h1": "Generatore Guide Turistiche",
+        "subtitle": "Da zero a local in mezzo minuto.",
+        "wiz_title": "🧙‍♂️ Vuoi chiedere al nostro Wizard di organizzare il tuo viaggio personalizzato?",
+        "wiz_desc": "Verifica il tuo budget, crea il tuo itinerario su misura, interroga qui sotto il nostro mago.",
+        "wiz_btn": "✨ APRI ITINERARY WIZARD",
+        "input_label": "Se vuoi generare la guida specifica di una città inserisci QUI la destinazione:",
+        "input_placeholder": "Es. Parigi, Tokyo, New York...",
+        "btn_generate": "Genera Guida PDF",
+        "btn_download": "🎨 SCARICA GUIDA PDF PRO",
+        "msg_warning": "Inserisci una città.",
+        "msg_success": "✅ Guida per {city} pronta!",
+        "spinner": "Stiamo scrivendo la tua guida... (non chiudere la pagina)",
+        "hub_title": "✈️ Organizza il viaggio a {city}",
+        "hub_title_gen": "✈️ I migliori strumenti per il tuo viaggio",
+        "footer_seo_title": "Come funziona 30SecondsToGuide?",
+        "footer_seo_text": "è il primo generatore di guide turistiche basato sull'Intelligenza Artificiale. A differenza dei tradizionali blog di viaggio, il nostro algoritmo crea <strong>itinerari personalizzati in PDF</strong> per qualsiasi città del mondo in meno di 30 secondi. Il servizio è <strong>gratuito al 100%</strong>.",
+        # Sidebar Labels
+        "sb_booking": "✈️ PRENOTAZIONI",
+        "sb_exp": "🎟️ ESPERIENZE & ALTRO",
+        "sb_tools": "🛠️ SERVIZI UTILI",
+        "sb_privacy": "Privacy Policy"
+    },
+    "EN": {
+        "h1": "AI Travel Guide Generator",
+        "subtitle": "From zero to local in 30 seconds.",
+        "wiz_title": "🧙‍♂️ Do you want our Wizard to organize your custom trip?",
+        "wiz_desc": "Check your budget, create a tailor-made itinerary, ask our wizard below.",
+        "wiz_btn": "✨ OPEN ITINERARY WIZARD",
+        "input_label": "Enter the destination city HERE to generate your exclusive guide:",
+        "input_placeholder": "E.g. Paris, Tokyo, New York...",
+        "btn_generate": "Generate PDF Guide",
+        "btn_download": "🎨 DOWNLOAD PRO PDF GUIDE",
+        "msg_warning": "Please enter a city.",
+        "msg_success": "✅ Guide for {city} is ready!",
+        "spinner": "Writing your guide... (please do not close this page)",
+        "hub_title": "✈️ Plan your trip to {city}",
+        "hub_title_gen": "✈️ Best tools for your trip",
+        "footer_seo_title": "How does 30SecondsToGuide work?",
+        "footer_seo_text": "is the first AI-based travel guide generator. Unlike traditional travel blogs, our algorithm creates <strong>custom PDF itineraries</strong> for any city in the world in less than 30 seconds. The service is <strong>100% free</strong>.",
+        # Sidebar Labels
+        "sb_booking": "✈️ BOOKINGS",
+        "sb_exp": "🎟️ EXPERIENCES & MORE",
+        "sb_tools": "🛠️ USEFUL SERVICES",
+        "sb_privacy": "Privacy Policy"
+    }
+}
 
-# --- Funzione Helper per Bottoni con Logo ---
-def get_base64_of_bin_file(bin_file):
-    if os.path.exists(bin_file):
-        with open(bin_file, 'rb') as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    return None
-
-def partner_button(label, link, image_file):
-    if os.path.exists(image_file):
-        try:
-            img_base64 = get_base64_of_bin_file(image_file)
-            html_code = f"""
-            <a href="{link}" target="_blank">
-                <img src="data:image/png;base64,{img_base64}" style="width:100%; border-radius:8px; border: 1px solid #e0e0e0; transition: transform 0.2s;">
-            </a>
-            <div style="text-align: center; margin-top: 5px; margin-bottom: 15px;">
-                <a href="{link}" target="_blank" style="text-decoration: none; color: #E67E22; font-weight: bold; font-size: 0.9em;">{label} ➜</a>
-            </div>
-            """
-            st.markdown(html_code, unsafe_allow_html=True)
-        except:
-            st.link_button(label, link, use_container_width=True)
-    else:
-        st.link_button(label, link, use_container_width=True)
-
-# ==========================================
-
-# --- MODELLO TESTO PROMPT ---
-TESTO_MODELLO = """
+# --- MODELLI PROMPT (IT / EN) ---
+TESTO_MODELLO_IT = """
 # [NOME CITTÀ]: Guida Esclusiva
 
 ## 1. L'Anima della Città
@@ -205,14 +214,164 @@ TESTO_MODELLO = """
 [Riflessione finale filosofica sul viaggio in questa città, descrivi l'essenza del viaggio].
 """
 
-# --- FUNZIONE PDF ---
-def create_pdf(text, city):
+TESTO_MODELLO_EN = """
+# [CITY NAME]: Exclusive Guide
+
+## 1. The Soul of the City
+[Evocative intro of 150 words, deep understanding of the soul of the places].
+
+## 2. Neighborhoods and Atmospheres
+[Zone description, identify the main contrast ancient vs modern, popular vs exclusive, right bank vs left bank, etc].
+
+### Zone Comparison
+* **[zone 1 mentioned above]:** [Atmosphere description]
+* **[zone 2 mentioned above]:** [Atmosphere description]
+* **Who goes there:** [Tourist target]
+
+## 3. Where to sleep
+[Best neighborhoods to stay for type of tourist/vacation: family, couple, group of friends, senior travelers].
+
+## 4. Gastronomy
+[What to eat and where, the gastronomic tradition].
+
+### Unmissable Dishes
+* **[Dish 1]:** [Description and ingredients]
+* **[Dish 2]:** [Description and ingredients]
+* **[traditional food]:** [best restaurants, most characteristic ones, tips to save money]
+* **[traditional drinks]:** [best bars, most characteristic ones, tips to save money]
+
+## 5. Attractions
+* **[Monument 1]:** [Description, if present opening days and hours, ticket prices]
+* **[Monument 2]:** [Description, if present opening days and hours, ticket prices]
+* **[Monument 3]:** [Description, if present opening days and hours, ticket prices]
+* **[Monument 4]:** [Description, if present opening days and hours, ticket prices]
+* **[Monument 5]:** [Description, if present opening days and hours, ticket prices]
+
+## 6. Markets
+* **[Market 1]:** [Description]
+* **[Market 2]:** [Description]
+
+## 7. Cultural Calendar
+[Main festivals, fairs, recurring events and city holidays].
+
+## 8. Practical Info
+* **Getting there:** [Info on airlines serving the main airport (legacy and low cost), flights from major hubs, alternative means: trains/buses)]
+* **Transport:** [Info]
+* **Safety:** [Info]
+* **Climate:** [Info on best periods to visit]
+* **Visas and requirements:** [Info]
+* **Time zone:** [Info]
+* **Useful tips:** [Info on local currency and power plugs, never use currency symbols but their codes, e.g. EUR, USD, GBP, etc]
+
+## 9. 3-Day Itinerary
+* **Day 1:** [Morning/Afternoon/Evening, think of the itinerary in the best order to rationalize time]
+* **Day 2:** [Morning/Afternoon/Evening, think of the itinerary in the best order to rationalize time]
+* **Day 3:** [Morning/Afternoon/Evening, think of the itinerary in the best order to rationalize time]
+
+## 10. 5-Day Itinerary
+* **Days 1-3:** As above.
+* **Day 4:** [Morning/Afternoon/Evening, think of the itinerary in the best order to rationalize time]
+* **Day 5:** [Morning/Afternoon/Evening, think of the itinerary in the best order to rationalize time]
+
+## 11. If you have more time
+* **Off the beaten path:** [A less touristy neighborhood].
+* **Day trips:** [One or more half-day or full-day trips in the surroundings].
+
+## 12. Conclusion
+[Final philosophical reflection on the trip to this city, describe the essence of the journey].
+"""
+
+# --- HELPER FUNZIONI ---
+def get_base64_of_bin_file(bin_file):
+    if os.path.exists(bin_file):
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    return None
+
+def partner_button(label, link, image_file):
+    if os.path.exists(image_file):
+        try:
+            img_base64 = get_base64_of_bin_file(image_file)
+            html_code = f"""
+            <a href="{link}" target="_blank">
+                <img src="data:image/png;base64,{img_base64}" style="width:100%; border-radius:8px; border: 1px solid #e0e0e0; transition: transform 0.2s;">
+            </a>
+            <div style="text-align: center; margin-top: 5px; margin-bottom: 15px;">
+                <a href="{link}" target="_blank" style="text-decoration: none; color: #E67E22; font-weight: bold; font-size: 0.9em;">{label} ➜</a>
+            </div>
+            """
+            st.markdown(html_code, unsafe_allow_html=True)
+        except:
+            st.link_button(label, link, use_container_width=True)
+    else:
+        st.link_button(label, link, use_container_width=True)
+
+# --- FUNZIONE PDF (Multilingua) ---
+def create_pdf(text, city, lang_code="IT"):
     
-    # --- FUNZIONE SPAZZINO 5.0 (SMART ACCENTS) ---
+    # Dizionario stringhe PDF
+    PDF_STRINGS = {
+        "IT": {
+            "header": "GUIDA",
+            "subtitle": "Guida turistica completa\nItinerari, Storia e Cultura",
+            "disclaimer": "Questa guida è offerta gratuitamente. Se ti è utile, nell'ultima pagina trovi una selezione di sconti esclusivi per voli e hotel che ci aiutano a mantenere il servizio attivo. Buon viaggio!",
+            "generated_by": "GENERATO CON www.30secondstoguide.it",
+            "promo_cta": "Clicca qui se vuoi un itinerario personalizzato in base alla durata e al tuo budget.",
+            "inj_esim": f"Non restare senza internet a {city}? eSim Saily (Sconto 5%)",
+            "inj_hotel": f"Prezzi Hotel in aumento a {city}? Verifica disponibilità su Expedia",
+            "inj_tix": f"Biglietti ufficiali Musei e Attrazioni a {city} su Tiqets",
+            "inj_flight": f"Trova subito voli economici per {city} su Kiwi.com",
+            "inj_transfer": f"Transfer NCC dall'aeroporto al prezzo di un taxi (Welcome Pickups)",
+            "inj_insur": "Assicurazione Viaggio (Sconto 10% con Heymondo)",
+            "partner_seen": "Già visti nella guida...",
+            "partner_others": "ALTRI SERVIZI INDISPENSABILI",
+            "p_hotel": "Hotel e alloggi",
+            "p_tix": "Biglietti musei e attrazioni",
+            "p_flight": "Voli low cost",
+            "p_insur": "Assicurazione viaggio",
+            "p_esim": "eSim internazionale",
+            "p_transf": "Transfer aeroportuali",
+            "p_lugg": "Libera le mani con Radical Storage",
+            "p_reimb": "Volo in ritardo? Chiedi risarcimento con AirHelp",
+            "p_rent": "Migliori tariffe con Auto Europe",
+            "p_train": "Prenota con Omio",
+            "p_taxi": "Kiwitaxi per spostamenti urbani",
+            "p_rest": "Recensioni su TripAdvisor"
+        },
+        "EN": {
+            "header": "GUIDE",
+            "subtitle": "Complete Travel Guide\nItineraries, History and Culture",
+            "disclaimer": "This guide is free. If it's useful, on the last page you'll find a selection of exclusive discounts for flights and hotels that help us keep the service running. Safe travels!",
+            "generated_by": "GENERATED WITH www.30secondstoguide.it",
+            "promo_cta": "Click here if you want a personalized itinerary based on duration and budget.",
+            "inj_esim": f"Don't run out of internet in {city}? eSim Saily (5% Discount)",
+            "inj_hotel": f"Hotel prices rising in {city}? Check availability on Expedia",
+            "inj_tix": f"Official Tickets for Museums and Attractions in {city} on Tiqets",
+            "inj_flight": f"Find cheap flights to {city} now on Kiwi.com",
+            "inj_transfer": f"Private Airport Transfer at taxi price (Welcome Pickups)",
+            "inj_insur": "Travel Insurance (10% Discount with Heymondo)",
+            "partner_seen": "Featured in this guide...",
+            "partner_others": "ESSENTIAL SERVICES",
+            "p_hotel": "Hotels and accommodation",
+            "p_tix": "Museums and attractions tickets",
+            "p_flight": "Low cost flights",
+            "p_insur": "Travel insurance",
+            "p_esim": "International eSim",
+            "p_transf": "Airport transfers",
+            "p_lugg": "Free your hands with Radical Storage",
+            "p_reimb": "Delayed flight? Claim compensation with AirHelp",
+            "p_rent": "Best rates with Auto Europe",
+            "p_train": "Book with Omio",
+            "p_taxi": "Kiwitaxi for urban rides",
+            "p_rest": "Reviews on TripAdvisor"
+        }
+    }
+    
+    ps = PDF_STRINGS[lang_code]
+
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        
-        # 1. Mappatura manuale per simboli problematici noti
         replacements = {
             "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
             "€": "EUR", "$": "USD", "£": "GBP",
@@ -221,42 +380,33 @@ def create_pdf(text, city):
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
-
-        # 2. Normalizzazione NFC (IMPORTANTE: Mantiene uniti accenti e lettere -> 'à' resta 'à')
         text_input = unicodedata.normalize('NFC', text_input)
-        
         output = []
         for char in text_input:
             try:
-                # 3. Test: il carattere è supportato nativamente da Latin-1?
                 char.encode('latin-1')
                 output.append(char)
             except UnicodeEncodeError:
-                # 4. Se fallisce, decomponiamo e prendiamo la base
                 decomposed = unicodedata.normalize('NFD', char)
                 base_char = decomposed[0]
                 try:
                     base_char.encode('latin-1')
                     output.append(base_char)
                 except UnicodeEncodeError:
-                    # 5. Se anche la base non va, lo ignoriamo
                     pass
-                    
         return "".join(output)
 
     city_clean = clean_text_for_pdf(city)
 
     class ModernPDF(FPDF):
         def header(self):
-            # FIX: Salta intestazione su Cover (1) E su Promo (2)
             if self.page_no() <= 2: return 
-            
             self.set_fill_color(44, 62, 80) 
             self.rect(0, 0, 210, 20, 'F')
             self.set_font('Helvetica', 'B', 10)
             self.set_text_color(255, 255, 255)
             self.set_y(8)
-            self.cell(0, 0, f'GUIDA: {city_clean.upper()}', 0, 0, 'R')
+            self.cell(0, 0, f'{ps["header"]}: {city_clean.upper()}', 0, 0, 'R')
             self.ln(20) 
             
         def footer(self):
@@ -265,7 +415,7 @@ def create_pdf(text, city):
             self.set_y(-15)
             self.set_font('Helvetica', 'I', 8)
             self.set_text_color(128, 128, 128)
-            self.cell(0, 10, f'30SecondsToGuide - Pagina {self.page_no()}', 0, 0, 'C')
+            self.cell(0, 10, f'30SecondsToGuide - Page {self.page_no()}', 0, 0, 'C')
 
         def make_cover(self, city_name_input):
             self.add_page()
@@ -285,7 +435,7 @@ def create_pdf(text, city):
             self.set_x(70)
             self.set_font('Helvetica', '', 16)
             self.set_text_color(127, 140, 141)
-            self.multi_cell(0, 10, "Guida turistica completa\nItinerari, Storia e Cultura")
+            self.multi_cell(0, 10, ps["subtitle"])
             self.ln(20)
             self.set_fill_color(230, 126, 34) 
             self.rect(70, self.get_y(), 100, 2, 'F')
@@ -293,58 +443,37 @@ def create_pdf(text, city):
             self.set_x(70)
             self.set_font('Helvetica', 'I', 9) 
             self.set_text_color(100, 100, 100)
-            disclaimer = "Questa guida è offerta gratuitamente. Se ti è utile, nell'ultima pagina trovi una selezione di sconti esclusivi per voli e hotel che ci aiutano a mantenere il servizio attivo. Buon viaggio!"
-            self.multi_cell(110, 5, disclaimer)
+            self.multi_cell(110, 5, ps["disclaimer"])
             self.set_y(250)
             self.set_x(70)
             self.set_font('Helvetica', 'BU', 10) 
             self.set_text_color(44, 62, 80)
-            self.cell(0, 10, "GENERATO CON www.30secondstoguide.it", link="https://www.30secondstoguide.it")
+            self.cell(0, 10, ps["generated_by"], link="https://www.30secondstoguide.it")
 
-    # --- FUNZIONE PAGINA PROMO ---
     def add_promo_page(pdf_obj):
-        # Se non c'è l'immagine, non facciamo nulla (evitiamo pagine bianche a caso)
         if not os.path.exists(PROMO_IMG_WIZARD): return
-
         pdf_obj.add_page()
-        
-        # 1. Immagine Screenshot
-        # Posizionata in alto (Y=30), larga 180mm (margini 15mm)
         pdf_obj.image(PROMO_IMG_WIZARD, x=15, y=30, w=180)
-        
-        # 2. Box CTA
         box_y = 160 
-        pdf_obj.set_fill_color(155, 89, 182) # Viola per rimandare al Wizard
+        pdf_obj.set_fill_color(155, 89, 182) 
         pdf_obj.set_draw_color(142, 68, 173)
         pdf_obj.rect(15, box_y, 180, 30, 'DF')
-        
-        # 3. Testo e Link
         pdf_obj.set_y(box_y + 8)
         pdf_obj.set_font("Helvetica", 'B', 14)
         pdf_obj.set_text_color(255, 255, 255)
-        
-        cta_text = "Clicca qui se vuoi un itinerario personalizzato in base alla durata e al tuo budget."
         pdf_obj.set_x(15)
-        pdf_obj.multi_cell(180, 8, cta_text, align='C', link=WIZARD_APP_URL)
+        pdf_obj.multi_cell(180, 8, ps["promo_cta"], align='C', link=WIZARD_APP_URL)
 
     pdf = ModernPDF()
     pdf.set_auto_page_break(auto=True, margin=25)
-    
-    # 1. Copertina (Pagina 1)
     pdf.make_cover(city_clean)
-    
-    # 2. Pagina Promo (Pagina 2)
     add_promo_page(pdf)
-    
-    # 3. FIX: Nuova pagina ORA, così la guida parte pulita a pag 3
     pdf.add_page()
     
     lines = text.split('\n')
     
-    # --- NUOVO BOX "MAGAZINE STYLE" (Uniformato a itinerari.py) ---
     def make_box(pdf_obj, text, link, style="blue"):
         text = clean_text_for_pdf(text)
-        
         palettes = {
             "blue":   {"bg": (240, 248, 255), "accent": (0, 102, 204)}, 
             "green":  {"bg": (240, 255, 240), "accent": (0, 153, 76)},  
@@ -352,52 +481,37 @@ def create_pdf(text, city):
             "purple": {"bg": (248, 240, 255), "accent": (102, 0, 153)}, 
             "orange": {"bg": (255, 245, 235), "accent": (230, 90, 0)}   
         }
-        
         chosen = palettes.get(style, palettes["blue"])
         bg_r, bg_g, bg_b = chosen["bg"]
         ac_r, ac_g, ac_b = chosen["accent"]
-        
-        # --- FIX PAGE BREAK ---
-        if pdf_obj.get_y() > 250: 
-             pdf_obj.add_page()   
-
+        if pdf_obj.get_y() > 250: pdf_obj.add_page()   
         pdf_obj.ln(4)
-        
         current_y = pdf_obj.get_y()
         pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
         pdf_obj.set_draw_color(bg_r, bg_g, bg_b) 
         pdf_obj.rect(10, current_y, 190, 14, 'DF')
-        
         pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
         pdf_obj.rect(10, current_y, 2, 14, 'F')
-        
         pdf_obj.set_xy(15, current_y + 4) 
         pdf_obj.set_font("Helvetica", 'B', 9)
         pdf_obj.set_text_color(44, 62, 80)
         pdf_obj.cell(180, 6, f"{text} >", link=link)
-        
         pdf_obj.ln(12)
-    # ----------------------------------------
 
     for line in lines:
         clean_line = clean_text_for_pdf(line)
         
-        # --- INIEZIONI CONTESTUALI (Uniformate) ---
-        
-        if line.startswith('## 2. Quartieri'):
-            make_box(pdf, f"Non restare senza internet a {city_clean}? eSim Saily (Sconto 5%)", ESIM_LINK, style="yellow")
-        
-        if line.startswith('## 4. Gastronomia'):
-            make_box(pdf, f"Prezzi Hotel in aumento a {city_clean}? Verifica disponibilità su Expedia", HOTEL_LINK, style="blue")
-            
-        if line.startswith('## 6. I mercati'):
-             make_box(pdf, f"Biglietti ufficiali Musei e Attrazioni a {city_clean} su Tiqets", TIQETS_LINK, style="orange")
-
-        if line.startswith('## 9. Itinerario'):
-             make_box(pdf, f"Trova subito voli economici per {city_clean} su Kiwi.com", FLIGHT_LINK, style="green")
-             make_box(pdf, f"Transfer NCC dall'aeroporto al prezzo di un taxi (Welcome Pickups)", TRANSF_LINK, style="purple")
-             make_box(pdf, "Assicurazione Viaggio (Sconto 10% con Heymondo)", INSURANCE_LINK, style="green")
-        # --------------------------------
+        # Iniezioni basate sulla lingua (usando dizionario 'ps')
+        if line.startswith('## 2. '):
+            make_box(pdf, ps["inj_esim"], ESIM_LINK, style="yellow")
+        if line.startswith('## 4. '):
+            make_box(pdf, ps["inj_hotel"], HOTEL_LINK, style="blue")
+        if line.startswith('## 6. '):
+             make_box(pdf, ps["inj_tix"], TIQETS_LINK, style="orange")
+        if line.startswith('## 9. '):
+             make_box(pdf, ps["inj_flight"], FLIGHT_LINK, style="green")
+             make_box(pdf, ps["inj_transfer"], TRANSF_LINK, style="purple")
+             make_box(pdf, ps["inj_insur"], INSURANCE_LINK, style="green")
 
         if line.startswith('# '): 
             pdf.ln(10)
@@ -410,7 +524,6 @@ def create_pdf(text, city):
             pdf.set_line_width(1)
             pdf.line(10, y+2, 50, y+2) 
             pdf.ln(8)
-            
         elif line.startswith('## '): 
             pdf.ln(5)
             pdf.set_font("Helvetica", 'B', 16)
@@ -418,28 +531,22 @@ def create_pdf(text, city):
             content = clean_line.replace('## ', '').replace('*', '').strip()
             pdf.cell(0, 10, content, ln=True)
             pdf.ln(2)
-            
         elif line.startswith('### '): 
             pdf.ln(3)
             pdf.set_font("Helvetica", 'B', 13)
             pdf.set_text_color(52, 73, 94)
             content = clean_line.replace('### ', '').replace('*', '').strip()
             pdf.cell(0, 10, content, ln=True)
-            
         elif line.strip().startswith('* ') or line.strip().startswith('- '):
             pdf.set_font("Helvetica", '', 11)
             pdf.set_text_color(0, 0, 0)
-            if line.strip().startswith('* '): content_raw = line.strip()[2:] 
-            else: content_raw = line.strip()[2:]
-            
+            content_raw = line.strip()[2:]
             content = clean_text_for_pdf(content_raw.replace('*', ''))
-            
             pdf.set_x(15) 
             pdf.cell(5, 5, chr(149), 0, 0) 
             pdf.set_x(22) 
             pdf.multi_cell(0, 6, content)
             pdf.ln(1)
-            
         else: 
             if line.strip():
                 pdf.set_font("Helvetica", '', 11)
@@ -448,75 +555,80 @@ def create_pdf(text, city):
                 pdf.multi_cell(0, 6, content)
                 pdf.ln(2)
 
-    # --- PAGINA PARTNER FINALE ---
+    # PAGINA PARTNER FINALE
     pdf.add_page()
     
     def make_sponsor_box(title, subtitle, link, highlight=False):
         title = clean_text_for_pdf(title)
         subtitle = clean_text_for_pdf(subtitle)
-        
         if highlight:
             pdf.set_fill_color(230, 240, 255) 
             pdf.set_draw_color(0, 102, 204)   
         else:
             pdf.set_fill_color(250, 250, 250) 
             pdf.set_draw_color(220, 220, 220) 
-            
         start_y = pdf.get_y()
         pdf.rect(10, start_y, 190, 14, 'DF') 
-        
         pdf.set_y(start_y + 2)
         pdf.set_x(15)
         pdf.set_font("Helvetica", 'B', 10) 
         pdf.set_text_color(44, 62, 80)
         pdf.cell(0, 5, title, 0, 1)
-        
         pdf.set_x(15)
         pdf.set_font("Helvetica", '', 9)
         pdf.set_text_color(0, 102, 204)
-        
         pdf.cell(0, 6, subtitle, 0, 1, link=link)
         pdf.ln(4) 
 
-    # 1. Partner già apparsi nel testo
     pdf.set_font("Helvetica", 'B', 14)
     pdf.set_text_color(100, 100, 100)
-    pdf.cell(0, 10, "Già visti nella guida...", 0, 1, 'L')
+    pdf.cell(0, 10, ps["partner_seen"], 0, 1, 'L')
     pdf.ln(2)
     
-    make_sponsor_box("Expedia", "Hotel e alloggi", HOTEL_LINK) 
-    make_sponsor_box("Tiqets", "Biglietti musei e attrazioni", TIQETS_LINK) 
-    make_sponsor_box("Kiwi.com", "Voli low cost", FLIGHT_LINK)
-    make_sponsor_box("Heymondo", "Assicurazione viaggio", INSURANCE_LINK)
-    make_sponsor_box("Saily", "eSim internazionale", ESIM_LINK)
-    make_sponsor_box("Welcome Pickups", "Transfer aeroportuali", TRANSF_LINK)
-
+    make_sponsor_box("Expedia", ps["p_hotel"], HOTEL_LINK) 
+    make_sponsor_box("Tiqets", ps["p_tix"], TIQETS_LINK) 
+    make_sponsor_box("Kiwi.com", ps["p_flight"], FLIGHT_LINK)
+    make_sponsor_box("Heymondo", ps["p_insur"], INSURANCE_LINK)
+    make_sponsor_box("Saily", ps["p_esim"], ESIM_LINK)
+    make_sponsor_box("Welcome Pickups", ps["p_transf"], TRANSF_LINK)
     pdf.ln(5)
-    
-    # 2. Partner NUOVI
     pdf.set_font("Helvetica", 'B', 16)
     pdf.set_text_color(44, 62, 80) 
-    pdf.cell(0, 10, "ALTRI SERVIZI INDISPENSABILI", 0, 1, 'L')
+    pdf.cell(0, 10, ps["partner_others"], 0, 1, 'L')
     pdf.ln(2)
     
-    make_sponsor_box("Deposito Bagagli", "Libera le mani con Radical Storage", LUGGAGE_LINK, highlight=True)
-    make_sponsor_box("Rimborsi Voli", "Volo in ritardo? Chiedi risarcimento con AirHelp", REIMB_LINK, highlight=True)
-    make_sponsor_box("Noleggio Auto", "Migliori tariffe con Auto Europe", RENTAL_LINK, highlight=True)
-    make_sponsor_box("Treni e Bus", "Prenota con Omio", TRAIN_LINK, highlight=True)
-    make_sponsor_box("Taxi Locale", "Kiwitaxi per spostamenti urbani", TAXI_LINK, highlight=True)
-    make_sponsor_box("Ristoranti", "Recensioni su TripAdvisor", RESTAURANT_LINK, highlight=True)
+    make_sponsor_box("Radical Storage", ps["p_lugg"], LUGGAGE_LINK, highlight=True)
+    make_sponsor_box("AirHelp", ps["p_reimb"], REIMB_LINK, highlight=True)
+    make_sponsor_box("Auto Europe", ps["p_rent"], RENTAL_LINK, highlight=True)
+    make_sponsor_box("Omio", ps["p_train"], TRAIN_LINK, highlight=True)
+    make_sponsor_box("Kiwitaxi", ps["p_taxi"], TAXI_LINK, highlight=True)
+    make_sponsor_box("TripAdvisor", ps["p_rest"], RESTAURANT_LINK, highlight=True)
 
     return bytes(pdf.output(dest='S'))
 
-# --- SIDEBAR ---
+# --- SIDEBAR E LINGUA ---
 with st.sidebar:
     if os.path.exists("logo.png"):
         st.image("logo.png", width=200)
     else:
         st.title("⏱️")
     
+    # SELETTORE LINGUA
+    st.write("") 
+    lang_opt = st.radio(
+        "Lingua / Language:",
+        ["🇮🇹 IT", "🇬🇧 EN"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    # Imposta codice lingua
+    lang_code = "IT" if "IT" in lang_opt else "EN"
+    
+    # Carica testi UI corretti
+    ui = LANGUAGES[lang_code]
+
     st.markdown("---")
-    st.caption("✈️ PRENOTAZIONI")
+    st.caption(ui["sb_booking"])
     partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
     partner_button("Hotel (Expedia)", HOTEL_LINK, "btn_booking.png") 
     partner_button("Transfers (Welcome)", TRANSF_LINK, "btn_wp.png")
@@ -524,28 +636,24 @@ with st.sidebar:
     partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
     partner_button("Taxi (Kiwitaxi)", TAXI_LINK, "btn_taxi.png")
     
-    st.caption("🎟️ ESPERIENZE & ALTRO")
+    st.caption(ui["sb_exp"])
     partner_button("Musei & Ticket (Tiqets)", TIQETS_LINK, "btn_tiqets.png") 
     partner_button("Ristoranti (Tripadvisor)", RESTAURANT_LINK, "btn_tripadv.png")
     
-    st.caption("🛠️ SERVIZI UTILI")
+    st.caption(ui["sb_tools"])
     partner_button("eSim (Saily)", ESIM_LINK, "btn_saily.png")
     partner_button("Bagagli (Radical)", LUGGAGE_LINK, "btn_radical.png")
     partner_button("Polizza (Heymondo)", INSURANCE_LINK, "btn_heymondo.png")
     partner_button("Rimborsi (Airhelp)", REIMB_LINK, "btn_airhelp.png")
     
-    # --- AREA ADMIN SEGRETA ---
     with st.sidebar.expander("🔐 Admin Stats"):
         secret_pwd = st.text_input("Password", type="password")
         if secret_pwd == "fabio123": 
-            st.write("### 📊 Ultime Ricerche:")
-            # MODIFICA: Uso load_logs() adattato per gspread
+            st.write("### 📊 Last Searches:")
             logs = load_logs()
             if logs:
-                # Limitiamo a 10 per non rallentare
                 for log in list(reversed(logs))[:10]:
                     if isinstance(log, dict):
-                         # Recuperiamo i dati. Se è una guida semplice, il budget sarà "GUIDE_ONLY"
                         dest = log.get('Destination', 'N/A')
                         ts = log.get('Timestamp', '')
                         note = log.get('Budget', '') 
@@ -553,12 +661,11 @@ with st.sidebar:
                     else:
                          st.caption(log)
             else:
-                st.caption("Nessuna ricerca ancora.")
-            # st.write(f"**Totale:** {len(logs)}")
+                st.caption("No logs yet.")
 
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
-    st.page_link("pages/privacy.py", label="Privacy Policy", icon="🔒")
+    st.page_link("pages/privacy.py", label=ui["sb_privacy"], icon="🔒")
 
 # --- CORPO CENTRALE ---
 if os.path.exists("logo.png"):
@@ -566,41 +673,33 @@ if os.path.exists("logo.png"):
     with col_img:
         st.image("logo.png", use_container_width=True)
 
-st.markdown("""
+st.markdown(f"""
     <h1 style='text-align: center; color: #2C3E50; margin-bottom: 0; margin-top: -10px;'>
-        Generatore Guide Turistiche
+        {ui["h1"]}
     </h1>
     <p style='text-align: center; color: #E67E22; font-size: 1.2em; font-style: italic; margin-top: 5px;'>
-        Da zero a local in mezzo minuto.
+        {ui["subtitle"]}
     </p>
     """, unsafe_allow_html=True)
 
-# ==========================================
-# 🆕 CTA WIZARD (MOBILE FRIENDLY)
-# ==========================================
+# CTA WIZARD
 st.write("") 
-
-# 1. Testo descrittivo "Gradient Style"
-st.markdown("""
+st.markdown(f"""
 <div style="background-color: #f0f2f6; border-radius: 10px; padding: 15px; margin-bottom: 15px; text-align: center; border: 1px solid #dcdcdc;">
-    <h3 style="margin: 0; color: #4A00E0; font-size: 1.2em;">🧙‍♂️ Vuoi chiedere al nostro Wizard di organizzare il tuo viaggio personalizzato?</h3>
+    <h3 style="margin: 0; color: #4A00E0; font-size: 1.2em;">{ui["wiz_title"]}</h3>
     <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #333;">
-        Verifica il tuo budget, crea il tuo itinerario su misura, interroga qui sotto il nostro mago.
+        {ui["wiz_desc"]}
     </p>
 </div>
 """, unsafe_allow_html=True)
 
-# 2. Bottone con Etichetta CORTA (Anti-Troncamento)
 with st.container(border=True):
-    st.page_link("pages/itinerari.py", label="✨ APRI ITINERARY WIZARD", use_container_width=True)
+    st.page_link("pages/itinerari.py", label=ui["wiz_btn"], use_container_width=True)
 
 st.write("") 
 
-# ==========================================
-# 📢 AREA PROMO AUTOMATICA
-# ==========================================
+# PROMO AUTOMATICA
 PROMO_IMG = "promo_banner.png"
-
 if os.path.exists(PROMO_IMG):
     try:
         promo_b64 = get_base64_of_bin_file(PROMO_IMG)
@@ -621,7 +720,6 @@ if os.path.exists(PROMO_IMG):
     except:
         pass
 
-# --- FUNZIONE RESET ---
 def reset_app():
     if 'generated_pdf' in st.session_state:
         del st.session_state['generated_pdf']
@@ -629,141 +727,144 @@ def reset_app():
         del st.session_state['last_city']
     st.session_state.city_input = ""
 
-# Collegamento variabile input
-city_name = st.text_input("Se vuoi generare la guida specifica di una città inserisci QUI la destinazione:", placeholder="Es. Parigi, Tokyo, New York...", key="city_input")
+city_name = st.text_input(ui["input_label"], placeholder=ui["input_placeholder"], key="city_input")
 
-# --- GENERAZIONE GUIDA ---
+# --- GENERAZIONE ---
 with st.container():
-    # Logica Bottone: Se c'è già un PDF, il bottone Genera è disabilitato
     is_generated = 'generated_pdf' in st.session_state
     
-    if st.button("Genera Guida PDF", type="primary", use_container_width=True, disabled=is_generated):
+    if st.button(ui["btn_generate"], type="primary", use_container_width=True, disabled=is_generated):
         if not city_name:
-            st.warning("Inserisci una città.")
+            st.warning(ui["msg_warning"])
         else:
-            # DATA NEL LOG - Modificata per usare gspread
-            # timestamp = datetime.datetime.now().strftime("%d/%m %H:%M") -> Spostato dentro add_log
             add_log(city_name)
             
-            with st.spinner("Stiamo scrivendo la tua guida... (non chiudere la pagina)"):
+            with st.spinner(ui["spinner"]):
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
+                    # SELEZIONE PROMPT IN BASE ALLA LINGUA
+                    if lang_code == "IT":
+                        sys_instruct = "Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per:"
+                        base_prompt = TESTO_MODELLO_IT
+                        rules = """
+                        1. NON USARE MAI TABELLE MARKDOWN (niente righe con | |).
+                        2. Se devi fare un confronto, usa elenchi puntati descrittivi.
+                        3. Usa ESATTAMENTE la struttura seguente.
+                        4. Scrivi paragrafi ricchi e lunghi.
+                        5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
+                        6. Se viene inserita una nazione, una regione, un'area geografica produci la guida per la città principale, aggiungi una premessa prima del capitolo 1 in cui elenchi eventuali altre città esortando a fare guide separate, suggerisci anche di utilizzare il bottone dell'"ITINERARY WIZARD" che trovano nel sito.
+                        7. Se viene inserita un parola o una frase che non sono luoghi geografici rispondi in modo scherzoso ma sintetico, non usare la struttura della guida.
+                        """
+                    else:
+                        sys_instruct = "You are an expert travel writer (Lonely Planet/National Geographic style). Write a DETAILED guide for:"
+                        base_prompt = TESTO_MODELLO_EN
+                        rules = """
+                        1. NEVER USE MARKDOWN TABLES (no lines with | |).
+                        2. If you need to make a comparison, use descriptive bullet points.
+                        3. Use EXACTLY the following structure.
+                        4. Write rich and long paragraphs.
+                        5. NEVER USE SPECIAL CHARACTERS or currency symbols (like Euro or Dollar), simplify foreign spelling using standard alphabet.
+                        6. If a nation, region, or geographic area is entered, produce the guide for the main city, add a premise before chapter 1 listing other cities urging to make separate guides, also suggest using the "ITINERARY WIZARD" button found on the site.
+                        7. If a word or phrase is entered that is not a geographical place, answer jokingly but synthetically, do not use the guide structure.
+                        """
+                    
                     full_prompt = f"""
-                    Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per: {city_name}.
+                    {sys_instruct} {city_name}.
                     
-                    REGOLE FONDAMENTALI:
-                    1. NON USARE MAI TABELLE MARKDOWN (niente righe con | |).
-                    2. Se devi fare un confronto, usa elenchi puntati descrittivi.
-                    3. Usa ESATTAMENTE la struttura seguente.
-                    4. Scrivi paragrafi ricchi e lunghi.
-                    5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
-                    6. Se viene inserita una nazione, una regione, un'area geografica produci la guida per la città principale, aggiungi una premessa prima del capitolo 1 in cui elenchi eventuali altre città esortando a fare guide separate, suggerisci anche di utilizzare il bottone dell'"ITINERARY WIZARD" che trovano nel sito.
-                    7. Se viene inserita un parola o una frase che non sono luoghi geografici rispondi in modo scherzoso ma sintetico, non usare la struttura della guida.
+                    RULES:
+                    {rules}
                     
-                    MODELLO:
-                    {TESTO_MODELLO}
+                    MODEL:
+                    {base_prompt}
                     """
                     
                     response = model.generate_content(full_prompt)
                     markdown_content = response.text
                     
-                    # Salva in sessione
-                    st.session_state['generated_pdf'] = create_pdf(markdown_content, city_name)
+                    st.session_state['generated_pdf'] = create_pdf(markdown_content, city_name, lang_code)
                     st.session_state['last_city'] = city_name
                     st.rerun()
                     
                 except Exception as e:
-                    st.error(f"Errore: {e}")
+                    st.error(f"Error: {e}")
 
-# --- DOWNLOAD BUTTON CON RESET ---
 if 'generated_pdf' in st.session_state:
-    st.success(f"✅ Guida per {st.session_state['last_city']} pronta!")
+    st.success(ui["msg_success"].format(city=st.session_state['last_city']))
     st.download_button(
-        label="🎨 SCARICA GUIDA PDF PRO",
+        label=ui["btn_download"],
         data=st.session_state['generated_pdf'],
-        file_name=f"Guida_{st.session_state['last_city']}.pdf",
+        file_name=f"Guide_{st.session_state['last_city']}.pdf",
         mime="application/pdf",
         type="primary",
         use_container_width=True,
         on_click=reset_app 
     )
 
-# =========================================================
-# 🏨 TRAVEL HUB (GRID 4x3)
-# =========================================================
+# --- TRAVEL HUB ---
 st.markdown("---")
 if city_name:
-    st.subheader(f"✈️ Organizza il viaggio a {city_name}")
+    st.subheader(ui["hub_title"].format(city=city_name))
 else:
-    st.subheader("✈️ I migliori strumenti per il tuo viaggio")
+    st.subheader(ui["hub_title_gen"])
 
-# RIGA 1
 c1, c2, c3 = st.columns(3)
 with c1:
-    st.caption("✈️ **Voli**")
-    partner_button("Voli Kiwi", FLIGHT_LINK, "btn_kiwi.png")
+    st.caption("✈️ **Kiwi**")
+    partner_button("Kiwi", FLIGHT_LINK, "btn_kiwi.png")
 with c2:
-    st.caption("🏨 **Hotel**")
+    st.caption("🏨 **Expedia**")
     partner_button("Expedia", HOTEL_LINK, "btn_booking.png") 
 with c3:
-    st.caption("🚘 **Transfer**")
-    partner_button("Welcome Pickups", TRANSF_LINK, "btn_wp.png")
+    st.caption("🚘 **Welcome**")
+    partner_button("Welcome", TRANSF_LINK, "btn_wp.png")
 
 st.write("") 
 
-# RIGA 2
 c4, c5, c6 = st.columns(3)
 with c4:
-    st.caption("🎟️ **Tour**")
+    st.caption("🎟️ **Tiqets**")
     partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png") 
 with c5:
-    st.caption("🚗 **Auto**")
-    partner_button("Noleggio", RENTAL_LINK, "btn_autoe.png")
+    st.caption("🚗 **Rental**")
+    partner_button("AutoEurope", RENTAL_LINK, "btn_autoe.png")
 with c6:
-    st.caption("🎒 **Bagagli**")
-    partner_button("Deposito", LUGGAGE_LINK, "btn_radical.png")
+    st.caption("🎒 **Radical**")
+    partner_button("Radical", LUGGAGE_LINK, "btn_radical.png")
 
 st.write("") 
 
-# RIGA 3
 c7, c8, c9 = st.columns(3)
 with c7:
-    st.caption("📲 **Dati**")
-    partner_button("eSim Saily", ESIM_LINK, "btn_saily.png")
+    st.caption("📲 **Saily**")
+    partner_button("Saily", ESIM_LINK, "btn_saily.png")
 with c8:
-    st.caption("🛡️ **Polizza**")
-    partner_button("Assicuraz.", INSURANCE_LINK, "btn_heymondo.png")
+    st.caption("🛡️ **Heymondo**")
+    partner_button("Heymondo", INSURANCE_LINK, "btn_heymondo.png")
 with c9:
-    st.caption("💸 **Risarcim.**")
+    st.caption("💸 **AirHelp**")
     partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
 
 st.write("") 
 
-# RIGA 4
 c10, c11, c12 = st.columns(3)
 with c10:
-    st.caption("🚆 **Treni**")
+    st.caption("🚆 **Omio**")
     partner_button("Omio", TRAIN_LINK, "btn_omio.png")
 with c11:
-    st.caption("🍴 **Ristoranti**")
+    st.caption("🍴 **TripAdv**")
     partner_button("Tripadvisor", RESTAURANT_LINK, "btn_tripadv.png")
 with c12:
-    st.caption("🚖 **Taxi**")
+    st.caption("🚖 **Kiwitaxi**")
     partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
 
-# --- SEZIONE SEO ---
+# --- FOOTER SEO ---
 st.markdown("---")
-st.markdown("""
+st.markdown(f"""
 <div style="text-align: justify; color: #555;">
-    <h3>Come funziona 30SecondsToGuide?</h3>
+    <h3>{ui["footer_seo_title"]}</h3>
     <p>
-        <strong>30SecondsToGuide</strong> è il primo generatore di guide turistiche basato sull'Intelligenza Artificiale. 
-        A differenza dei tradizionali blog di viaggio, il nostro algoritmo crea <strong>itinerari personalizzati in PDF</strong> 
-        per qualsiasi città del mondo in meno di 30 secondi.
-    </p>
-    <p>
-        Il servizio è <strong>gratuito al 100%</strong>.
+        <strong>30SecondsToGuide</strong> {ui["footer_seo_text"]}
     </p>
 </div>
 """, unsafe_allow_html=True)
