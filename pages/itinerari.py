@@ -78,7 +78,7 @@ except Exception:
 # 🌐 CONFIGURAZIONE CROSS-PROMO & MONETIZZAZIONE
 # ==========================================
 GUIDE_APP_URL = "https://www.30secondstoguide.it" 
-PROMO_IMG_GUIDE = "promo_to_guide.jpg" 
+# Nota: Immagini promo gestite dinamicamente nel PDF
 
 FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"
 LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW"
@@ -314,16 +314,22 @@ def create_complex_pdf(text, destination, meta_data, lang_code):
             self.cell(0, 10, ui["pdf_generated"], 0, 0, 'C', link="https://www.30secondstoguide.it")
 
     def add_promo_page(pdf_obj):
-        if not os.path.exists(PROMO_IMG_GUIDE): return
+        # Selezione dinamica immagine
+        promo_img = "promo_to_guide_en.jpg" if lang_code == "EN" else "promo_to_guide.jpg"
+        if not os.path.exists(promo_img): return
+        
         pdf_obj.add_page()
-        pdf_obj.image(PROMO_IMG_GUIDE, x=15, y=30, w=180)
+        pdf_obj.image(promo_img, x=15, y=30, w=180)
+        
         box_y = 160 
         pdf_obj.set_fill_color(230, 126, 34) 
         pdf_obj.set_draw_color(211, 84, 0)
         pdf_obj.rect(15, box_y, 180, 30, 'DF')
+        
         pdf_obj.set_y(box_y + 8)
         pdf_obj.set_font("Helvetica", 'B', 14)
         pdf_obj.set_text_color(255, 255, 255)
+        
         cta_text = ui["pdf_promo"]
         pdf_obj.set_x(15)
         pdf_obj.multi_cell(180, 8, cta_text, align='C', link=GUIDE_APP_URL)
@@ -496,30 +502,24 @@ with st.sidebar:
         st.image("logo.png", width=200)
     else:
         st.title("⏱️")
-        
-    # SELETTORE LINGUA
-    st.write("") 
-    lang_opt = st.radio(
-        "Lingua / Language:",
-        ["🇮🇹 IT", "🇬🇧 EN"],
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-    lang_code = "IT" if "IT" in lang_opt else "EN"
-    ui = LANGUAGES[lang_code] # Carico il set di testi
+    
+    # Session state fallback per sidebar labels
+    if "lang_code" not in st.session_state:
+        st.session_state["lang_code"] = "IT"
+    ui_sb = LANGUAGES[st.session_state["lang_code"]]
 
     st.markdown("---")
-    st.caption(ui["sb_book"])
+    st.caption(ui_sb["sb_book"])
     partner_button("Kiwi", FLIGHT_LINK, "btn_kiwi.png")
     partner_button("Expedia", HOTEL_LINK, "btn_booking.png")
     partner_button("Welcome", TRANSF_LINK, "btn_wp.png")
     partner_button("AutoEurope", RENTAL_LINK, "btn_autoe.png")
     partner_button("Omio", TRAIN_LINK, "btn_omio.png")
     partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
-    st.caption(ui["sb_exp"])
+    st.caption(ui_sb["sb_exp"])
     partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png")
     partner_button("Tripadvisor", RESTAURANT_LINK, "btn_tripadv.png")
-    st.caption(ui["sb_tools"])
+    st.caption(ui_sb["sb_tools"])
     partner_button("Saily", ESIM_LINK, "btn_saily.png")
     partner_button("Radical", LUGGAGE_LINK, "btn_radical.png")
     partner_button("Heymondo", INSURANCE_LINK, "btn_heymondo.png")
@@ -537,6 +537,22 @@ with st.sidebar:
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
 
+# --- MAIN: SELETTORE LINGUA ---
+col_lang_1, col_lang_2 = st.columns([3, 1]) 
+with col_lang_2:
+    lang_opt = st.radio(
+        "Language:",
+        ["🇮🇹 IT", "🇬🇧 EN"],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="lang_select_wiz"
+    )
+
+lang_code = "IT" if "IT" in lang_opt else "EN"
+st.session_state["lang_code"] = lang_code 
+ui = LANGUAGES[lang_code]
+
+# --- MAIN: LOGO E TITOLO ---
 if os.path.exists("logo.png"):
     col_sp1, col_img, col_sp2 = st.columns([3, 2, 3])
     with col_img: st.image("logo.png", use_container_width=True)
@@ -567,7 +583,6 @@ div[data-testid="stPageLink-NavLink"] p { color: white !important; font-weight: 
 with st.container():
     st.info(ui["info_box"])
     
-    # Carica mesi nella lingua corretta
     current_months = ui["months"]
 
     c_dest, c_bud = st.columns([2, 1])
