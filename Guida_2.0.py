@@ -10,25 +10,6 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # --- 0. CONFIGURAZIONE PAGINA ---
-col_lang_1, col_lang_2 = st.columns([3, 1]) 
-
-with col_lang_2:
-    lang_opt = st.radio(
-        "Lingua / Language:",
-        ["🇮🇹 IT", "🇬🇧 EN"],
-        horizontal=True,
-        label_visibility="collapsed",
-        key="lang_select_main" # Key univoca per sicurezza
-    )
-
-# Definisci le variabili globali qui, subito dopo il radio button
-lang_code = "IT" if "IT" in lang_opt else "EN"
-ui = LANGUAGES[lang_code]
-
-# --- CORPO CENTRALE (Codice esistente) ---
-if os.path.exists("logo.png"):
-    col_sp1, col_img, col_sp2 = st.columns([3, 2, 3])
-    # ... eccetera
 if os.path.exists("logo.png"):
     st.set_page_config(page_title="30SecondsToGuide", page_icon="logo.png", layout="centered")
 else:
@@ -633,15 +614,15 @@ with st.sidebar:
         st.title("⏱️")
     
     # SELETTORE LINGUA
-#    st.write("") 
-#    lang_opt = st.radio(
-#        "Lingua / Language:",
-#        ["🇮🇹 IT", "🇬🇧 EN"],
-#        horizontal=True,
-#        label_visibility="collapsed"
-#    )
+    st.write("") 
+    lang_opt = st.radio(
+        "Lingua / Language:",
+        ["🇮🇹 IT", "🇬🇧 EN"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
     # Imposta codice lingua
- #   lang_code = "IT" if "IT" in lang_opt else "EN"
+    lang_code = "IT" if "IT" in lang_opt else "EN"
     
     # Carica testi UI corretti
     ui = LANGUAGES[lang_code]
@@ -887,4 +868,3 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
