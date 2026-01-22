@@ -77,7 +77,7 @@ except:
 # 🌐 CONFIGURAZIONE CROSS-PROMO & MONETIZZAZIONE
 # ==========================================
 WIZARD_APP_URL = "https://www.30secondstoguide.it" 
-PROMO_IMG_WIZARD = "promo_to_wizard.jpg"
+# Nota: Le immagini promozionali vengono gestite dinamicamente nella funzione PDF
 
 # LINK TRACCIATI
 FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"
@@ -451,9 +451,12 @@ def create_pdf(text, city, lang_code="IT"):
             self.cell(0, 10, ps["generated_by"], link="https://www.30secondstoguide.it")
 
     def add_promo_page(pdf_obj):
-        if not os.path.exists(PROMO_IMG_WIZARD): return
+        # Selezione dinamica immagine (Wizard En vs Wizard It)
+        promo_img = "promo_to_wizard_en.jpg" if lang_code == "EN" else "promo_to_wizard.jpg"
+        if not os.path.exists(promo_img): return
+        
         pdf_obj.add_page()
-        pdf_obj.image(PROMO_IMG_WIZARD, x=15, y=30, w=180)
+        pdf_obj.image(promo_img, x=15, y=30, w=180)
         box_y = 160 
         pdf_obj.set_fill_color(155, 89, 182) 
         pdf_obj.set_draw_color(142, 68, 173)
@@ -501,7 +504,7 @@ def create_pdf(text, city, lang_code="IT"):
     for line in lines:
         clean_line = clean_text_for_pdf(line)
         
-        # Iniezioni basate sulla lingua (usando dizionario 'ps')
+        # Iniezioni basate sui numeri di sezione (funzionano per IT e EN)
         if line.startswith('## 2. '):
             make_box(pdf, ps["inj_esim"], ESIM_LINK, style="yellow")
         if line.startswith('## 4. '):
@@ -606,29 +609,32 @@ def create_pdf(text, city, lang_code="IT"):
 
     return bytes(pdf.output(dest='S'))
 
-# --- SIDEBAR E LINGUA ---
+# --- SIDEBAR (SENZA LINGUA, SOLO MENU) ---
 with st.sidebar:
     if os.path.exists("logo.png"):
         st.image("logo.png", width=200)
     else:
         st.title("⏱️")
     
-    # SELETTORE LINGUA
-    st.write("") 
-    lang_opt = st.radio(
-        "Lingua / Language:",
-        ["🇮🇹 IT", "🇬🇧 EN"],
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-    # Imposta codice lingua
-    lang_code = "IT" if "IT" in lang_opt else "EN"
+    # QUI HO RIMOSSO IL SELETTORE LINGUA COME RICHIESTO
     
-    # Carica testi UI corretti
-    ui = LANGUAGES[lang_code]
-
+    # Caricamento preliminare per le etichette sidebar di default (fallback IT)
+    # Verranno sovrascritte se l'utente cambia lingua, ma serve per il primo render
+    # Nota: il vero cambio avviene al refresh dopo il click nel main.
+    
     st.markdown("---")
-    st.caption(ui["sb_booking"])
+    # Nota: Le etichette nella sidebar qui rimangono statiche o richiedono reload.
+    # Per semplicità in questo file main, uso icone universali o testo generico
+    # Se vuoi che anche la sidebar cambi lingua dinamicamente, dovremmo leggere lo stato
+    # ma il selettore è nel corpo principale.
+    # Soluzione: Uso session_state per persistere la lingua
+    
+    if "lang_code" not in st.session_state:
+        st.session_state["lang_code"] = "IT"
+        
+    ui_sb = LANGUAGES[st.session_state["lang_code"]]
+
+    st.caption(ui_sb["sb_booking"])
     partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
     partner_button("Hotel (Expedia)", HOTEL_LINK, "btn_booking.png") 
     partner_button("Transfers (Welcome)", TRANSF_LINK, "btn_wp.png")
@@ -636,11 +642,11 @@ with st.sidebar:
     partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
     partner_button("Taxi (Kiwitaxi)", TAXI_LINK, "btn_taxi.png")
     
-    st.caption(ui["sb_exp"])
+    st.caption(ui_sb["sb_exp"])
     partner_button("Musei & Ticket (Tiqets)", TIQETS_LINK, "btn_tiqets.png") 
     partner_button("Ristoranti (Tripadvisor)", RESTAURANT_LINK, "btn_tripadv.png")
     
-    st.caption(ui["sb_tools"])
+    st.caption(ui_sb["sb_tools"])
     partner_button("eSim (Saily)", ESIM_LINK, "btn_saily.png")
     partner_button("Bagagli (Radical)", LUGGAGE_LINK, "btn_radical.png")
     partner_button("Polizza (Heymondo)", INSURANCE_LINK, "btn_heymondo.png")
@@ -665,7 +671,24 @@ with st.sidebar:
 
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
-    st.page_link("pages/privacy.py", label=ui["sb_privacy"], icon="🔒")
+    st.page_link("pages/privacy.py", label=ui_sb["sb_privacy"], icon="🔒")
+
+# --- SELETTORE LINGUA (MAIN AREA) ---
+# Lo posizioniamo prima del logo, allineato a destra
+col_lang_1, col_lang_2 = st.columns([3, 1]) 
+with col_lang_2:
+    lang_opt = st.radio(
+        "Language:",
+        ["🇮🇹 IT", "🇬🇧 EN"],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="lang_select_main"
+    )
+
+# Aggiornamento Variabili Lingua
+lang_code = "IT" if "IT" in lang_opt else "EN"
+st.session_state["lang_code"] = lang_code # Salviamo per la sidebar al prossimo rerun
+ui = LANGUAGES[lang_code]
 
 # --- CORPO CENTRALE ---
 if os.path.exists("logo.png"):
