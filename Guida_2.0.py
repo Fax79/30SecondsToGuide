@@ -761,7 +761,7 @@ with st.container():
         if not city_name:
             st.warning(ui["msg_warning"])
         else:
-            add_log(city_name)
+            add_log(city_name, lang_code)
             
             with st.spinner(ui["spinner"]):
                 try:
@@ -892,4 +892,5 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
