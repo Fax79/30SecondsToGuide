@@ -61,7 +61,7 @@ def add_log(entry_data):
                 entry_data.get("nights", 0),
                 entry_data.get("adults", 0),
                 entry_data.get("minors", 0),
-                str(entry_data.get("minors_ages", []))
+                str(entry_data.get("minors_ages", [])),
                 entry_data.get("lang", "-")
             ]
             sheet.append_row(row)
