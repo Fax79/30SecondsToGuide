@@ -46,7 +46,7 @@ def load_logs():
             return []
     return []
 
-def add_log(city_name):
+def add_log(city_name, lang_code):
     """Aggiunge una nuova ricerca nel DB condiviso."""
     sheet = get_db_connection()
     if sheet:
@@ -59,7 +59,8 @@ def add_log(city_name):
                 "-",
                 "-",
                 "-",
-                "-"
+                "-",
+                lang_code
             ]
             sheet.append_row(row)
         except Exception as e:
@@ -891,3 +892,4 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
