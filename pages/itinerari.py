@@ -62,6 +62,7 @@ def add_log(entry_data):
                 entry_data.get("adults", 0),
                 entry_data.get("minors", 0),
                 str(entry_data.get("minors_ages", []))
+                entry_data.get("lang", "-")
             ]
             sheet.append_row(row)
         except Exception as e:
@@ -643,7 +644,8 @@ with st.container():
                 "nights": duration_check, 
                 "adults": adults, 
                 "minors": kids, 
-                "minors_ages": kids_ages
+                "minors_ages": kids_ages,
+                "lang": lang_code
             })
             
             with st.spinner(ui["spinner"].format(dest=destination)):
