@@ -17,7 +17,7 @@ else:
 
 def set_social_headers():
     # Link diretto all'immagine nel tuo repository GitHub
-    SOCIAL_IMAGE_URL = "https://raw.githubusercontent.com/Fax79/30secondstoguide/main/social_preview.png"
+    SOCIAL_IMAGE_URL = "https://raw.githubusercontent.com/Fax79/30secondstoguide/main/logo.png"
     
     meta_tags = f"""
     <head>
@@ -908,6 +908,7 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
