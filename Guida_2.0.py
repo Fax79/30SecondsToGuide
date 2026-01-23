@@ -15,6 +15,22 @@ if os.path.exists("logo.png"):
 else:
     st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
 
+def set_social_headers():
+    # Link diretto all'immagine nel tuo repository GitHub
+    SOCIAL_IMAGE_URL = "https://raw.githubusercontent.com/Fax79/30secondstoguide/main/social_preview.png"
+    
+    meta_tags = f"""
+    <head>
+        <meta property="og:title" content="30SecondsToGuide - La tua guida di viaggio IA" />
+        <meta property="og:description" content="Da zero a local in 30 secondi. Crea itinerari personalizzati e scarica guide PDF gratuite per qualsiasi città." />
+        <meta property="og:image" content="{SOCIAL_IMAGE_URL}" />
+        <meta property="og:url" content="https://www.30secondstoguide.it" />
+        <meta property="og:type" content="website" />
+    </head>
+    """
+    st.markdown(meta_tags, unsafe_allow_html=True)
+
+set_social_headers()
 # --- CONFIGURAZIONE GOOGLE SHEETS ---
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -892,5 +908,6 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
