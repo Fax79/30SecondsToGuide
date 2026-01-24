@@ -16,7 +16,6 @@ else:
     st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
 
 def set_social_headers():
-    # Link diretto all'immagine nel tuo repository GitHub
     SOCIAL_IMAGE_URL = "https://raw.githubusercontent.com/Fax79/30secondstoguide/main/logo.png"
     
     meta_tags = f"""
@@ -31,6 +30,7 @@ def set_social_headers():
     st.markdown(meta_tags, unsafe_allow_html=True)
 
 set_social_headers()
+
 # --- CONFIGURAZIONE GOOGLE SHEETS ---
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -39,7 +39,6 @@ SCOPES = [
 SHEET_NAME = "30Seconds_Stats"
 
 def get_db_connection():
-    """Connette a Google Sheets usando i Secrets."""
     try:
         if "gcp_service_account" not in st.secrets:
             return None
@@ -53,7 +52,6 @@ def get_db_connection():
         return None
 
 def load_logs():
-    """Carica i log da Google Sheets."""
     sheet = get_db_connection()
     if sheet:
         try:
@@ -63,7 +61,6 @@ def load_logs():
     return []
 
 def add_log(city_name, lang_code):
-    """Aggiunge una nuova ricerca nel DB condiviso."""
     sheet = get_db_connection()
     if sheet:
         try:
@@ -91,12 +88,11 @@ except:
     st.stop()
 
 # ==========================================
-# 🌐 CONFIGURAZIONE CROSS-PROMO & MONETIZZAZIONE
+# 🌐 CONFIGURAZIONE PROMO & LINK
 # ==========================================
 WIZARD_APP_URL = "https://www.30secondstoguide.it" 
-# Nota: Le immagini promozionali vengono gestite dinamicamente nella funzione PDF
 
-# LINK TRACCIATI
+# LINK TRACCIATI (Usati nel Travel Hub e nel PDF)
 FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"
 LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW"
 REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"
@@ -133,9 +129,7 @@ LANGUAGES = {
         "footer_seo_title": "Come funziona 30SecondsToGuide?",
         "footer_seo_text": "è il primo generatore di guide turistiche basato sull'Intelligenza Artificiale. A differenza dei tradizionali blog di viaggio, il nostro algoritmo crea <strong>itinerari personalizzati in PDF</strong> per qualsiasi città del mondo in meno di 30 secondi. Il servizio è <strong>gratuito al 100%</strong>.",
         # Sidebar Labels
-        "sb_booking": "✈️ PRENOTAZIONI",
-        "sb_exp": "🎟️ ESPERIENZE & ALTRO",
-        "sb_tools": "🛠️ SERVIZI UTILI",
+        "sb_pocket": "📚 LE NOSTRE GUIDE POCKET",
         "sb_privacy": "Privacy Policy"
     },
     "EN": {
@@ -156,9 +150,7 @@ LANGUAGES = {
         "footer_seo_title": "How does 30SecondsToGuide work?",
         "footer_seo_text": "is the first AI-based travel guide generator. Unlike traditional travel blogs, our algorithm creates <strong>custom PDF itineraries</strong> for any city in the world in less than 30 seconds. The service is <strong>100% free</strong>.",
         # Sidebar Labels
-        "sb_booking": "✈️ BOOKINGS",
-        "sb_exp": "🎟️ EXPERIENCES & MORE",
-        "sb_tools": "🛠️ USEFUL SERVICES",
+        "sb_pocket": "📚 OUR POCKET GUIDES",
         "sb_privacy": "Privacy Policy"
     }
 }
@@ -307,6 +299,7 @@ def get_base64_of_bin_file(bin_file):
     return None
 
 def partner_button(label, link, image_file):
+    # Questa funzione è usata solo nel Travel Hub (in basso), non più nella sidebar
     if os.path.exists(image_file):
         try:
             img_base64 = get_base64_of_bin_file(image_file)
@@ -521,7 +514,7 @@ def create_pdf(text, city, lang_code="IT"):
     for line in lines:
         clean_line = clean_text_for_pdf(line)
         
-        # Iniezioni basate sui numeri di sezione (funzionano per IT e EN)
+        # Iniezioni basate sui numeri di sezione
         if line.startswith('## 2. '):
             make_box(pdf, ps["inj_esim"], ESIM_LINK, style="yellow")
         if line.startswith('## 4. '):
@@ -626,49 +619,41 @@ def create_pdf(text, city, lang_code="IT"):
 
     return bytes(pdf.output(dest='S'))
 
-# --- SIDEBAR (SENZA LINGUA, SOLO MENU) ---
+# --- SELETTORE LINGUA (MAIN AREA) ---
+# Niente bandiere, solo testo per evitare problemi su PC
+col_lang_1, col_lang_2 = st.columns([3, 1]) 
+with col_lang_2:
+    lang_opt = st.radio(
+        "Language:",
+        ["Italiano", "English"],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="lang_select_main"
+    )
+
+# Aggiornamento Variabili Lingua
+lang_code = "IT" if lang_opt == "Italiano" else "EN"
+st.session_state["lang_code"] = lang_code 
+ui = LANGUAGES[lang_code]
+
+# --- SIDEBAR (NUOVA VERSIONE: GUIDE POCKET) ---
 with st.sidebar:
     if os.path.exists("logo.png"):
         st.image("logo.png", width=200)
     else:
         st.title("⏱️")
     
-    # QUI HO RIMOSSO IL SELETTORE LINGUA COME RICHIESTO
-    
-    # Caricamento preliminare per le etichette sidebar di default (fallback IT)
-    # Verranno sovrascritte se l'utente cambia lingua, ma serve per il primo render
-    # Nota: il vero cambio avviene al refresh dopo il click nel main.
-    
     st.markdown("---")
-    # Nota: Le etichette nella sidebar qui rimangono statiche o richiedono reload.
-    # Per semplicità in questo file main, uso icone universali o testo generico
-    # Se vuoi che anche la sidebar cambi lingua dinamicamente, dovremmo leggere lo stato
-    # ma il selettore è nel corpo principale.
-    # Soluzione: Uso session_state per persistere la lingua
     
-    if "lang_code" not in st.session_state:
-        st.session_state["lang_code"] = "IT"
-        
-    ui_sb = LANGUAGES[st.session_state["lang_code"]]
+    # Titolo sezione
+    st.subheader(ui["sb_pocket"])
+    
+    # LISTA GUIDE - Stile Bottone Pieno
+    st.link_button("Roma", "https://guide.30secondstoguide.it/roma", use_container_width=True)
+    st.link_button("New York", "https://guide.30secondstoguide.it/new-york", use_container_width=True)
+    st.link_button("Tokyo", "https://guide.30secondstoguide.it/tokyo", use_container_width=True)
 
-    st.caption(ui_sb["sb_booking"])
-    partner_button("Voli (Kiwi)", FLIGHT_LINK, "btn_kiwi.png")
-    partner_button("Hotel (Expedia)", HOTEL_LINK, "btn_booking.png") 
-    partner_button("Transfers (Welcome)", TRANSF_LINK, "btn_wp.png")
-    partner_button("Auto (Autoeurope)", RENTAL_LINK, "btn_autoe.png")
-    partner_button("Treni (Omio)", TRAIN_LINK, "btn_omio.png")
-    partner_button("Taxi (Kiwitaxi)", TAXI_LINK, "btn_taxi.png")
-    
-    st.caption(ui_sb["sb_exp"])
-    partner_button("Musei & Ticket (Tiqets)", TIQETS_LINK, "btn_tiqets.png") 
-    partner_button("Ristoranti (Tripadvisor)", RESTAURANT_LINK, "btn_tripadv.png")
-    
-    st.caption(ui_sb["sb_tools"])
-    partner_button("eSim (Saily)", ESIM_LINK, "btn_saily.png")
-    partner_button("Bagagli (Radical)", LUGGAGE_LINK, "btn_radical.png")
-    partner_button("Polizza (Heymondo)", INSURANCE_LINK, "btn_heymondo.png")
-    partner_button("Rimborsi (Airhelp)", REIMB_LINK, "btn_airhelp.png")
-    
+    # --- ADMIN ---
     with st.sidebar.expander("🔐 Admin Stats"):
         secret_pwd = st.text_input("Password", type="password")
         if secret_pwd == "fabio123": 
@@ -688,24 +673,8 @@ with st.sidebar:
 
     st.markdown("---")
     st.caption("© 2025 30SecondsToGuide")
-    st.page_link("pages/privacy.py", label=ui_sb["sb_privacy"], icon="🔒")
+    st.page_link("pages/privacy.py", label=ui["sb_privacy"], icon="🔒")
 
-# --- SELETTORE LINGUA (MAIN AREA) ---
-# Lo posizioniamo prima del logo, allineato a destra
-col_lang_1, col_lang_2 = st.columns([3, 1]) 
-with col_lang_2:
-    lang_opt = st.radio(
-        "Language:",
-        ["🇮🇹 IT", "🇬🇧 EN"],
-        horizontal=True,
-        label_visibility="collapsed",
-        key="lang_select_main"
-    )
-
-# Aggiornamento Variabili Lingua
-lang_code = "IT" if "IT" in lang_opt else "EN"
-st.session_state["lang_code"] = lang_code # Salviamo per la sidebar al prossimo rerun
-ui = LANGUAGES[lang_code]
 
 # --- CORPO CENTRALE ---
 if os.path.exists("logo.png"):
@@ -841,7 +810,7 @@ if 'generated_pdf' in st.session_state:
         on_click=reset_app 
     )
 
-# --- TRAVEL HUB ---
+# --- TRAVEL HUB (Rimasto invariato, in fondo pagina) ---
 st.markdown("---")
 if city_name:
     st.subheader(ui["hub_title"].format(city=city_name))
@@ -908,7 +877,3 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
-
-
-
