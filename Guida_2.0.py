@@ -666,6 +666,8 @@ with st.sidebar:
         use_container_width=True
     )
     
+    st.divider()
+    
     # --- ADMIN ---
     with st.sidebar.expander("🔐 Admin Stats"):
         secret_pwd = st.text_input("Password", type="password")
@@ -890,4 +892,5 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
