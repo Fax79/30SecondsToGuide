@@ -652,7 +652,20 @@ with st.sidebar:
     st.link_button("Roma", "https://guide.30secondstoguide.it/roma", use_container_width=True)
     st.link_button("New York", "https://guide.30secondstoguide.it/new-york", use_container_width=True)
     st.link_button("Tokyo", "https://guide.30secondstoguide.it/tokyo", use_container_width=True)
-
+    
+    st.divider() # Linea di separazione
+    
+    # Sezione Blog
+    st.markdown("### 📝 Travel Blog")
+    st.caption("Ispirazione, guide e sfide AI.")
+    
+    st.link_button(
+        label="Vai al Blog Ufficiale 🚀", 
+        url="https://blog.30secondstoguide.it",
+        type="primary", 
+        use_container_width=True
+    )
+    
     # --- ADMIN ---
     with st.sidebar.expander("🔐 Admin Stats"):
         secret_pwd = st.text_input("Password", type="password")
@@ -877,3 +890,4 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
