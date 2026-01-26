@@ -25,6 +25,7 @@ def set_social_headers():
         <meta property="og:image" content="{SOCIAL_IMAGE_URL}" />
         <meta property="og:url" content="https://www.30secondstoguide.it" />
         <meta property="og:type" content="website" />
+        <script defer src="https://cloud.umami.is/script.js" data-website-id="897aa2b4-2423-49b6-978d-c1f36c84c4b3"></script>
     </head>
     """
     st.markdown(meta_tags, unsafe_allow_html=True)
@@ -892,5 +893,6 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
