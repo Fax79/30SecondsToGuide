@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components # <--- UNICA AGGIUNTA NEGLI IMPORT
 import google.generativeai as genai
 from fpdf import FPDF
 import os
@@ -15,20 +16,37 @@ if os.path.exists("logo.png"):
 else:
     st.set_page_config(page_title="30SecondsToGuide", page_icon="⏱️", layout="centered")
 
+# --- MODIFICA CONCORDATA: INJECTION JAVASCRIPT PER UMAMI ---
 def set_social_headers():
     SOCIAL_IMAGE_URL = "https://raw.githubusercontent.com/Fax79/30secondstoguide/main/logo.png"
     
+    # 1. Meta Tags (Restano in Markdown perché sono statici)
     meta_tags = f"""
-    
-        <meta property="og:title" content="30SecondsToGuide - La tua guida di viaggio IA" />
-        <meta property="og:description" content="Da zero a local in 30 secondi. Crea itinerari personalizzati e scarica guide PDF gratuite per qualsiasi città." />
-        <meta property="og:image" content="{SOCIAL_IMAGE_URL}" />
-        <meta property="og:url" content="https://www.30secondstoguide.it" />
-        <meta property="og:type" content="website" />
-        <script defer src="https://cloud.umami.is/script.js" data-website-id="897aa2b4-2423-49b6-978d-c1f36c84c4b3"></script>
-    
+    <meta property="og:title" content="30SecondsToGuide - La tua guida di viaggio IA" />
+    <meta property="og:description" content="Da zero a local in 30 secondi. Crea itinerari personalizzati e scarica guide PDF gratuite per qualsiasi città." />
+    <meta property="og:image" content="{SOCIAL_IMAGE_URL}" />
+    <meta property="og:url" content="https://www.30secondstoguide.it" />
+    <meta property="og:type" content="website" />
     """
     st.markdown(meta_tags, unsafe_allow_html=True)
+
+    # 2. Injection "Chirurgica" di Umami
+    # Questo script JS esce dall'iframe e scrive nell'Header della pagina principale (window.parent).
+    umami_injection = """
+        <script>
+            var parentHead = window.parent.document.getElementsByTagName("head")[0];
+            var script = window.parent.document.createElement("script");
+            script.defer = true;
+            script.src = "https://cloud.umami.is/script.js";
+            script.setAttribute("data-website-id", "897aa2b4-2423-49b6-978d-c1f36c84c4b3");
+            
+            // Controllo anti-duplicati: lo aggiungo solo se non c'è già
+            if (!parentHead.querySelector('script[src="https://cloud.umami.is/script.js"]')) {
+                parentHead.appendChild(script);
+            }
+        </script>
+    """
+    components.html(umami_injection, height=0, width=0)
 
 set_social_headers()
 
@@ -893,6 +911,7 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
