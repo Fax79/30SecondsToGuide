@@ -664,9 +664,9 @@ with st.container():
                         [Info trasporti, eSim Saily (NO per Italia/UE), assicurazione Heymondo sconto 10%]
                         ## CAPITOLO 2: DOVE DORMIRE (Strategie alloggio)
                         ## CAPITOLO 3: L'ITINERARIO GIORNO PER GIORNO (Dettagliato)
-                        [Itinerario ottimizzato. Prediligi attrazioni su Tiqets. Scoperta del territorio]
+                        [Itinerario ottimizzato, razionalizza gli spostamenti in base alla distanza, a seconda del mezzo di trasporto massimizza le tappe con i tempo a disposizione. Prediligi attrazioni su Tiqets. Scoperta del territorio]
                         ## CAPITOLO 4: COSA MANGIARE
-                        [Piatti tipici, ristoranti (Tripadvisor), street food]
+                        [Piatti tipici, ristoranti (verifica su Tripadvisor i migliori per la fascia di prezzo compatibile con il budget e dai riferimenti puntuali), suggerisci i posti migliori per lo street food]
                         ## CAPITOLO 5: CALENDARIO CULTURALE
                         [Festival e ricorrenze]
                         ## CAPITOLO 6: CONTO ECONOMICO FINALE
