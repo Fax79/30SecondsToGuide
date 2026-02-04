@@ -124,7 +124,7 @@ INSURANCE_LINK = "https://heymondo.it?utm_medium=Afiliado&utm_source=30SECONDSTO
 
 # LINK GENERICI
 TRAIN_LINK = "https://www.omio.com"
-RESTAURANT_LINK = "https://www.tripadvisor.com"
+GYG_LINK = "https://gyg.me/YAGbtbpK"
 HOTEL_LINK = "https://www.expedia.com" 
 PROMO_LINK = INSURANCE_LINK 
 
@@ -366,7 +366,7 @@ def create_pdf(text, city, lang_code="IT"):
             "p_rent": "Migliori tariffe con Auto Europe",
             "p_train": "Prenota con Omio",
             "p_taxi": "Kiwitaxi per spostamenti urbani",
-            "p_rest": "Recensioni su TripAdvisor"
+            "p_rest": "Le tue escursioni con GetYourGuide"
         },
         "EN": {
             "header": "GUIDE",
@@ -393,7 +393,7 @@ def create_pdf(text, city, lang_code="IT"):
             "p_rent": "Best rates with Auto Europe",
             "p_train": "Book with Omio",
             "p_taxi": "Kiwitaxi for urban rides",
-            "p_rest": "Reviews on TripAdvisor"
+            "p_rest": "Travel experiences on GetYourGuide"
         }
     }
     
@@ -634,7 +634,7 @@ def create_pdf(text, city, lang_code="IT"):
     make_sponsor_box("Auto Europe", ps["p_rent"], RENTAL_LINK, highlight=True)
     make_sponsor_box("Omio", ps["p_train"], TRAIN_LINK, highlight=True)
     make_sponsor_box("Kiwitaxi", ps["p_taxi"], TAXI_LINK, highlight=True)
-    make_sponsor_box("TripAdvisor", ps["p_rest"], RESTAURANT_LINK, highlight=True)
+    make_sponsor_box("GetYourGuide", ps["p_rest"], GYG_LINK, highlight=True)
 
     return bytes(pdf.output(dest='S'))
 
@@ -895,8 +895,8 @@ with c10:
     st.caption("🚆 **Omio**")
     partner_button("Omio", TRAIN_LINK, "btn_omio.png")
 with c11:
-    st.caption("🍴 **TripAdv**")
-    partner_button("Tripadvisor", RESTAURANT_LINK, "btn_tripadv.png")
+    st.caption("🍴 **GYG**")
+    partner_button("GetYourGuide", GYG_LINK, "btn_gyg.png")
 with c12:
     st.caption("🚖 **Kiwitaxi**")
     partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
@@ -911,6 +911,7 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
