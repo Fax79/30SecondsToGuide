@@ -91,7 +91,7 @@ TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"
 TIQETS_LINK = "https://tiqets.tpx.lt/XV1Urbnn"
 INSURANCE_LINK = "https://heymondo.it?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=INPUT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 TRAIN_LINK = "https://www.omio.com"
-RESTAURANT_LINK = "https://www.tripadvisor.com"
+GYG_LINK = "https://gyg.me/YAGbtbpK"
 HOTEL_LINK = "https://www.expedia.com"
 TOUR_LINK = "https://www.getyourguide.com"
 
@@ -169,7 +169,7 @@ LANGUAGES = {
         "ad_tiqets": "Non rischiare il tutto esaurito a {dest}. Assicurati il posto e le migliori offerte su Tiqets",
         "ad_car": "Viaggia in libertà e noleggia un auto: Tariffe esclusive con Auto Europe",
         "ad_train": "Treni e Bus: Prenota su Omio",
-        "ad_rest": "Ristoranti: Leggi le recensioni su TripAdvisor",
+        "ad_rest": "Esplora {dest} al miglior prezzo! Prenota su GetYourGuide",
         # Sidebar
         "sb_book": "✈️ PRENOTAZIONI",
         "sb_exp": "🎟️ ESPERIENZE & ALTRO",
@@ -223,7 +223,7 @@ LANGUAGES = {
         "ad_tiqets": "Don't risk sold out in {dest}. Secure spots and best deals on Tiqets",
         "ad_car": "Travel freely and rent a car: Exclusive rates with Auto Europe",
         "ad_train": "Trains and Buses: Book on Omio",
-        "ad_rest": "Restaurants: Read reviews on TripAdvisor",
+        "ad_rest": "Discover {dest} at the best rate! Book on GetYourGuide",
         # Sidebar
         "sb_book": "✈️ BOOKINGS",
         "sb_exp": "🎟️ EXPERIENCES & MORE",
@@ -396,7 +396,7 @@ def create_complex_pdf(text, destination, meta_data, lang_code):
             make_box(pdf, ui["ad_train"], TRAIN_LINK, "purple")
             inserted_ch3 = True
         elif f"{TRIGGER_CH} 5" in line_upper and not inserted_ch4:
-            make_box(pdf, ui["ad_rest"], RESTAURANT_LINK, "green")
+            make_box(pdf, ui["ad_rest"], GYG_LINK, "green")
             inserted_ch4 = True
 
         if line.strip().startswith('# '):
@@ -483,7 +483,7 @@ def create_complex_pdf(text, destination, meta_data, lang_code):
     make_sponsor_box("Kiwi.com", "Flights", FLIGHT_LINK)
     make_sponsor_box("Heymondo", "Insurance", INSURANCE_LINK)
     make_sponsor_box("Saily", "eSim", ESIM_LINK)
-    make_sponsor_box("TripAdvisor", "Restaurants", RESTAURANT_LINK)
+    make_sponsor_box("GetYourGuide", "Escursioni", GYG_LINK)
     pdf.ln(5)
     pdf.set_font("Helvetica", 'B', 16)
     pdf.set_text_color(44, 62, 80)
@@ -519,7 +519,7 @@ with st.sidebar:
     partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
     st.caption(ui_sb["sb_exp"])
     partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png")
-    partner_button("Tripadvisor", RESTAURANT_LINK, "btn_tripadv.png")
+    partner_button("GetYourGuide", GYG_LINK, "btn_gyg.png")
     st.caption(ui_sb["sb_tools"])
     partner_button("Saily", ESIM_LINK, "btn_saily.png")
     partner_button("Radical", LUGGAGE_LINK, "btn_radical.png")
@@ -664,7 +664,7 @@ with st.container():
                         [Info trasporti, eSim Saily (NO per Italia/UE), assicurazione Heymondo sconto 10%]
                         ## CAPITOLO 2: DOVE DORMIRE (Strategie alloggio)
                         ## CAPITOLO 3: L'ITINERARIO GIORNO PER GIORNO (Dettagliato)
-                        [Itinerario ottimizzato, razionalizza gli spostamenti in base alla distanza, a seconda del mezzo di trasporto massimizza le tappe con i tempo a disposizione. Prediligi attrazioni su Tiqets. Scoperta del territorio]
+                        [Itinerario ottimizzato, razionalizza gli spostamenti in base alla distanza, a seconda del mezzo di trasporto massimizza le tappe con i tempo a disposizione. Prediligi attrazioni su Tiqets e Getyourguide. Scoperta del territorio]
                         ## CAPITOLO 4: COSA MANGIARE
                         [Piatti tipici, ristoranti (verifica su Tripadvisor i migliori per la fascia di prezzo compatibile con il budget e dai riferimenti puntuali), suggerisci i posti migliori per lo street food]
                         ## CAPITOLO 5: CALENDARIO CULTURALE
@@ -743,7 +743,7 @@ with c9: partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
 st.write("")
 c10, c11, c12 = st.columns(3)
 with c10: partner_button("Omio", TRAIN_LINK, "btn_omio.png")
-with c11: partner_button("Tripadvisor", RESTAURANT_LINK, "btn_tripadv.png")
+with c11: partner_button("GetYourGuide", GYG_LINK, "btn_gyg.png")
 with c12: partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
 
 st.markdown("---")
