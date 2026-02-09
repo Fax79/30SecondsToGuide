@@ -169,7 +169,7 @@ LANGUAGES = {
         "ad_tiqets": "Non rischiare il tutto esaurito a {dest}. Assicurati il posto e le migliori offerte su Tiqets",
         "ad_car": "Viaggia in libertà e noleggia un auto: Tariffe esclusive con Auto Europe",
         "ad_train": "Treni e Bus: Prenota su Omio",
-        "ad_rest": "Esplora {dest} al miglior prezzo! Prenota su GetYourGuide",
+        "ad_rest": "Esplora al miglior prezzo! Prenota su GetYourGuide",
         # Sidebar
         "sb_book": "✈️ PRENOTAZIONI",
         "sb_exp": "🎟️ ESPERIENZE & ALTRO",
@@ -223,7 +223,7 @@ LANGUAGES = {
         "ad_tiqets": "Don't risk sold out in {dest}. Secure spots and best deals on Tiqets",
         "ad_car": "Travel freely and rent a car: Exclusive rates with Auto Europe",
         "ad_train": "Trains and Buses: Book on Omio",
-        "ad_rest": "Discover {dest} at the best rate! Book on GetYourGuide",
+        "ad_rest": "Discover at the best rate! Book on GetYourGuide",
         # Sidebar
         "sb_book": "✈️ BOOKINGS",
         "sb_exp": "🎟️ EXPERIENCES & MORE",
