@@ -134,7 +134,7 @@ LANGUAGES = {
         "h1": "Generatore Guide Turistiche",
         "subtitle": "Da zero a local in mezzo minuto.",
         "wiz_title": "🧙‍♂️ Vuoi chiedere al nostro Wizard di organizzare il tuo viaggio personalizzato?",
-        "wiz_desc": "Verifica il tuo budget, crea il tuo itinerario su misura, interroga qui sotto il nostro mago.",
+        "wiz_desc": "Verifica il tuo budget, crea il tuo itinerario su misura, interroga qui sotto il nostro mago. 🔻🔻🔻",
         "wiz_btn": "✨ APRI ITINERARY WIZARD",
         "input_label": "Se vuoi generare la guida specifica di una città inserisci QUI la destinazione:",
         "input_placeholder": "Es. Parigi, Tokyo, New York...",
@@ -911,6 +911,7 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
