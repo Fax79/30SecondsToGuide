@@ -669,7 +669,7 @@ with st.container():
                         [Piatti tipici, ristoranti (verifica su Tripadvisor i migliori per la fascia di prezzo compatibile con il budget e dai riferimenti puntuali), suggerisci i posti migliori per lo street food]
                         ## CAPITOLO 5: CALENDARIO CULTURALE
                         [Festival e ricorrenze]
-                        ## CAPITOLO 6: CONTO ECONOMICO FINALE
+                        ## CAPITOLO 6: CONTO ECONOMICO FINALE [includi sempre Voli internazionali se il viaggio li necessita per la stima del budget]
                         ## CAPITOLO 7: INFORMAZIONI PRATICHE
                         ## CAPITOLO 8: CONCLUSIONE
                         """
