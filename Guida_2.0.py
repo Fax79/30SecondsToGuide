@@ -126,7 +126,7 @@ INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDST
 TRAIN_LINK = "https://www.omio.com"
 GYG_LINK = "https://gyg.me/YAGbtbpK"
 HOTEL_LINK = "https://www.expedia.com" 
-PROMO_LINK = INSURANCE_LINK 
+PROMO_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=PASQUA15&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL" 
 
 # --- DIZIONARI LINGUA ---
 LANGUAGES = {
