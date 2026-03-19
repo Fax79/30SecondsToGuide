@@ -352,7 +352,7 @@ def create_pdf(text, city, lang_code="IT"):
             "inj_tix": f"Biglietti ufficiali Musei e Attrazioni a {city} su Tiqets",
             "inj_flight": f"Trova subito voli economici per {city} su Kiwi.com",
             "inj_transfer": f"Transfer NCC dall'aeroporto al prezzo di un taxi (Welcome Pickups)",
-            "inj_insur": "Assicurazione Viaggio (Sconto 10% con Heymondo)",
+            "inj_insur": "Assicurazione Viaggio (Fino al 29 marzo SCONTO 15% con Heymondo)",
             "partner_seen": "Già visti nella guida...",
             "partner_others": "ALTRI SERVIZI INDISPENSABILI",
             "p_hotel": "Hotel e alloggi",
