@@ -163,7 +163,7 @@ LANGUAGES = {
         # Ad Texts
         "ad_flight": "In {month} i prezzi aumentano? Prenota ora su Kiwi.com",
         "ad_esim": "eSim Saily: Internet immediato all'arrivo senza acquisto di SIM locali",
-        "ad_insur": "MAI senza Assicurazione Sanitaria: SOLO FINO AL 29 MARZO 15% DI SCONTO con Heymondo",
+        "ad_insur": "MAI senza Assicurazione Sanitaria: Clicca e sblocca il 10% DI SCONTO con Heymondo",
         "ad_hotel": "Stanze in Hotel quasi esaurite in {month}? Prenota ora su Expedia",
         "ad_transfer": "Transfer privati ad un prezzo WOW! da e per l'aeroporto",
         "ad_tiqets": "Non rischiare il tutto esaurito a {dest}. Assicurati il posto e le migliori offerte su Tiqets",
