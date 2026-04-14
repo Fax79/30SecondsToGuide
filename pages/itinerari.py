@@ -661,7 +661,7 @@ with st.container():
                         # {destination.upper()}: [Sottotitolo]
                         **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
                         ## CAPITOLO 1: LA PREPARAZIONE (Voli, eSim, Assicurazione)
-                        [Info trasporti, eSim Saily (NO per Italia/UE), assicurazione Heymondo sconto 10%]
+                        [Info trasporti ottimizza orari dei voli consultando dove possibile google flights se hai informazioni sulla città di partenza, eSim Saily (NO per Italia/UE), assicurazione Heymondo sconto 10%]
                         ## CAPITOLO 2: DOVE DORMIRE (Strategie alloggio)
                         ## CAPITOLO 3: L'ITINERARIO GIORNO PER GIORNO (Dettagliato)
                         [Itinerario ottimizzato, razionalizza gli spostamenti in base alla distanza, a seconda del mezzo di trasporto massimizza le tappe con i tempo a disposizione. Prediligi attrazioni su Tiqets e Getyourguide. Scoperta del territorio]
