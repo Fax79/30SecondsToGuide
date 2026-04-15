@@ -119,7 +119,7 @@ ESIM_LINK = "https://go.saily.site/aff_c?offer_id=126&aff_id=13541"
 RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"
 TRANSF_LINK = "https://tpx.lt/O5I4OrpX"
 TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"
-TIQETS_LINK = "https://www.tiqets.com/?partner=30secondstoguide.it-185728"
+TIQETS_LINK = "https://tiqets.tpx.lt/abHnK4vL"
 INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=GUIDA&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 
 # LINK GENERICI
