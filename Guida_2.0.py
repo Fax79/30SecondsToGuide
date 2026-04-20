@@ -408,6 +408,8 @@ def create_pdf(text, city, lang_code="IT"):
         if not line_clean:
             continue
             
+        line_clean = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', line_clean)
+        
         if line_clean.startswith('## '):
             title = line_clean.replace('## ', '')
             formatted_body += f"<h2 class='h2-title'>{title}</h2>"
