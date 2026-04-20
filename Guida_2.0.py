@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components # <--- UNICA AGGIUNTA NEGLI IMPORT
 import google.generativeai as genai
-from weasyprint import HTML, CSS # <--- CAMBIATO DA FPDF A WEASYPRINT
+from fpdf import FPDF
 import os
 import base64
 import datetime
@@ -904,3 +904,11 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
+
+
+
+
+
+
+
