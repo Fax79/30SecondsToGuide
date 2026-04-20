@@ -393,8 +393,6 @@ def create_pdf(text, city, lang_code="IT"):
     formatted_body = ""
     lines = text.split('\n')
     
-    # Rimuoviamo il titolo di riga 1 generato da Gemini (es. # ROMA: Guida Esclusiva) 
-    # perché abbiamo già la copertina enorme.
     if lines and lines[0].startswith('# '):
         lines = lines[1:]
 
@@ -407,7 +405,6 @@ def create_pdf(text, city, lang_code="IT"):
             title = line_clean.replace('## ', '')
             formatted_body += f"<h2 class='h2-title'>{title}</h2>"
             
-            # Iniezione Automatica dei Box Contestuali (Stile L-Design)
             if any(x in title.upper() for x in ["DORMIRE", "SLEEP", "HOTEL"]):
                 formatted_body += f"""
                 <div class="section-service-box">
@@ -441,187 +438,174 @@ def create_pdf(text, city, lang_code="IT"):
             title = line_clean.replace('### ', '')
             formatted_body += f"<h3 class='h3-title'>{title}</h3>"
         elif line_clean.startswith('* ') or line_clean.startswith('- '):
-            # Effetto link testo (Opzione 3) se mai mettessimo link, altrimenti normale lista
             formatted_body += f"<li>{line_clean[2:]}</li>"
         else:
             formatted_body += f"<p>{line_clean}</p>"
 
-    # 5. Struttura HTML Unificata (Stesso CSS che abbiamo concordato)
+    # 5. Struttura HTML Unificata (Corretta per il motore WeasyPrint)
     html_template = f"""
     <!DOCTYPE html>
     <html lang="it">
     <head>
         <meta charset="UTF-8">
         <style>
-            /* --- CONFIGURAZIONE PAGINA E BASE --- */
-            @page {{ size: A4; margin: 0; }}
-            body {{
-                margin: 0; padding: 0;
-                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-                background-color: #faf9f6; 
-                color: #1a1a1a;
-                line-height: 1.6;
-            }}
-
-            /* --- IL DNA VISIVO (Texture e Griglia) --- */
-            .paper-texture {{
+            /* --- CONFIGURAZIONE PAGINA GLOBALE --- */
+            @page {{
+                size: A4;
+                margin: 25mm 20mm 30mm 20mm; /* Top, Right, Bottom, Left */
+                background-color: #faf9f6;
+                /* Spostata la texture nativamente sulla pagina per evitarne il taglio */
                 background-image: 
                     linear-gradient(rgba(26, 26, 26, 0.03) 1px, transparent 1px),
                     linear-gradient(90deg, rgba(26, 26, 26, 0.03) 1px, transparent 1px);
                 background-size: 40px 40px;
-                min-height: 100vh;
-                position: relative;
-                display: flex;
-                flex-direction: column;
+
+                /* Footer nativi inseriti in automatico da WeasyPrint su tutte le pagine */
+                @bottom-left {{
+                    content: "30SecondsToGuide";
+                    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                    font-size: 14px;
+                    font-weight: 800;
+                    color: #e67e22;
+                    padding-bottom: 5mm;
+                }}
+                @bottom-right {{
+                    content: "{strings['gen']}";
+                    font-family: monospace;
+                    font-size: 11px;
+                    color: #1a1a1a;
+                    opacity: 0.8;
+                    padding-bottom: 5mm;
+                }}
+            }}
+
+            body {{
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                color: #1a1a1a;
+                line-height: 1.6;
+                margin: 0;
+                padding: 0;
             }}
 
             /* --- COMPONENTI DELLA COPERTINA --- */
             .cover-container {{
-                flex-grow: 1;
-                padding: 60px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                position: relative;
                 page-break-after: always;
+                position: relative;
+                padding-top: 80px;
             }}
             .design-accent-l {{
                 position: absolute;
-                top: 120px; left: 45px;
+                top: 40px; left: -15px;
                 width: 120px; height: 200px;
                 border-top: 12px solid #1a1a1a;
                 border-left: 12px solid #1a1a1a;
-                z-index: 0;
+                z-index: -1;
             }}
             .category-label {{
                 font-size: 13px; font-weight: 800; letter-spacing: 5px;
                 text-transform: uppercase; margin-bottom: 12px;
                 background: #faf9f6; display: inline-block; padding-right: 10px;
-                z-index: 1; position: relative; margin-left: 20px;
             }}
             .city-name {{
                 font-size: 65px; font-weight: 900; text-transform: uppercase;
                 margin: 0; line-height: 0.95; letter-spacing: -2px;
-                color: #e67e22; z-index: 1; position: relative; margin-left: 20px;
+                color: #e67e22;
             }}
             .last-letter-dot {{ color: #1a1a1a; }}
             .guide-subtitle {{
                 font-size: 20px; margin-top: 20px; color: #7f8c8d;
                 font-weight: 400; letter-spacing: 0.5px;
-                background: #faf9f6; display: table; padding: 2px 5px;
-                z-index: 1; position: relative; margin-left: 20px;
+                background: #faf9f6; display: inline-block; padding: 2px 5px;
             }}
             .description-box {{
                 margin-top: 45px; padding: 25px; background-color: #ffffff;
                 border-left: 4px solid #1a1a1a; max-width: 460px; font-size: 14px;
                 color: #555; box-shadow: 8px 8px 0px rgba(26, 26, 26, 0.05);
-                z-index: 1; position: relative; margin-left: 20px;
             }}
 
             /* --- TIPOGRAFIA CORPO TESTO --- */
             .content-container {{
-                padding: 60px;
                 page-break-after: always;
             }}
             .h2-title {{
                 text-transform: uppercase; font-weight: 900; letter-spacing: -1px;
                 color: #e67e22; margin-top: 40px; margin-bottom: 15px; border-bottom: 2px solid #1a1a1a; display: inline-block;
+                page-break-after: avoid; /* Evita che il titolo venga separato dal paragrafo seguente */
             }}
-            .h3-title {{ font-weight: 800; color: #1a1a1a; margin-top: 30px; margin-bottom: 10px; }}
-            p, li {{ font-size: 14px; color: #333; margin-bottom: 10px; }}
+            .h3-title {{ 
+                font-weight: 800; color: #1a1a1a; margin-top: 30px; margin-bottom: 10px; 
+                page-break-after: avoid; 
+            }}
+            p, li {{ font-size: 14px; color: #333; margin-bottom: 10px; text-align: justify; }}
             li {{ margin-left: 20px; }}
 
             /* --- LINK CONTESTUALI (Box di Sezione) --- */
             .section-service-box {{
-                margin: 45px 0px; padding: 30px; position: relative;
-                background-color: #faf9f6;
+                margin: 40px 0px; padding: 25px; position: relative;
+                background-color: #ffffff; /* Modificato in bianco per distacco visivo */
                 border: 1px solid rgba(26, 26, 26, 0.08);
                 box-shadow: 8px 8px 0px rgba(26, 26, 26, 0.05);
-                page-break-inside: avoid;
+                page-break-inside: avoid; /* Cruciale: evita che il box venga tagliato a metà tra due pagine */
             }}
             .section-service-box::before {{
                 content: ""; position: absolute; top: -6px; left: -6px;
-                width: 45px; height: 65px;
-                border-top: 10px solid #1a1a1a; border-left: 10px solid #1a1a1a;
+                width: 40px; height: 40px;
+                border-top: 8px solid #1a1a1a; border-left: 8px solid #1a1a1a;
             }}
             .service-tag {{
                 font-size: 11px; font-weight: 800; letter-spacing: 4px;
-                text-transform: uppercase; color: #1a1a1a; display: block; margin-bottom: 12px; margin-left: 5px;
+                text-transform: uppercase; color: #1a1a1a; display: block; margin-bottom: 10px;
             }}
             .service-cta {{
-                font-size: 32px; font-weight: 900; text-transform: uppercase;
-                color: #e67e22; text-decoration: none; letter-spacing: -1.5px; line-height: 0.95; margin-left: 5px;
+                font-size: 30px; font-weight: 900; text-transform: uppercase;
+                color: #e67e22; text-decoration: none; letter-spacing: -1.5px; line-height: 1; display: block;
             }}
             .service-cta::after {{ content: "."; color: #1a1a1a; }}
-            .service-sub {{ font-size: 13px; color: #7f8c8d; margin-top: 8px; margin-left: 5px; font-weight: 400; }}
+            .service-sub {{ font-size: 13px; color: #7f8c8d; margin-top: 8px; font-weight: 400; }}
 
             /* --- ULTIMA PAGINA PARTNER --- */
-            .partner-block {{ margin-bottom: 60px; position: relative; padding-left: 20px; }}
-            .offer-description {{ font-size: 16px; color: #7f8c8d; margin-top: 10px; max-width: 450px; background: #faf9f6; display: inline-block; }}
+            .partner-block {{ margin-bottom: 50px; position: relative; padding-left: 15px; page-break-inside: avoid; }}
+            .offer-description {{ font-size: 15px; color: #7f8c8d; margin-top: 10px; max-width: 450px; background: #faf9f6; display: inline-block; }}
 
-            /* --- FOOTER COMUNE --- */
-            .footer {{
-                position: absolute; bottom: 0; width: 100%;
-                padding: 40px 60px; background-color: #ffffff;
-                border-top: 1px solid rgba(0,0,0,0.05);
-                display: flex; justify-content: space-between; align-items: center;
-                box-sizing: border-box;
-            }}
-            .brand-logo {{ font-size: 18px; font-weight: 800; color: #e67e22; }}
-            .site-url {{ font-family: monospace; font-size: 11px; color: #1a1a1a; opacity: 0.8; text-align: right; float: right;}}
         </style>
     </head>
     <body>
 
-        <div class="paper-texture">
-            <div class="cover-container">
-                <div class="design-accent-l"></div>
-                <div class="category-label">{strings['label']}</div>
-                <h1 class="city-name">{html_city}</h1>
-                <div class="guide-subtitle">{strings['sub']}</div>
-                <div class="description-box">{strings['disc']}</div>
-            </div>
-            <div class="footer">
-                <div class="brand-logo" style="float:left;">30SecondsToGuide</div>
-                <div class="site-url">{strings['gen']}</div>
-            </div>
+        <div class="cover-container">
+            <div class="design-accent-l"></div>
+            <div class="category-label">{strings['label']}</div>
+            <h1 class="city-name">{html_city}</h1>
+            <div class="guide-subtitle">{strings['sub']}</div>
+            <div class="description-box">{strings['disc']}</div>
         </div>
 
-        <div class="paper-texture">
-            <div class="content-container">
-                {formatted_body}
-            </div>
+        <div class="content-container">
+            {formatted_body}
         </div>
 
-        <div class="paper-texture">
-            <div class="cover-container" style="justify-content: flex-start; padding-top: 100px;">
-                <div class="category-label">{strings['planner']}</div>
-                
-                <div class="partner-block" style="margin-top: 60px;">
-                    <div class="design-accent-l" style="top: -10px; left: -25px; width: 40px; height: 60px; border-width: 8px;"></div>
-                    <a href="{HOTEL_LINK}" class="service-cta" style="font-size: 45px; margin-left: 0;">BOOKIN<span class="last-letter-dot">G.</span></a>
-                    <div class="offer-description">Tariffe Smart selezionate per hotel e appartamenti nella tua destinazione.</div>
-                </div>
-
-                <div class="partner-block">
-                    <div class="design-accent-l" style="top: -10px; left: -25px; width: 40px; height: 60px; border-width: 8px;"></div>
-                    <a href="{FLIGHT_LINK}" class="service-cta" style="font-size: 45px; margin-left: 0;">FLIGHT<span class="last-letter-dot">S.</span></a>
-                    <div class="offer-description">Le migliori combinazioni di volo verificate per questa settimana.</div>
-                </div>
-                
-                <div class="partner-block">
-                    <div class="design-accent-l" style="top: -10px; left: -25px; width: 40px; height: 60px; border-width: 8px;"></div>
-                    <a href="{INSURANCE_LINK}" class="service-cta" style="font-size: 45px; margin-left: 0;">INSURANC<span class="last-letter-dot">E.</span></a>
-                    <div class="offer-description">Assicurazione viaggio con il 10% di sconto riservato ai nostri lettori.</div>
-                </div>
-
-                <div style="margin-top: 40px; font-size: 13px; color: #1a1a1a; font-style: italic; max-width: 350px; line-height: 1.6; margin-left: 20px;">
-                    {strings['footer_msg']}
-                </div>
+        <div class="cover-container" style="padding-top: 40px; page-break-after: avoid;">
+            <div class="category-label">{strings['planner']}</div>
+            
+            <div class="partner-block" style="margin-top: 60px;">
+                <div class="design-accent-l" style="top: -10px; left: -15px; width: 40px; height: 50px; border-width: 8px;"></div>
+                <a href="{HOTEL_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">BOOKIN<span class="last-letter-dot">G.</span></a>
+                <div class="offer-description">Tariffe Smart selezionate per hotel e appartamenti nella tua destinazione.</div>
             </div>
-            <div class="footer">
-                <div class="brand-logo" style="float:left;">30SecondsToGuide</div>
-                <div class="site-url">{strings['gen']}</div>
+
+            <div class="partner-block">
+                <div class="design-accent-l" style="top: -10px; left: -15px; width: 40px; height: 50px; border-width: 8px;"></div>
+                <a href="{FLIGHT_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">FLIGHT<span class="last-letter-dot">S.</span></a>
+                <div class="offer-description">Le migliori combinazioni di volo verificate per questa settimana.</div>
+            </div>
+            
+            <div class="partner-block">
+                <div class="design-accent-l" style="top: -10px; left: -15px; width: 40px; height: 50px; border-width: 8px;"></div>
+                <a href="{INSURANCE_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">INSURANC<span class="last-letter-dot">E.</span></a>
+                <div class="offer-description">Assicurazione viaggio con il 10% di sconto riservato ai nostri lettori.</div>
+            </div>
+
+            <div style="margin-top: 40px; font-size: 13px; color: #1a1a1a; font-style: italic; max-width: 350px; line-height: 1.6;">
+                {strings['footer_msg']}
             </div>
         </div>
 
@@ -630,6 +614,7 @@ def create_pdf(text, city, lang_code="IT"):
     """
 
     return HTML(string=html_template).write_pdf()
+
 
 # --- SELETTORE LINGUA (MAIN AREA) ---
 # Niente bandiere, solo testo per evitare problemi su PC
