@@ -336,9 +336,11 @@ def partner_button(label, link, image_file):
     else:
         st.link_button(label, link, use_container_width=True)
 
-# --- FUNZIONE PDF (LA NUOVA STAMPA CON WEASYPRINT) ---
+# --- FUNZIONE PDF (LA NUOVA STAMPA CON WEASYPRINT E GRASSETTO FIXATO) ---
 def create_pdf(text, city, lang_code="IT"):
-    # 1. Pulizia base del testo per renderlo sicuro (mantenuta dalla tua funzione originale)
+    import re  # Importiamo la libreria per le espressioni regolari
+    
+    # 1. Pulizia base e conversione Markdown
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
         replacements = {
@@ -347,6 +349,11 @@ def create_pdf(text, city, lang_code="IT"):
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
+            
+        # --- NOVITÀ: TRASFORMA IL GRASSETTO MARKDOWN IN HTML ---
+        # Trova tutto ciò che è tra ** e lo racchiude nel tag <strong>
+        text_input = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text_input)
+        
         return text_input
 
     city_clean = clean_text_for_pdf(city)
@@ -442,25 +449,22 @@ def create_pdf(text, city, lang_code="IT"):
         else:
             formatted_body += f"<p>{line_clean}</p>"
 
-    # 5. Struttura HTML Unificata (Corretta per il motore WeasyPrint)
+    # 5. Struttura HTML Unificata
     html_template = f"""
     <!DOCTYPE html>
     <html lang="it">
     <head>
         <meta charset="UTF-8">
         <style>
-            /* --- CONFIGURAZIONE PAGINA GLOBALE --- */
             @page {{
                 size: A4;
-                margin: 25mm 20mm 30mm 20mm; /* Top, Right, Bottom, Left */
+                margin: 25mm 20mm 30mm 20mm;
                 background-color: #faf9f6;
-                /* Spostata la texture nativamente sulla pagina per evitarne il taglio */
                 background-image: 
                     linear-gradient(rgba(26, 26, 26, 0.03) 1px, transparent 1px),
                     linear-gradient(90deg, rgba(26, 26, 26, 0.03) 1px, transparent 1px);
                 background-size: 40px 40px;
 
-                /* Footer nativi inseriti in automatico da WeasyPrint su tutte le pagine */
                 @bottom-left {{
                     content: "30SecondsToGuide";
                     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -487,7 +491,6 @@ def create_pdf(text, city, lang_code="IT"):
                 padding: 0;
             }}
 
-            /* --- COMPONENTI DELLA COPERTINA --- */
             .cover-container {{
                 page-break-after: always;
                 position: relative;
@@ -523,14 +526,13 @@ def create_pdf(text, city, lang_code="IT"):
                 color: #555; box-shadow: 8px 8px 0px rgba(26, 26, 26, 0.05);
             }}
 
-            /* --- TIPOGRAFIA CORPO TESTO --- */
             .content-container {{
                 page-break-after: always;
             }}
             .h2-title {{
                 text-transform: uppercase; font-weight: 900; letter-spacing: -1px;
                 color: #e67e22; margin-top: 40px; margin-bottom: 15px; border-bottom: 2px solid #1a1a1a; display: inline-block;
-                page-break-after: avoid; /* Evita che il titolo venga separato dal paragrafo seguente */
+                page-break-after: avoid; 
             }}
             .h3-title {{ 
                 font-weight: 800; color: #1a1a1a; margin-top: 30px; margin-bottom: 10px; 
@@ -538,14 +540,16 @@ def create_pdf(text, city, lang_code="IT"):
             }}
             p, li {{ font-size: 14px; color: #333; margin-bottom: 10px; text-align: justify; }}
             li {{ margin-left: 20px; }}
+            
+            /* Nuovo stile per rendere il grassetto ben visibile */
+            strong {{ color: #000000; font-weight: bold; }}
 
-            /* --- LINK CONTESTUALI (Box di Sezione) --- */
             .section-service-box {{
                 margin: 40px 0px; padding: 25px; position: relative;
-                background-color: #ffffff; /* Modificato in bianco per distacco visivo */
+                background-color: #ffffff;
                 border: 1px solid rgba(26, 26, 26, 0.08);
                 box-shadow: 8px 8px 0px rgba(26, 26, 26, 0.05);
-                page-break-inside: avoid; /* Cruciale: evita che il box venga tagliato a metà tra due pagine */
+                page-break-inside: avoid;
             }}
             .section-service-box::before {{
                 content: ""; position: absolute; top: -6px; left: -6px;
@@ -563,7 +567,6 @@ def create_pdf(text, city, lang_code="IT"):
             .service-cta::after {{ content: "."; color: #1a1a1a; }}
             .service-sub {{ font-size: 13px; color: #7f8c8d; margin-top: 8px; font-weight: 400; }}
 
-            /* --- ULTIMA PAGINA PARTNER --- */
             .partner-block {{ margin-bottom: 50px; position: relative; padding-left: 15px; page-break-inside: avoid; }}
             .offer-description {{ font-size: 15px; color: #7f8c8d; margin-top: 10px; max-width: 450px; background: #faf9f6; display: inline-block; }}
 
@@ -614,6 +617,8 @@ def create_pdf(text, city, lang_code="IT"):
     """
 
     return HTML(string=html_template).write_pdf()
+
+
 
 
 # --- SELETTORE LINGUA (MAIN AREA) ---
