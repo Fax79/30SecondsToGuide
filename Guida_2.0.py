@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components # <--- UNICA AGGIUNTA NEGLI IMPORT
 import google.generativeai as genai
-from fpdf import FPDF
+from weasyprint import HTML, CSS
 import os
 import base64
 import datetime
