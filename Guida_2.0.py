@@ -444,7 +444,7 @@ def create_pdf(text, city, lang_code="IT"):
                 <div class="section-service-box">
                     <span class="service-tag">{strings["must"]}</span>
                     <a href="{INSURANCE_LINK}" class="service-cta">{strings["safe"]}</a>
-                    <div class="service-sub">Proteggi il tuo viaggio.</div>
+                    <div class="service-sub">Proteggi il tuo viaggio con Heymondo.</div>
                 </div>"""    
             elif any(x in title.upper() for x in ["ANIMA", "SOUL"]):
                 formatted_body += f"""
