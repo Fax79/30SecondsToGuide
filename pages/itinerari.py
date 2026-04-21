@@ -425,7 +425,7 @@ def create_complex_pdf(text, destination, meta_data, lang_code):
             .last-letter-dot {{ color: #1a1a1a; }}
             
             .description-box {{
-                margin-top: 45px; padding: 25px; background-color: #ffffff;
+                margin-top: 100px; padding: 25px; background-color: #ffffff;
                 border-left: 4px solid #1a1a1a; max-width: 460px; font-size: 14px;
                 color: #555; box-shadow: 8px 8px 0px rgba(26, 26, 26, 0.05);
             }}
