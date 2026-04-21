@@ -380,6 +380,7 @@ def create_pdf(text, city, lang_code="IT"):
             "disc": "Questa guida è offerta gratuitamente. Se ti è utile, nell'ultima pagina trovi una selezione di sconti esclusivi per voli e hotel che ci aiutano a mantenere il servizio attivo. <strong>Buon viaggio!</strong>",
             "planner": "Travel Planner",
             "cta": "PRENOTA ORA",
+            "safe": "VIAGGIA SERENO"
             "insight": "Travel Insight",
             "must": "Non partire senza",
             "gen": "WWW.30SECONDSTOGUIDE.IT",
@@ -391,6 +392,7 @@ def create_pdf(text, city, lang_code="IT"):
             "disc": "This guide is free. If it's useful, on the last page you'll find a selection of exclusive discounts for flights and hotels that help us keep the service running. <strong>Safe travels!</strong>",
             "planner": "Travel Planner",
             "cta": "BOOK NOW",
+            "safe": "TAKE CARE"
             "insight": "Travel Insight",
             "must": "Must have",
             "gen": "WWW.30SECONDSTOGUIDE.IT",
@@ -602,19 +604,31 @@ def create_pdf(text, city, lang_code="IT"):
             
             <div class="partner-block" style="margin-top: 60px;">
                 <div class="design-accent-l" style="top: -10px; left: -15px; width: 40px; height: 50px; border-width: 8px;"></div>
-                <a href="{HOTEL_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">BOOKIN<span class="last-letter-dot">G.</span></a>
+                <a href="{HOTEL_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">BOOKIN<span class="last-letter-dot">G</span></a>
                 <div class="offer-description">Tariffe Smart selezionate per hotel e appartamenti nella tua destinazione.</div>
             </div>
 
             <div class="partner-block">
                 <div class="design-accent-l" style="top: -10px; left: -15px; width: 40px; height: 50px; border-width: 8px;"></div>
-                <a href="{FLIGHT_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">FLIGHT<span class="last-letter-dot">S.</span></a>
+                <a href="{FLIGHT_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">FLIGHT<span class="last-letter-dot">S</span></a>
                 <div class="offer-description">Le migliori combinazioni di volo verificate per questa settimana.</div>
+            </div>
+
+            <div class="partner-block">
+                <div class="design-accent-l" style="top: -10px; left: -15px; width: 40px; height: 50px; border-width: 8px;"></div>
+                <a href="{ESIM_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">INTERNE<span class="last-letter-dot">T</span></a>
+                <div class="offer-description">Con Saily sei connesso da subito - Nuovo cliente? 5USD di sconto con codice FABIOI3455.</div>
+            </div>
+
+            <div class="partner-block">
+                <div class="design-accent-l" style="top: -10px; left: -15px; width: 40px; height: 50px; border-width: 8px;"></div>
+                <a href="{TRANSF_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">TRANSFE<span class="last-letter-dot">R</span></a>
+                <div class="offer-description">Arriva in hotel comodo e con stile con un trasfer Welcome Pickups.</div>
             </div>
             
             <div class="partner-block">
                 <div class="design-accent-l" style="top: -10px; left: -15px; width: 40px; height: 50px; border-width: 8px;"></div>
-                <a href="{INSURANCE_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">INSURANC<span class="last-letter-dot">E.</span></a>
+                <a href="{INSURANCE_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">INSURANC<span class="last-letter-dot">E</span></a>
                 <div class="offer-description">Assicurazione viaggio con il 10% di sconto riservato ai nostri lettori.</div>
             </div>
 
