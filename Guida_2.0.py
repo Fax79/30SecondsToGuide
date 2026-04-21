@@ -534,7 +534,7 @@ def create_pdf(text, city, lang_code="IT"):
                 background: #faf9f6; display: inline-block; padding: 2px 5px;
             }}
             .description-box {{
-                margin-top: 45px; padding: 25px; background-color: #ffffff;
+                margin-top: 90px; padding: 25px; background-color: #ffffff;
                 border-left: 4px solid #1a1a1a; max-width: 460px; font-size: 14px;
                 color: #555; box-shadow: 8px 8px 0px rgba(26, 26, 26, 0.05);
             }}
