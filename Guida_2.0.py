@@ -619,12 +619,6 @@ def create_pdf(text, city, lang_code="IT"):
                 <a href="{ESIM_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">INTERNE<span class="last-letter-dot">T</span></a>
                 <div class="offer-description">Con Saily sei connesso da subito - Nuovo cliente? 5USD di sconto con codice FABIOI3455.</div>
             </div>
-
-            <div class="partner-block">
-                <div class="design-accent-l" style="top: -10px; left: -15px; width: 40px; height: 50px; border-width: 8px;"></div>
-                <a href="{TRANSF_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">TRANSFE<span class="last-letter-dot">R</span></a>
-                <div class="offer-description">Arriva in hotel comodo e con stile con un trasfer Welcome Pickups.</div>
-            </div>
             
             <div class="partner-block">
                 <div class="design-accent-l" style="top: -10px; left: -15px; width: 40px; height: 50px; border-width: 8px;"></div>
