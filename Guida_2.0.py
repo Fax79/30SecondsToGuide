@@ -380,7 +380,7 @@ def create_pdf(text, city, lang_code="IT"):
             "disc": "Questa guida è offerta gratuitamente. Se ti è utile, nell'ultima pagina trovi una selezione di sconti esclusivi per voli e hotel che ci aiutano a mantenere il servizio attivo. <strong>Buon viaggio!</strong>",
             "planner": "Travel Planner",
             "cta": "PRENOTA ORA",
-            "safe": "VIAGGIA SERENO"
+            "safe": "VIAGGIA SERENO",
             "insight": "Travel Insight",
             "must": "Non partire senza",
             "gen": "WWW.30SECONDSTOGUIDE.IT",
@@ -392,7 +392,7 @@ def create_pdf(text, city, lang_code="IT"):
             "disc": "This guide is free. If it's useful, on the last page you'll find a selection of exclusive discounts for flights and hotels that help us keep the service running. <strong>Safe travels!</strong>",
             "planner": "Travel Planner",
             "cta": "BOOK NOW",
-            "safe": "TAKE CARE"
+            "safe": "TAKE CARE",
             "insight": "Travel Insight",
             "must": "Must have",
             "gen": "WWW.30SECONDSTOGUIDE.IT",
