@@ -717,7 +717,7 @@ with st.container():
                     
                     REGOLE TASSATIVE:
                     1. {rules_lang} 2. TRASLITTERA i nomi locali. 3. Simboli Valute: EUR, USD.
-                    4. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
+                    4. USA intelligentemente il grassetto markdown (**) per evidenziare i giorni (es. **Giorno 1:**), i nomi dei luoghi, degli hotel, delle attrazioni e dei ristoranti, per rendere la lettura del documento molto più facile e scansionabile.
                     5. VIETATO USARE LISTE ANNIDATE. 6. PREZZI IN EURO CON SEPARATORE MIGLIAIA.
                     7. USA DURATA {duration_check}, non ricalcolare. 8. NON SCRIVERE I TUOI PENSIERI INTERNI.
                     
