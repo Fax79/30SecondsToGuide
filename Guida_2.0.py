@@ -381,6 +381,7 @@ def create_pdf(text, city, lang_code="IT"):
             "planner": "Travel Planner",
             "cta": "PRENOTA ORA",
             "insight": "Travel Insight",
+            "must": "Non partire senza",
             "gen": "WWW.30SECONDSTOGUIDE.IT",
             "footer_msg": "Questa guida è gratuita grazie ai nostri partner. Usando questi link supporti il nostro lavoro. Buon viaggio!"
         },
@@ -391,6 +392,7 @@ def create_pdf(text, city, lang_code="IT"):
             "planner": "Travel Planner",
             "cta": "BOOK NOW",
             "insight": "Travel Insight",
+            "must": "Must have",
             "gen": "WWW.30SECONDSTOGUIDE.IT",
             "footer_msg": "This guide is free thanks to our partners. Using these links supports our work. Have a great trip!"
         }
@@ -435,10 +437,17 @@ def create_pdf(text, city, lang_code="IT"):
                     <a href="{TIQETS_LINK}" class="service-cta">{strings["cta"]}</a>
                     <div class="service-sub">Biglietti ufficiali saltafila.</div>
                 </div>"""
-            elif any(x in title.upper() for x in ["INFO", "PRATICHE", "PRACTICAL"]):
+            elif any(x in title.upper() for x in ["QUARTIERI", "ZONE"]):
                 formatted_body += f"""
                 <div class="section-service-box">
-                    <span class="service-tag">{strings["insight"]}</span>
+                    <span class="service-tag">{strings["must"]}</span>
+                    <a href="{INSURANCE_LINK}" class="service-cta">{strings["cta"]}</a>
+                    <div class="service-sub">Proteggi il tuo viaggio.</div>
+                </div>"""    
+            elif any(x in title.upper() for x in ["ANIMA", "SOUL"]):
+                formatted_body += f"""
+                <div class="section-service-box">
+                    <span class="service-tag">{strings["must"]}</span>
                     <a href="{ESIM_LINK}" class="service-cta">INTERNET</a>
                     <div class="service-sub">eSim internazionale Saily.</div>
                 </div>"""
