@@ -599,7 +599,7 @@ with st.container():
 
     c_dest, c_bud = st.columns([2, 1])
     with c_dest: destination = st.text_input(ui["label_dest"], placeholder=ui["place_dest"])
-    with c_bud: budget = st.number_input(ui["label_budget"], min_value=500, value=3000, step=100)
+    with c_bud: budget = st.number_input(ui["label_budget"], min_value=100, value=3000, step=100)
     
     def aggiorna_data_ritorno():
         if st.session_state.start_input: st.session_state.end_input = st.session_state.start_input + datetime.timedelta(days=1)
