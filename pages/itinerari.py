@@ -661,7 +661,7 @@ with st.container():
             
             with st.spinner(ui["spinner"].format(dest=destination)):
                 try:
-                    model = genai.GenerativeModel("gemini-2.5-flash")
+                    model = genai.GenerativeModel("gemini-3-flash-preview")
                     
                     # LOGICA PROMPT LINGUA
                     if lang_code == "IT":
