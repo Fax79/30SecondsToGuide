@@ -786,7 +786,7 @@ with st.container():
             
             with st.spinner(ui["spinner"]):
                 try:
-                    model = genai.GenerativeModel("gemini-2.5-flash")
+                    model = genai.GenerativeModel("gemini-3.0-flash-lite")
                     
                     # SELEZIONE PROMPT IN BASE ALLA LINGUA
                     if lang_code == "IT":
