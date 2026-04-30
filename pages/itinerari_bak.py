@@ -1,12 +1,14 @@
 import streamlit as st
+import streamlit.components.v1 as components # <--- AGGIUNTO PER UMAMI
 import google.generativeai as genai
-from fpdf import FPDF
+from weasyprint import HTML # <--- SOSTITUITO FPDF CON WEASYPRINT
 import base64
 import datetime
 import unicodedata
 import os
 import re
 import json
+import urllib.parse # <--- AGGIUNTO PER URL ENCODING GYG
 
 # --- NUOVE IMPORTAZIONI PER GOOGLE SHEETS ---
 import gspread
@@ -17,6 +19,36 @@ if os.path.exists("logo.png"):
     st.set_page_config(page_title="Itinerary Wizard", page_icon="logo.png", layout="centered")
 else:
     st.set_page_config(page_title="Itinerary Wizard", page_icon="🧙‍♂️", layout="centered")
+
+# --- INJECTION JAVASCRIPT PER UMAMI E SOCIAL ---
+def set_social_headers():
+    SOCIAL_IMAGE_URL = "https://raw.githubusercontent.com/Fax79/30secondstoguide/main/logo.png"
+    
+    meta_tags = f"""
+    <meta property="og:title" content="Itinerary Wizard - 30SecondsToGuide" />
+    <meta property="og:description" content="Il pianificatore di viaggi complessi con analisi del budget generato dall'IA." />
+    <meta property="og:image" content="{SOCIAL_IMAGE_URL}" />
+    <meta property="og:url" content="https://www.30secondstoguide.it" />
+    <meta property="og:type" content="website" />
+    """
+    st.markdown(meta_tags, unsafe_allow_html=True)
+
+    umami_injection = """
+        <script>
+            var parentHead = window.parent.document.getElementsByTagName("head")[0];
+            var script = window.parent.document.createElement("script");
+            script.defer = true;
+            script.src = "https://cloud.umami.is/script.js";
+            script.setAttribute("data-website-id", "897aa2b4-2423-49b6-978d-c1f36c84c4b3");
+            
+            if (!parentHead.querySelector('script[src="https://cloud.umami.is/script.js"]')) {
+                parentHead.appendChild(script);
+            }
+        </script>
+    """
+    components.html(umami_injection, height=0, width=0)
+
+set_social_headers()
 
 # --- CONFIGURAZIONE GOOGLE SHEETS ---
 SCOPES = [
@@ -79,13 +111,12 @@ except Exception:
 # 🌐 CONFIGURAZIONE CROSS-PROMO & MONETIZZAZIONE
 # ==========================================
 GUIDE_APP_URL = "https://www.30secondstoguide.it" 
-# Nota: Immagini promo gestite dinamicamente nel PDF
 
 FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"
 LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW"
 REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"
 ESIM_LINK = "https://go.saily.site/aff_c?offer_id=126&aff_id=13541"
-RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"
+RENTAL_LINK = "https://clk.tradedoubler.com/click?p=284745&a=3480952"
 TRANSF_LINK = "https://tpx.lt/O5I4OrpX"
 TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"
 TIQETS_LINK = "https://www.tiqets.com/?partner=30secondstoguide.it-185728"
@@ -234,265 +265,272 @@ LANGUAGES = {
 }
 
 # ==========================================
-# 🧙‍♂️ PDF ENGINE (MULTILINGUA)
+# GESTIONE LINK DINAMICI GETYOURGUIDE
+# ==========================================
+def inject_gyg_links(text_line, dest_name):
+    """
+    Intercetta i tag [TOUR: ...] generati dall'AI e li trasforma 
+    in Deep Link affiliati per GetYourGuide.
+    """
+    tour_matches = re.findall(r'\[TOUR:\s*(.*?)\]', text_line)
+    
+    for tour in tour_matches:
+        query_string = f"{tour} {dest_name}"
+        query_encoded = urllib.parse.quote(query_string)
+        
+        search_link = f"https://www.getyourguide.it/s?q={query_encoded}&partner_id=UR2ZJHB&utm_medium=online_publisher"
+        html_link = f"<a href='{search_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>{tour}</a>"
+        
+        text_line = text_line.replace(f"[TOUR: {tour}]", html_link)
+
+    return text_line
+
+
+# ==========================================
+# 🧙‍♂️ PDF ENGINE (MULTILINGUA & WEASYPRINT)
 # ==========================================
 def create_complex_pdf(text, destination, meta_data, lang_code):
     
-    ui = LANGUAGES[lang_code] # Carico dizionario lingua corretta
+    ui = LANGUAGES[lang_code]
 
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        text_input = text_input.replace("**", "")
         replacements = {
-            "€": "EUR", "â‚¬": "EUR", "$": "USD", "£": "GBP",
-            "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "..."
+            "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
+            "€": "EUR", "$": "USD", "£": "GBP"
         }
         for char, replacement in replacements.items():
             text_input = text_input.replace(char, replacement)
-        text_input = unicodedata.normalize('NFC', text_input)
-        output = []
-        for char in text_input:
-            try:
-                char.encode('latin-1')
-                output.append(char)
-            except UnicodeEncodeError:
-                decomposed = unicodedata.normalize('NFD', char)
-                stripped = "".join(c for c in decomposed if unicodedata.category(c) != 'Mn')
-                try:
-                    stripped.encode('latin-1')
-                    output.append(stripped)
-                except:
-                    pass    
-        return "".join(output)
+            
+        # Sostituisce il grassetto markdown con tag HTML
+        text_input = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text_input)
+        return text_input
 
     dest_clean = clean_text_for_pdf(destination)
     month_clean = clean_text_for_pdf(meta_data.get('month_name', ''))
 
-    class WizardPDF(FPDF):
-        def header(self):
-            if self.page_no() <= 2: return 
-            self.set_fill_color(44, 62, 80)
-            self.rect(0, 0, 210, 15, 'F')
-            self.set_font('Helvetica', 'B', 8)
-            self.set_text_color(255, 255, 255)
-            self.set_y(6)
-            self.cell(0, 0, f'TRAVEL PLAN: {dest_clean.upper()}', border=0, ln=0, align='R')
-            self.ln(15)
-            
-        def footer(self):
-            self.set_draw_color(200, 200, 200)
-            self.line(10, 285, 200, 285)
-            self.set_y(-15)
-            self.set_font('Helvetica', 'I', 8)
-            self.set_text_color(128, 128, 128)
-            self.cell(0, 10, f'30SecondsToGuide - {ui["pdf_page"]} {self.page_no()}', 0, 0, 'C')
+    # Titolo Copertina
+    city_upper = dest_clean.strip().upper()
+    if len(city_upper) > 24:
+        city_upper = city_upper[:21] + "..."
+    if 12 < len(city_upper) <= 24 and " " in city_upper:
+        words = city_upper.split()
+        mid = len(words) // 2
+        line1, line2 = " ".join(words[:mid]), " ".join(words[mid:])
+        html_city = f"{line1}<br>{line2[:-1]}<span class='last-letter-dot'>{line2[-1]}.</span>"
+    else:
+        html_city = f"{city_upper[:-1]}<span class='last-letter-dot'>{city_upper[-1]}.</span>"
 
-        def make_cover(self, dest, meta):
-            self.add_page()
-            self.set_fill_color(245, 245, 245)
-            self.rect(0, 0, 210, 297, 'F')
-            if os.path.exists("logo.png"):
-                self.image("logo.png", x=80, y=30, w=50)
-            self.ln(80)
-            self.set_font('Helvetica', 'B', 36)
-            self.set_text_color(44, 62, 80)
-            self.multi_cell(0, 15, dest.upper(), align='C')
-            self.ln(10)
-            self.set_font('Helvetica', 'I', 14)
-            self.set_text_color(100, 100, 100)
-            self.cell(0, 10, ui["pdf_title"], 0, 1, 'C')
-            self.ln(20)
-            self.set_fill_color(255, 255, 255)
-            self.rect(55, 140, 100, 50, 'F')
-            self.set_y(145)
-            self.set_font('Helvetica', 'B', 10)
-            clean_budget = clean_text_for_pdf(meta['budget'])
-            self.cell(0, 6, f"{ui['pdf_date']}: {meta['dates']}", 0, 1, 'C')
-            self.cell(0, 6, f"{ui['pdf_travellers']}: {meta['pax']}", 0, 1, 'C')
-            self.cell(0, 6, f"{ui['pdf_budget_target']}: {clean_budget}", 0, 1, 'C')
-            self.set_y(260)
-            self.set_font('Helvetica', '', 10)
-            self.cell(0, 10, ui["pdf_generated"], 0, 0, 'C', link="https://www.30secondstoguide.it")
-
-    def add_promo_page(pdf_obj):
-        # Selezione dinamica immagine
-        promo_img = "promo_to_guide_en.jpg" if lang_code == "EN" else "promo_to_guide.jpg"
-        if not os.path.exists(promo_img): return
-        
-        pdf_obj.add_page()
-        pdf_obj.image(promo_img, x=15, y=30, w=180)
-        
-        box_y = 160 
-        pdf_obj.set_fill_color(230, 126, 34) 
-        pdf_obj.set_draw_color(211, 84, 0)
-        pdf_obj.rect(15, box_y, 180, 30, 'DF')
-        
-        pdf_obj.set_y(box_y + 8)
-        pdf_obj.set_font("Helvetica", 'B', 14)
-        pdf_obj.set_text_color(255, 255, 255)
-        
-        cta_text = ui["pdf_promo"]
-        pdf_obj.set_x(15)
-        pdf_obj.multi_cell(180, 8, cta_text, align='C', link=GUIDE_APP_URL)
-
-    pdf = WizardPDF()
-    pdf.set_margins(15, 15, 15)
-    pdf.set_auto_page_break(auto=True, margin=25)
-    pdf.make_cover(dest_clean, meta_data)
-    add_promo_page(pdf)
-    pdf.add_page()
-    
-    def make_box(pdf_obj, text, link, style="blue"):
-        text = clean_text_for_pdf(text)
-        palettes = {
-            "blue":  {"bg": (240, 248, 255), "accent": (0, 102, 204)},
-            "green":  {"bg": (240, 255, 240), "accent": (0, 153, 76)},
-            "yellow": {"bg": (255, 253, 240), "accent": (204, 153, 0)},
-            "purple": {"bg": (248, 240, 255), "accent": (102, 0, 153)},
-            "orange": {"bg": (255, 245, 235), "accent": (230, 90, 0)}
-        }
-        chosen = palettes.get(style, palettes["blue"])
-        bg_r, bg_g, bg_b = chosen["bg"]
-        ac_r, ac_g, ac_b = chosen["accent"]
-        if pdf_obj.get_y() > 250: pdf_obj.add_page()
-        pdf_obj.ln(4)
-        current_y = pdf_obj.get_y()
-        pdf_obj.set_fill_color(bg_r, bg_g, bg_b)
-        pdf_obj.set_draw_color(bg_r, bg_g, bg_b)
-        pdf_obj.rect(15, current_y, 180, 14, 'DF')
-        pdf_obj.set_fill_color(ac_r, ac_g, ac_b)
-        pdf_obj.rect(15, current_y, 2, 14, 'F')
-        pdf_obj.set_xy(20, current_y + 4)
-        pdf_obj.set_font("Helvetica", 'B', 9)
-        pdf_obj.set_text_color(44, 62, 80)
-        pdf_obj.cell(170, 6, f"{text} >", link=link)
-        pdf_obj.ln(12)
-
+    # Preparazione Body HTML
+    formatted_body = ""
     lines = text.split('\n')
     inserted_ch1 = inserted_ch2 = inserted_ch3 = inserted_ch4 = False
 
-    # DEFINISCO I TRIGGER DINAMICI (Es. "## CAPITOLO 2" vs "## CHAPTER 2")
     TRIGGER_CH = f"## {ui['key_chapter']}"
     TRIGGER_VERDICT = ui['key_verdict']
     TRIGGER_DAY = f"{ui['key_day']}"
 
+    def make_html_box(link, cta, sub):
+        return f"""
+        <div class="section-service-box">
+            <span class="service-tag">INSIGHT</span>
+            <a href="{link}" target="_blank" class="service-cta">{cta}</a>
+            <div class="service-sub">{sub}</div>
+        </div>
+        """
+
     for line in lines:
-        clean_line = clean_text_for_pdf(line)
+        clean_line = clean_text_for_pdf(line.strip())
+        
+        # --- ESECUZIONE DELLA FUNZIONE GYG SULLA RIGA CORRENTE ---
+        clean_line = inject_gyg_links(clean_line, destination)
+        
+        if not clean_line:
+            continue
         line_upper = clean_line.upper()
         
-        # LOGICA INIEZIONE ANNUNCI (Basata sulla stringa localizzata)
+        # LOGICA INIEZIONE ANNUNCI 
         if f"{TRIGGER_CH} 2" in line_upper and not inserted_ch1:
-            make_box(pdf, ui["ad_flight"].format(month=month_clean), FLIGHT_LINK, "green")
-            make_box(pdf, ui["ad_esim"], ESIM_LINK, "yellow")
-            make_box(pdf, ui["ad_insur"], INSURANCE_LINK, "green")
+            formatted_body += make_html_box(FLIGHT_LINK, "FLIGHTS", ui["ad_flight"].format(month=month_clean))
+            formatted_body += make_html_box(ESIM_LINK, "INTERNET", ui["ad_esim"])
+            formatted_body += make_html_box(INSURANCE_LINK, "INSURANCE", ui["ad_insur"])
             inserted_ch1 = True
         elif f"{TRIGGER_CH} 3" in line_upper and not inserted_ch2:
-            make_box(pdf, ui["ad_hotel"].format(month=month_clean), HOTEL_LINK, "blue")
-            make_box(pdf, ui["ad_transfer"], TRANSF_LINK, "purple")
+            formatted_body += make_html_box(HOTEL_LINK, "HOTEL", ui["ad_hotel"].format(month=month_clean))
+            formatted_body += make_html_box(TRANSF_LINK, "TRANSFER", ui["ad_transfer"])
             inserted_ch2 = True
         elif f"{TRIGGER_CH} 4" in line_upper and not inserted_ch3:
-            make_box(pdf, ui["ad_tiqets"].format(dest=dest_clean), TIQETS_LINK, "orange")
-            make_box(pdf, ui["ad_car"], RENTAL_LINK, "purple")
-            make_box(pdf, ui["ad_train"], TRAIN_LINK, "purple")
+            formatted_body += make_html_box(TIQETS_LINK, "TICKETS", ui["ad_tiqets"].format(dest=dest_clean))
+            formatted_body += make_html_box(RENTAL_LINK, "RENTAL CAR", ui["ad_car"])
+            formatted_body += make_html_box(TRAIN_LINK, "TRAIN & BUS", ui["ad_train"])
             inserted_ch3 = True
         elif f"{TRIGGER_CH} 5" in line_upper and not inserted_ch4:
-            make_box(pdf, ui["ad_rest"], GYG_LINK, "green")
+            formatted_body += make_html_box(GYG_LINK, "TOURS", ui["ad_rest"])
             inserted_ch4 = True
 
-        if line.strip().startswith('# '):
-            pdf.ln(5)
-            pdf.set_font("Helvetica", 'B', 20)
-            pdf.set_text_color(44, 62, 80)
-            pdf.multi_cell(175, 10, clean_line.replace('#', '').strip())
-            pdf.ln(5)
-        # Regex dinamica per Capitoli (supporta CAPITOLO e CHAPTER)
-        elif re.match(r'^[\*#\s]*' + re.escape(ui['key_chapter']) + r'\s+\d+\s*:', line_upper):
-            pdf.ln(5)
-            pdf.set_font("Helvetica", 'B', 14)
-            pdf.set_text_color(230, 126, 34)
-            title_text = re.sub(r'^[\*#\s]*', '', clean_line).strip()
-            pdf.multi_cell(175, 10, title_text)
-            pdf.ln(3)
+        # PARSING ELEMENTI MARKDOWN
+        if clean_line.startswith('## '):
+            formatted_body += f"<h2 class='h2-title'>{clean_line.replace('## ', '')}</h2>"
+        elif clean_line.startswith('### '):
+            formatted_body += f"<h3 class='h3-title'>{clean_line.replace('### ', '')}</h3>"
         elif TRIGGER_VERDICT in line_upper:
-            pdf.ln(5)
-            pdf.set_font("Helvetica", 'B', 12)
-            pdf.set_fill_color(220, 220, 220)
-            clean_verdict = clean_line.replace('*', '').strip()
-            pdf.multi_cell(180, 8, clean_verdict, border=1, align='C', fill=True)
-            pdf.ln(5)
-        elif line.strip().startswith('* ') or line.strip().startswith('- '):
-            pdf.set_font("Helvetica", '', 11)
-            pdf.set_text_color(20, 20, 20)
-            pdf.set_x(20) 
-            pdf.cell(5, 6, chr(149), 0, 0)
-            content = re.sub(r'^[\*-]\s*', '', clean_line).strip()
-            if content: pdf.multi_cell(160, 6, content)
-        elif re.match(r'^\d+\.', line.strip()):
-            pdf.set_font("Helvetica", 'B', 11)
-            pdf.set_text_color(44, 62, 80)
-            pdf.ln(2)
-            pdf.multi_cell(175, 6, clean_line)
-        # Regex dinamica per Giorni (GIORNO o DAY)
-        elif re.match(re.escape(TRIGGER_DAY) + r'\s*\d+:', line_upper):
-            if pdf.get_x() > 15: pdf.ln(6) 
-            pdf.set_font("Helvetica", 'B', 11)
-            pdf.set_text_color(20, 20, 20)
-            pdf.multi_cell(175, 6, clean_line)
-            pdf.ln(1)
+            verdict_text = clean_line.replace('#', '').strip()
+            formatted_body += f"<div class='verdict-box'>{verdict_text}</div>"
+        elif clean_line.startswith('* ') or clean_line.startswith('- '):
+            formatted_body += f"<li>{clean_line[2:]}</li>"
+        elif re.match(r'^\d+\.', clean_line):
+            formatted_body += f"<p><strong>{clean_line}</strong></p>"
+        elif clean_line.startswith('# '):
+            continue # Salta l'H1 per non duplicare la copertina
         else:
-            if line.strip():
-                if pdf.get_x() > 15 and pdf.get_y() > 20: pdf.ln(1) 
-                pdf.set_font("Helvetica", '', 11)
-                pdf.set_text_color(40, 40, 40)
-                pdf.multi_cell(175, 6, clean_line)
-                pdf.ln(1)
+            formatted_body += f"<p>{clean_line}</p>"
 
-    pdf.add_page()
-    def make_sponsor_box(title, subtitle, link, highlight=False):
-        title = clean_text_for_pdf(title)
-        subtitle = clean_text_for_pdf(subtitle)
-        if highlight:
-            pdf.set_fill_color(230, 240, 255)
-            pdf.set_draw_color(0, 102, 204)
-        else:
-            pdf.set_fill_color(250, 250, 250)
-            pdf.set_draw_color(220, 220, 220)
-        if pdf.get_y() > 250: pdf.add_page()
-        start_y = pdf.get_y()
-        pdf.rect(15, start_y, 180, 14, 'DF')
-        pdf.set_y(start_y + 2)
-        pdf.set_x(20)
-        pdf.set_font("Helvetica", 'B', 10)
-        pdf.set_text_color(44, 62, 80)
-        pdf.cell(0, 5, title, 0, 1)
-        pdf.set_x(20)
-        pdf.set_font("Helvetica", '', 9)
-        pdf.set_text_color(0, 102, 204)
-        pdf.cell(0, 6, subtitle, 0, 1, link=link)
-        pdf.ln(4)
+    html_template = f"""
+    <!DOCTYPE html>
+    <html lang="it">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            @page {{
+                size: A4;
+                margin: 25mm 20mm 30mm 20mm;
+                background-color: #faf9f6;
+                background-image: 
+                    linear-gradient(rgba(26, 26, 26, 0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(26, 26, 26, 0.03) 1px, transparent 1px);
+                background-size: 40px 40px;
 
-    pdf.set_font("Helvetica", 'B', 14)
-    pdf.set_text_color(100, 100, 100)
-    pdf.cell(0, 10, ui["pdf_seen"], 0, 1, 'L')
-    pdf.ln(2)
-    make_sponsor_box("Expedia", "Hotel", HOTEL_LINK)
-    make_sponsor_box("Tiqets", "Tickets", TIQETS_LINK)
-    make_sponsor_box("Welcome Pickups", "Transfer", TRANSF_LINK)
-    make_sponsor_box("Auto Europe", "Auto", RENTAL_LINK)
-    make_sponsor_box("Omio", "Bus/Train", TRAIN_LINK)
-    make_sponsor_box("Kiwi.com", "Flights", FLIGHT_LINK)
-    make_sponsor_box("Heymondo", "Insurance", INSURANCE_LINK)
-    make_sponsor_box("Saily", "eSim", ESIM_LINK)
-    make_sponsor_box("GetYourGuide", "Escursioni", GYG_LINK)
-    pdf.ln(5)
-    pdf.set_font("Helvetica", 'B', 16)
-    pdf.set_text_color(44, 62, 80)
-    pdf.cell(0, 10, ui["pdf_others"], 0, 1, 'L')
-    pdf.ln(2)
-    make_sponsor_box("Radical Storage", "Luggage Storage", LUGGAGE_LINK, highlight=True)
-    make_sponsor_box("AirHelp", "Flight Refund", REIMB_LINK, highlight=True)
-    make_sponsor_box("Kiwitaxi", "Taxi", TAXI_LINK, highlight=True)
-    return bytes(pdf.output(dest='S'))
+                @bottom-left {{
+                    content: "30SecondsToGuide";
+                    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                    font-size: 14px;
+                    font-weight: 800;
+                    color: #e67e22;
+                    padding-bottom: 5mm;
+                }}
+                @bottom-right {{
+                    content: "{ui['pdf_generated']}";
+                    font-family: monospace;
+                    font-size: 11px;
+                    color: #1a1a1a;
+                    opacity: 0.8;
+                    padding-bottom: 5mm;
+                }}
+            }}
+
+            body {{
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                color: #1a1a1a;
+                line-height: 1.6;
+                margin: 0;
+                padding: 0;
+            }}
+
+            .cover-container {{
+                page-break-after: always;
+                position: relative;
+                padding-top: 80px;
+            }}
+            .design-accent-l {{
+                position: absolute;
+                top: 40px; left: -15px;
+                width: 120px; height: 200px;
+                border-top: 12px solid #1a1a1a;
+                border-left: 12px solid #1a1a1a;
+                z-index: -1;
+            }}
+            .category-label {{
+                font-size: 13px; font-weight: 800; letter-spacing: 5px;
+                text-transform: uppercase; margin-bottom: 12px;
+                background: #faf9f6; display: inline-block; padding-right: 10px;
+            }}
+            .city-name {{
+                font-size: 65px; font-weight: 900; text-transform: uppercase;
+                margin: 0; line-height: 0.95; letter-spacing: -2px;
+                color: #e67e22;
+            }}
+            .last-letter-dot {{ color: #1a1a1a; }}
+            
+            .description-box {{
+                margin-top: 145px; padding: 25px; background-color: #ffffff;
+                border-left: 4px solid #1a1a1a; max-width: 460px; font-size: 14px;
+                color: #555; box-shadow: 8px 8px 0px rgba(26, 26, 26, 0.05);
+            }}
+
+            .content-container {{
+                page-break-after: always;
+            }}
+            .h2-title {{
+                text-transform: uppercase; font-weight: 900; letter-spacing: -1px;
+                color: #e67e22; margin-top: 40px; margin-bottom: 15px; border-bottom: 2px solid #1a1a1a; display: inline-block;
+                page-break-after: avoid; 
+            }}
+            .h3-title {{ 
+                font-weight: 800; color: #1a1a1a; margin-top: 30px; margin-bottom: 10px; 
+                page-break-after: avoid; 
+            }}
+            p, li {{ font-size: 14px; color: #333; margin-bottom: 10px; text-align: justify; }}
+            li {{ margin-left: 20px; }}
+            strong {{ color: #000000; font-weight: bold; }}
+
+            .verdict-box {{
+                margin: 30px 0; padding: 15px; background-color: #f8f9fa; 
+                border-left: 5px solid #e67e22; font-weight: bold; color: #2c3e50;
+            }}
+
+            .section-service-box {{
+                margin: 40px 0px; padding: 25px; position: relative;
+                background-color: #ffffff;
+                border: 1px solid rgba(26, 26, 26, 0.08);
+                box-shadow: 8px 8px 0px rgba(26, 26, 26, 0.05);
+                page-break-inside: avoid;
+            }}
+            .section-service-box::before {{
+                content: ""; position: absolute; top: -6px; left: -6px;
+                width: 40px; height: 40px;
+                border-top: 8px solid #1a1a1a; border-left: 8px solid #1a1a1a;
+            }}
+            .service-tag {{
+                font-size: 11px; font-weight: 800; letter-spacing: 4px;
+                text-transform: uppercase; color: #1a1a1a; display: block; margin-bottom: 10px;
+            }}
+            .service-cta {{
+                font-size: 30px; font-weight: 900; text-transform: uppercase;
+                color: #e67e22; text-decoration: none; letter-spacing: -1.5px; line-height: 1; display: block;
+            }}
+            .service-cta::after {{ content: "."; color: #1a1a1a; }}
+            .service-sub {{ font-size: 13px; color: #7f8c8d; margin-top: 8px; font-weight: 400; }}
+
+        </style>
+    </head>
+    <body>
+
+        <div class="cover-container">
+            <div class="design-accent-l"></div>
+            <div class="category-label">{ui['pdf_title']}</div>
+            <h1 class="city-name">{html_city}</h1>
+            <div class="description-box">
+                <strong>{ui['pdf_date']}:</strong> {meta_data['dates']}<br>
+                <strong>{ui['pdf_travellers']}:</strong> {meta_data['pax']}<br>
+                <strong>{ui['pdf_budget_target']}:</strong> {meta_data['budget']}
+            </div>
+            
+            <div style="margin-top: 60px; text-align: center;">
+                <a href="{GUIDE_APP_URL}" style="display:inline-block; padding:15px 25px; background-color:#e67e22; color:white; text-decoration:none; font-weight:bold; border-radius:5px;">
+                    {ui['pdf_promo']}
+                </a>
+            </div>
+        </div>
+
+        <div class="content-container">
+            {formatted_body}
+        </div>
+
+    </body>
+    </html>
+    """
+
+    return HTML(string=html_template).write_pdf()
 
 # ==========================================
 # 🖥️ INTERFACCIA UTENTE
@@ -588,7 +626,7 @@ with st.container():
 
     c_dest, c_bud = st.columns([2, 1])
     with c_dest: destination = st.text_input(ui["label_dest"], placeholder=ui["place_dest"])
-    with c_bud: budget = st.number_input(ui["label_budget"], min_value=500, value=3000, step=100)
+    with c_bud: budget = st.number_input(ui["label_budget"], min_value=100, value=3000, step=100)
     
     def aggiorna_data_ritorno():
         if st.session_state.start_input: st.session_state.end_input = st.session_state.start_input + datetime.timedelta(days=1)
@@ -652,10 +690,10 @@ with st.container():
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
-                    # LOGICA PROMPT LINGUA
+                    # LOGICA PROMPT LINGUA - AGGIORNATA CON REGOLE GYG
                     if lang_code == "IT":
                         sys_prompt = "Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi un viaggio su misura che massimizza il valore del budget."
-                        rules_lang = "Usa SOLO l'alfabeto Latino/Italiano."
+                        rules_lang = "Usa SOLO l'alfabeto Latino/Italiano. Quando suggerisci un'escursione, un'attrazione, un tour o un museo specifico, devi racchiudere il nome ESATTAMENTE in questo tag: [TOUR: Nome Attrazione]. Esempio: Ti consiglio di visitare il [TOUR: Colosseo]."
                         # Struttura fissa IT
                         structure = f"""
                         # {destination.upper()}: [Sottotitolo]
@@ -675,7 +713,7 @@ with st.container():
                         """
                     else:
                         sys_prompt = "Act as a Senior Travel Planner. You don't just plan a trip, you plan a tailor-made trip that maximizes budget value."
-                        rules_lang = "Use ONLY Latin/English alphabet."
+                        rules_lang = "Use ONLY Latin/English alphabet. When you suggest a specific excursion, attraction, tour, or museum, you MUST enclose the name EXACTLY in this tag: [TOUR: Attraction Name]. Example: I recommend visiting the [TOUR: Colosseum]."
                         # Struttura fissa EN (Cruciale: CHAPTER instead of CAPITOLO)
                         structure = f"""
                         # {destination.upper()}: [Subtitle]
@@ -706,7 +744,7 @@ with st.container():
                     
                     REGOLE TASSATIVE:
                     1. {rules_lang} 2. TRASLITTERA i nomi locali. 3. Simboli Valute: EUR, USD.
-                    4. VIETATO L'USO DI ASTERISCHI O GRASSETTO MARKDOWN.
+                    4. USA intelligentemente il grassetto markdown (**) per evidenziare i giorni (es. **Giorno 1:**), i nomi dei luoghi, degli hotel, delle attrazioni e dei ristoranti, per rendere la lettura del documento molto più facile e scansionabile.
                     5. VIETATO USARE LISTE ANNIDATE. 6. PREZZI IN EURO CON SEPARATORE MIGLIAIA.
                     7. USA DURATA {duration_check}, non ricalcolare. 8. NON SCRIVERE I TUOI PENSIERI INTERNI.
                     
