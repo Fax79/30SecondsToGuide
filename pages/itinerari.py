@@ -333,7 +333,7 @@ def create_complex_pdf(text, destination, meta_data, lang_code):
     def make_html_box(link, cta, sub):
         return f"""
         <div class="section-service-box">
-            <span class="service-tag">INSIGHT</span>
+            <span class="service-tag">LINK UTILI PER IL TUO VIAGGIO</span>
             <a href="{link}" target="_blank" class="service-cta">{cta}</a>
             <div class="service-sub">{sub}</div>
         </div>
