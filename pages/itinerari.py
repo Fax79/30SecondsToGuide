@@ -115,7 +115,7 @@ GUIDE_APP_URL = "https://www.30secondstoguide.it"
 FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"
 LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW"
 REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"
-ESIM_LINK = "https://go.saily.site/aff_c?offer_id=126&aff_id=13541"
+ESIM_LINK = "https://go.saily.site/aff_c?offer_id=101&aff_id=13541&source=WIZARD"
 RENTAL_LINK = "https://clk.tradedoubler.com/click?p=284745&a=3480952"
 TRANSF_LINK = "https://tpx.lt/O5I4OrpX"
 TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"
@@ -346,6 +346,11 @@ def create_complex_pdf(text, destination, meta_data, lang_code):
         heymondo_link = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=WIZARDCONTEXT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
         heymondo_html = f"<a href='{heymondo_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>Heymondo</a>"
         clean_line = re.sub(r'\bHeymondo\b', heymondo_html, clean_line, flags=re.IGNORECASE)
+
+        # --- SOSTITUZIONE DIRETTA PER SAILY ---
+        saily_link = "https://go.saily.site/aff_c?offer_id=101&aff_id=13541&source=WIZARDTEXT"
+        saily_html = f"<a href='{saily_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>Saily</a>"
+        clean_line = re.sub(r'\bSaily\b', saily_html, clean_line, flags=re.IGNORECASE)
         
         # --- ESECUZIONE DELLA FUNZIONE GYG SULLA RIGA CORRENTE ---
         clean_line = inject_gyg_links(clean_line, destination)
