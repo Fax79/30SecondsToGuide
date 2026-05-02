@@ -331,10 +331,13 @@ def create_complex_pdf(text, destination, meta_data, lang_code):
     TRIGGER_DAY = f"{ui['key_day']}"
 
     def make_html_box(link, cta, sub):
+        # Isola l'ultima lettera e le assegna il grigio scuro/nero
+        cta_html = f"{cta[:-1]}<span style='color: #1a1a1a;'>{cta[-1]}</span>"
+        
         return f"""
         <div class="section-service-box">
             <span class="service-tag">LINK UTILI PER IL TUO VIAGGIO</span>
-            <a href="{link}" target="_blank" class="service-cta">{cta}</a>
+            <a href="{link}" target="_blank" class="service-cta">{cta_html}</a>
             <div class="service-sub">{sub}</div>
         </div>
         """
