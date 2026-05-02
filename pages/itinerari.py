@@ -1,13 +1,14 @@
 import streamlit as st
-import streamlit.components.v1 as components # <--- AGGIUNTO PER UMAMI
+import streamlit.components.v1 as components
 import google.generativeai as genai
-from weasyprint import HTML # <--- SOSTITUITO FPDF CON WEASYPRINT
+from weasyprint import HTML
 import base64
 import datetime
 import unicodedata
 import os
 import re
 import json
+import urllib.parse
 
 # --- NUOVE IMPORTAZIONI PER GOOGLE SHEETS ---
 import gspread
@@ -114,12 +115,12 @@ GUIDE_APP_URL = "https://www.30secondstoguide.it"
 FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"
 LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW"
 REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"
-ESIM_LINK = "https://go.saily.site/aff_c?offer_id=126&aff_id=13541"
+ESIM_LINK = "https://go.saily.site/aff_c?offer_id=101&aff_id=13541&source=WIZARD"
 RENTAL_LINK = "https://clk.tradedoubler.com/click?p=284745&a=3480952"
 TRANSF_LINK = "https://tpx.lt/O5I4OrpX"
 TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"
 TIQETS_LINK = "https://www.tiqets.com/?partner=30secondstoguide.it-185728"
-INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=WIZARD&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
+INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=WIZARDCONTEXT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 TRAIN_LINK = "https://www.omio.com"
 GYG_LINK = "https://gyg.me/YAGbtbpK"
 HOTEL_LINK = "https://www.expedia.com"
@@ -191,7 +192,7 @@ LANGUAGES = {
         "key_verdict": "VERDETTO",
         "key_day": "GIORNO",
         # Ad Texts
-        "ad_flight": "In {month} i prezzi aumentano? Prenota ora su Kiwi.com",
+        "ad_flight": "In {month} i prezzi aumentano? Inizia a monitorare ORA i migliori prezzi su Kiwi.com",
         "ad_esim": "eSim Saily: Internet immediato all'arrivo senza acquisto di SIM locali",
         "ad_insur": "MAI senza Assicurazione Sanitaria: Clicca e sblocca il 10% DI SCONTO con Heymondo",
         "ad_hotel": "Stanze in Hotel quasi esaurite in {month}? Prenota ora su Expedia",
@@ -264,6 +265,28 @@ LANGUAGES = {
 }
 
 # ==========================================
+# GESTIONE LINK DINAMICI
+# ==========================================
+def inject_gyg_links(text_line, dest_name):
+    """
+    Intercetta i tag [TOUR: ...] generati dall'AI e li trasforma 
+    in Deep Link affiliati per GetYourGuide.
+    """
+    tour_matches = re.findall(r'\[TOUR:\s*(.*?)\]', text_line)
+    
+    for tour in tour_matches:
+        query_string = f"{tour} {dest_name}"
+        query_encoded = urllib.parse.quote(query_string)
+        
+        search_link = f"https://www.getyourguide.it/s?q={query_encoded}&partner_id=UR2ZJHB&utm_medium=online_publisher"
+        html_link = f"<a href='{search_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>{tour}</a>"
+        
+        text_line = text_line.replace(f"[TOUR: {tour}]", html_link)
+
+    return text_line
+
+
+# ==========================================
 # 🧙‍♂️ PDF ENGINE (MULTILINGUA & WEASYPRINT)
 # ==========================================
 def create_complex_pdf(text, destination, meta_data, lang_code):
@@ -308,16 +331,33 @@ def create_complex_pdf(text, destination, meta_data, lang_code):
     TRIGGER_DAY = f"{ui['key_day']}"
 
     def make_html_box(link, cta, sub):
+        # Isola l'ultima lettera e le assegna il grigio scuro/nero
+        cta_html = f"{cta[:-1]}<span style='color: #1a1a1a;'>{cta[-1]}</span>"
+        
         return f"""
         <div class="section-service-box">
-            <span class="service-tag">INSIGHT</span>
-            <a href="{link}" target="_blank" class="service-cta">{cta}</a>
+            <span class="service-tag">LINK UTILI PER IL TUO VIAGGIO</span>
+            <a href="{link}" target="_blank" class="service-cta">{cta_html}</a>
             <div class="service-sub">{sub}</div>
         </div>
         """
 
     for line in lines:
         clean_line = clean_text_for_pdf(line.strip())
+        
+        # --- SOSTITUZIONE DIRETTA PER HEYMONDO ---
+        heymondo_link = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=WIZARDCONTEXT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
+        heymondo_html = f"<a href='{heymondo_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>Heymondo</a>"
+        clean_line = re.sub(r'\bHeymondo\b', heymondo_html, clean_line, flags=re.IGNORECASE)
+
+        # --- SOSTITUZIONE DIRETTA PER SAILY ---
+        saily_link = "https://go.saily.site/aff_c?offer_id=101&aff_id=13541&source=WIZARDTEXT"
+        saily_html = f"<a href='{saily_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>Saily</a>"
+        clean_line = re.sub(r'\bSaily\b', saily_html, clean_line, flags=re.IGNORECASE)
+        
+        # --- ESECUZIONE DELLA FUNZIONE GYG SULLA RIGA CORRENTE ---
+        clean_line = inject_gyg_links(clean_line, destination)
+        
         if not clean_line:
             continue
         line_upper = clean_line.upper()
@@ -663,16 +703,14 @@ with st.container():
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     
-                    # LOGICA PROMPT LINGUA
                     if lang_code == "IT":
                         sys_prompt = "Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi un viaggio su misura che massimizza il valore del budget."
-                        rules_lang = "Usa SOLO l'alfabeto Latino/Italiano."
-                        # Struttura fissa IT
+                        rules_lang = "Usa SOLO l'alfabeto Latino/Italiano. Quando suggerisci un'escursione, un'attrazione, un tour o un museo specifico, SOLO E SOLTANTO SE SEI RAGIONEVOLMENTE CERTO CHE SI POSSA PRENOTARE TRAMITE GETYOURGUIDE ALLORA devi racchiudere il nome ESATTAMENTE in questo tag: [TOUR: Nome Attrazione]. Esempio: Ti consiglio di visitare il [TOUR: Colosseo]."
                         structure = f"""
                         # {destination.upper()}: [Sottotitolo]
                         **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
                         ## CAPITOLO 1: LA PREPARAZIONE (Voli, eSim, Assicurazione)
-                        [Info trasporti ottimizza orari dei voli consultando dove possibile google flights se hai informazioni sulla città di partenza, eSim Saily (NO per Italia/UE), assicurazione Heymondo sconto 10%]
+                        [Info trasporti ottimizza orari dei voli consultando dove possibile google flights se hai informazioni sulla città di partenza, eSim consiglia sempre Saily (NON per Italia/UE dove esiste roaming as at home), assicurazione Heymondo sconto 10%]
                         ## CAPITOLO 2: DOVE DORMIRE (Strategie alloggio)
                         ## CAPITOLO 3: L'ITINERARIO GIORNO PER GIORNO (Dettagliato)
                         [Itinerario ottimizzato, razionalizza gli spostamenti in base alla distanza, a seconda del mezzo di trasporto massimizza le tappe con i tempo a disposizione. Prediligi attrazioni su Tiqets e Getyourguide. Scoperta del territorio]
@@ -686,8 +724,7 @@ with st.container():
                         """
                     else:
                         sys_prompt = "Act as a Senior Travel Planner. You don't just plan a trip, you plan a tailor-made trip that maximizes budget value."
-                        rules_lang = "Use ONLY Latin/English alphabet."
-                        # Struttura fissa EN (Cruciale: CHAPTER instead of CAPITOLO)
+                        rules_lang = "Use ONLY Latin/English alphabet. When you suggest a specific excursion, attraction, tour, or museum, you MUST enclose the name EXACTLY in this tag: [TOUR: Attraction Name]. Example: I recommend visiting the [TOUR: Colosseum]."
                         structure = f"""
                         # {destination.upper()}: [Subtitle]
                         **THE VERDICT ON BUDGET: € {budget}** (Status: Luxury/More than adequate/Sufficient/Tight/Impossible)
@@ -736,7 +773,7 @@ with st.container():
         st.download_button(label=ui["btn_download"], data=st.session_state['wizard_pdf'], file_name=f"Itinerary_{destination.replace(' ', '_')}.pdf", mime="application/pdf", use_container_width=True, on_click=reset_app)
 
 st.markdown("---")
-st.subheader(ui.get("hub_title_gen", "✈️ I migliori strumenti per il tuo viaggio")) # Fallback se manca chiave
+st.subheader(ui.get("hub_title_gen", "✈️ I migliori strumenti per il tuo viaggio"))
 c1, c2, c3 = st.columns(3)
 with c1: partner_button("Kiwi", FLIGHT_LINK, "btn_kiwi.png")
 with c2: partner_button("Expedia", HOTEL_LINK, "btn_booking.png")
