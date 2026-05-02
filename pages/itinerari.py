@@ -702,12 +702,12 @@ with st.container():
                     
                     if lang_code == "IT":
                         sys_prompt = "Agisci come un Travel Planner Senior. Non pianifichi solo un viaggio, pianifichi un viaggio su misura che massimizza il valore del budget."
-                        rules_lang = "Usa SOLO l'alfabeto Latino/Italiano. Quando suggerisci un'escursione, un'attrazione, un tour o un museo specifico, devi racchiudere il nome ESATTAMENTE in questo tag: [TOUR: Nome Attrazione]. Esempio: Ti consiglio di visitare il [TOUR: Colosseo]."
+                        rules_lang = "Usa SOLO l'alfabeto Latino/Italiano. Quando suggerisci un'escursione, un'attrazione, un tour o un museo specifico, SOLO E SOLTANTO SE SEI RAGIONEVOLMENTE CERTO CHE SI POSSA PRENOTARE TRAMITE GETYOURGUIDE ALLORA devi racchiudere il nome ESATTAMENTE in questo tag: [TOUR: Nome Attrazione]. Esempio: Ti consiglio di visitare il [TOUR: Colosseo]."
                         structure = f"""
                         # {destination.upper()}: [Sottotitolo]
                         **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
                         ## CAPITOLO 1: LA PREPARAZIONE (Voli, eSim, Assicurazione)
-                        [Info trasporti ottimizza orari dei voli consultando dove possibile google flights se hai informazioni sulla città di partenza, eSim Saily (NO per Italia/UE), assicurazione Heymondo sconto 10%]
+                        [Info trasporti ottimizza orari dei voli consultando dove possibile google flights se hai informazioni sulla città di partenza, eSim consiglia sempre Saily (NON per Italia/UE dove esiste roaming as at home), assicurazione Heymondo sconto 10%]
                         ## CAPITOLO 2: DOVE DORMIRE (Strategie alloggio)
                         ## CAPITOLO 3: L'ITINERARIO GIORNO PER GIORNO (Dettagliato)
                         [Itinerario ottimizzato, razionalizza gli spostamenti in base alla distanza, a seconda del mezzo di trasporto massimizza le tappe con i tempo a disposizione. Prediligi attrazioni su Tiqets e Getyourguide. Scoperta del territorio]
