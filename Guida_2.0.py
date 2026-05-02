@@ -1,5 +1,5 @@
 import streamlit as st
-import streamlit.components.v1 as components # <--- UNICA AGGIUNTA NEGLI IMPORT
+import streamlit.components.v1 as components
 import google.generativeai as genai
 from weasyprint import HTML, CSS
 import os
@@ -9,6 +9,8 @@ import unicodedata
 import json
 import gspread
 from google.oauth2.service_account import Credentials
+import urllib.parse
+import re
 
 # --- 0. CONFIGURAZIONE PAGINA ---
 if os.path.exists("logo.png"):
@@ -31,7 +33,6 @@ def set_social_headers():
     st.markdown(meta_tags, unsafe_allow_html=True)
 
     # 2. Injection "Chirurgica" di Umami
-    # Questo script JS esce dall'iframe e scrive nell'Header della pagina principale (window.parent).
     umami_injection = """
         <script>
             var parentHead = window.parent.document.getElementsByTagName("head")[0];
@@ -116,7 +117,7 @@ FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"
 LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW"
 REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"
 ESIM_LINK = "https://go.saily.site/aff_c?offer_id=126&aff_id=13541"
-RENTAL_LINK = "https://clk.tradedoubler.com/click?p=284745&a=3480952"
+RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"
 TRANSF_LINK = "https://tpx.lt/O5I4OrpX"
 TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"
 TIQETS_LINK = "https://tiqets.tpx.lt/abHnK4vL"
@@ -147,7 +148,6 @@ LANGUAGES = {
         "hub_title_gen": "✈️ I migliori strumenti per il tuo viaggio",
         "footer_seo_title": "Come funziona 30SecondsToGuide?",
         "footer_seo_text": "è il primo generatore di guide turistiche basato sull'Intelligenza Artificiale. A differenza dei tradizionali blog di viaggio, il nostro algoritmo crea <strong>itinerari personalizzati in PDF</strong> per qualsiasi città del mondo in meno di 30 secondi. Il servizio è <strong>gratuito al 100%</strong>.",
-        # Sidebar Labels
         "sb_pocket": "📚 LE NOSTRE GUIDE POCKET",
         "sb_privacy": "Privacy Policy"
     },
@@ -168,7 +168,6 @@ LANGUAGES = {
         "hub_title_gen": "✈️ Best tools for your trip",
         "footer_seo_title": "How does 30SecondsToGuide work?",
         "footer_seo_text": "is the first AI-based travel guide generator. Unlike traditional travel blogs, our algorithm creates <strong>custom PDF itineraries</strong> for any city in the world in less than 30 seconds. The service is <strong>100% free</strong>.",
-        # Sidebar Labels
         "sb_pocket": "📚 OUR POCKET GUIDES",
         "sb_privacy": "Privacy Policy"
     }
@@ -309,6 +308,19 @@ TESTO_MODELLO_EN = """
 [Final philosophical reflection on the trip to this city, describe the essence of the journey].
 """
 
+# ==========================================
+# GESTIONE LINK DINAMICI GETYOURGUIDE
+# ==========================================
+def inject_gyg_links(text_line, dest_name):
+    tour_matches = re.findall(r'\[TOUR:\s*(.*?)\]', text_line)
+    for tour in tour_matches:
+        query_string = f"{tour} {dest_name}"
+        query_encoded = urllib.parse.quote(query_string)
+        search_link = f"https://www.getyourguide.it/s?q={query_encoded}&partner_id=UR2ZJHB&utm_medium=online_publisher"
+        html_link = f"<a href='{search_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>{tour}</a>"
+        text_line = text_line.replace(f"[TOUR: {tour}]", html_link)
+    return text_line
+
 # --- HELPER FUNZIONI ---
 def get_base64_of_bin_file(bin_file):
     if os.path.exists(bin_file):
@@ -318,7 +330,6 @@ def get_base64_of_bin_file(bin_file):
     return None
 
 def partner_button(label, link, image_file):
-    # Questa funzione è usata solo nel Travel Hub (in basso), non più nella sidebar
     if os.path.exists(image_file):
         try:
             img_base64 = get_base64_of_bin_file(image_file)
@@ -336,30 +347,11 @@ def partner_button(label, link, image_file):
     else:
         st.link_button(label, link, use_container_width=True)
 
-# --- FUNZIONE PDF (LA NUOVA STAMPA CON WEASYPRINT E GRASSETTO FIXATO) ---
+# --- FUNZIONE PDF ---
 def create_pdf(text, city, lang_code="IT"):
-    import re  # Importiamo la libreria per le espressioni regolari
     
-    # 1. Pulizia base e conversione Markdown
-    def clean_text_for_pdf(text_input):
-        if not text_input: return ""
-        replacements = {
-            "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
-            "€": "EUR", "$": "USD", "£": "GBP"
-        }
-        for char, replacement in replacements.items():
-            text_input = text_input.replace(char, replacement)
-            
-        # --- NOVITÀ: TRASFORMA IL GRASSETTO MARKDOWN IN HTML ---
-        # Trova tutto ciò che è tra ** e lo racchiude nel tag <strong>
-        text_input = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text_input)
-        
-        return text_input
+    city_clean = city
 
-    city_clean = clean_text_for_pdf(city)
-    text = clean_text_for_pdf(text)
-
-    # 2. Logica Titolo Dinamico per la Copertina (Regola 12/24)
     city_upper = city_clean.strip().upper()
     if len(city_upper) > 24:
         city_upper = city_upper[:21] + "..."
@@ -372,7 +364,6 @@ def create_pdf(text, city, lang_code="IT"):
     else:
         html_city = f"{city_upper[:-1]}<span class='last-letter-dot'>{city_upper[-1]}.</span>"
 
-    # 3. Dizionario Stringhe per il PDF (Traduzioni)
     strings = {
         "IT": {
             "label": "Pocket Guide",
@@ -400,7 +391,6 @@ def create_pdf(text, city, lang_code="IT"):
         }
     }[lang_code]
 
-    # 4. Parsing del Testo Markdown e Iniezione dei Box
     formatted_body = ""
     lines = text.split('\n')
     
@@ -414,43 +404,55 @@ def create_pdf(text, city, lang_code="IT"):
             
         line_clean = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', line_clean)
         
+        # --- SOSTITUZIONI INLINE ---
+        heymondo_link = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=GUIDACONTEXT&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
+        heymondo_html = f"<a href='{heymondo_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>Heymondo</a>"
+        line_clean = re.sub(r'\bHeymondo\b', heymondo_html, line_clean, flags=re.IGNORECASE)
+
+        saily_link = "https://go.saily.site/aff_c?offer_id=101&aff_id=13541&source=GUIDATEXT"
+        saily_html = f"<a href='{saily_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>Saily</a>"
+        line_clean = re.sub(r'\bSaily\b', saily_html, line_clean, flags=re.IGNORECASE)
+        
+        line_clean = inject_gyg_links(line_clean, city_clean)
+        
         if line_clean.startswith('## '):
             title = line_clean.replace('## ', '')
             formatted_body += f"<h2 class='h2-title'>{title}</h2>"
             
+            # --- INIEZIONE BOX DINAMICI (STILE WIZARD COLORE PUNTO) ---
             if any(x in title.upper() for x in ["DORMIRE", "SLEEP", "HOTEL"]):
                 formatted_body += f"""
                 <div class="section-service-box">
                     <span class="service-tag">{strings["insight"]}</span>
-                    <a href="{HOTEL_LINK}" class="service-cta">{strings["cta"]}</a>
+                    <a href="{HOTEL_LINK}" class="service-cta">HOTEL<span class="last-letter-dot">S</span></a>
                     <div class="service-sub">Tariffe verificate per hotel e appartamenti.</div>
                 </div>"""
             elif any(x in title.upper() for x in ["ARRIVARE", "GETTING", "VOLI", "TRASPORTI"]):
                 formatted_body += f"""
                 <div class="section-service-box">
                     <span class="service-tag">{strings["insight"]}</span>
-                    <a href="{FLIGHT_LINK}" class="service-cta">{strings["cta"]}</a>
+                    <a href="{FLIGHT_LINK}" class="service-cta">FLIGHT<span class="last-letter-dot">S</span></a>
                     <div class="service-sub">Le migliori combinazioni di volo.</div>
                 </div>"""
             elif any(x in title.upper() for x in ["ATTRAZIONI", "ATTRACTIONS", "MUSEI", "MUSEUMS"]):
                 formatted_body += f"""
                 <div class="section-service-box">
                     <span class="service-tag">{strings["insight"]}</span>
-                    <a href="{TIQETS_LINK}" class="service-cta">{strings["cta"]}</a>
+                    <a href="{TIQETS_LINK}" class="service-cta">TICKET<span class="last-letter-dot">S</span></a>
                     <div class="service-sub">Biglietti ufficiali saltafila.</div>
                 </div>"""
-            elif any(x in title.upper() for x in ["QUARTIERI", "ZONE"]):
+            elif any(x in title.upper() for x in ["QUARTIERI", "ZONE", "NEIGHBORHOODS"]):
                 formatted_body += f"""
                 <div class="section-service-box">
                     <span class="service-tag">{strings["must"]}</span>
-                    <a href="{INSURANCE_LINK}" class="service-cta">{strings["safe"]}</a>
+                    <a href="{INSURANCE_LINK}" class="service-cta">INSURANC<span class="last-letter-dot">E</span></a>
                     <div class="service-sub">Proteggi il tuo viaggio con Heymondo.</div>
                 </div>"""    
             elif any(x in title.upper() for x in ["ANIMA", "SOUL"]):
                 formatted_body += f"""
                 <div class="section-service-box">
                     <span class="service-tag">{strings["must"]}</span>
-                    <a href="{ESIM_LINK}" class="service-cta">INTERNET</a>
+                    <a href="{ESIM_LINK}" class="service-cta">INTERNE<span class="last-letter-dot">T</span></a>
                     <div class="service-sub">eSim internazionale Saily.</div>
                 </div>"""
                 
@@ -462,7 +464,6 @@ def create_pdf(text, city, lang_code="IT"):
         else:
             formatted_body += f"<p>{line_clean}</p>"
 
-    # 5. Struttura HTML Unificata
     html_template = f"""
     <!DOCTYPE html>
     <html lang="it">
@@ -534,7 +535,7 @@ def create_pdf(text, city, lang_code="IT"):
                 background: #faf9f6; display: inline-block; padding: 2px 5px;
             }}
             .description-box {{
-                margin-top: 90px; padding: 25px; background-color: #ffffff;
+                margin-top: 45px; padding: 25px; background-color: #ffffff;
                 border-left: 4px solid #1a1a1a; max-width: 460px; font-size: 14px;
                 color: #555; box-shadow: 8px 8px 0px rgba(26, 26, 26, 0.05);
             }}
@@ -554,7 +555,6 @@ def create_pdf(text, city, lang_code="IT"):
             p, li {{ font-size: 14px; color: #333; margin-bottom: 10px; text-align: justify; }}
             li {{ margin-left: 20px; }}
             
-            /* Nuovo stile per rendere il grassetto ben visibile */
             strong {{ color: #000000; font-weight: bold; }}
 
             .section-service-box {{
@@ -638,10 +638,7 @@ def create_pdf(text, city, lang_code="IT"):
     return HTML(string=html_template).write_pdf()
 
 
-
-
 # --- SELETTORE LINGUA (MAIN AREA) ---
-# Niente bandiere, solo testo per evitare problemi su PC
 col_lang_1, col_lang_2 = st.columns([3, 1]) 
 with col_lang_2:
     lang_opt = st.radio(
@@ -666,17 +663,14 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # Titolo sezione
     st.subheader(ui["sb_pocket"])
     
-    # LISTA GUIDE - Stile Bottone Pieno
     st.link_button("Roma", "https://guide.30secondstoguide.it/roma", use_container_width=True)
     st.link_button("New York", "https://guide.30secondstoguide.it/new-york", use_container_width=True)
     st.link_button("Tokyo", "https://guide.30secondstoguide.it/tokyo", use_container_width=True)
     
-    st.divider() # Linea di separazione
+    st.divider()
     
-    # Sezione Blog
     st.markdown("### 📝 Travel Blog")
     st.caption("Ispirazione, guide e sfide AI.")
     
@@ -689,7 +683,6 @@ with st.sidebar:
     
     st.divider()
     
-    # --- ADMIN ---
     with st.sidebar.expander("🔐 Admin Stats"):
         secret_pwd = st.text_input("Password", type="password")
         if secret_pwd == "fabio123": 
@@ -727,7 +720,6 @@ st.markdown(f"""
     </p>
     """, unsafe_allow_html=True)
 
-# CTA WIZARD
 st.write("") 
 st.markdown(f"""
 <div style="background-color: #f0f2f6; border-radius: 10px; padding: 15px; margin-bottom: 15px; text-align: center; border: 1px solid #dcdcdc;">
@@ -743,7 +735,6 @@ with st.container(border=True):
 
 st.write("") 
 
-# PROMO AUTOMATICA
 PROMO_IMG = "promo_banner.png"
 if os.path.exists(PROMO_IMG):
     try:
@@ -786,9 +777,8 @@ with st.container():
             
             with st.spinner(ui["spinner"]):
                 try:
-                    model = genai.GenerativeModel("gemini-2.5-flash")
+                    model = genai.GenerativeModel("gemini-3-flash-preview")
                     
-                    # SELEZIONE PROMPT IN BASE ALLA LINGUA
                     if lang_code == "IT":
                         sys_instruct = "Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per:"
                         base_prompt = TESTO_MODELLO_IT
@@ -796,10 +786,10 @@ with st.container():
                         1. NON USARE MAI TABELLE MARKDOWN (niente righe con | |).
                         2. Se devi fare un confronto, usa elenchi puntati descrittivi.
                         3. Usa ESATTAMENTE la struttura seguente.
-                        4. Scrivi paragrafi ricchi e lunghi, utilizza il grassetto per aumentare la chiarezza e la leggibilità.
-                        5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
-                        6. Se viene inserita una nazione, una regione, un'area geografica produci la guida per la città principale, aggiungi una premessa prima del capitolo 1 in cui elenchi eventuali altre città esortando a fare guide separate, suggerisci anche di utilizzare il bottone dell'"ITINERARY WIZARD" che trovano nel sito.
-                        7. Se viene inserita un parola o una frase che non sono luoghi geografici rispondi in modo scherzoso ma sintetico, non usare la struttura della guida.
+                        4. Scrivi paragrafi ricchi e lunghi.
+                        5. Se viene inserita una nazione, una regione, un'area geografica produci la guida per la città principale, aggiungi una premessa prima del capitolo 1 in cui elenchi eventuali altre città esortando a fare guide separate, suggerisci anche di utilizzare il bottone dell'"ITINERARY WIZARD" che trovano nel sito.
+                        6. Se viene inserita un parola o una frase che non sono luoghi geografici rispondi in modo scherzoso ma sintetico, non usare la struttura della guida.
+                        7. Quando suggerisci un'escursione, un'attrazione, un tour o un museo specifico, SOLO E SOLTANTO SE SEI RAGIONEVOLMENTE CERTO CHE SI POSSA PRENOTARE TRAMITE GETYOURGUIDE ALLORA devi racchiudere il nome ESATTAMENTE in questo tag: [TOUR: Nome Attrazione]. Esempio: Ti consiglio di visitare il [TOUR: Colosseo].
                         """
                     else:
                         sys_instruct = "You are an expert travel writer (Lonely Planet/National Geographic style). Write a DETAILED guide for:"
@@ -809,9 +799,9 @@ with st.container():
                         2. If you need to make a comparison, use descriptive bullet points.
                         3. Use EXACTLY the following structure.
                         4. Write rich and long paragraphs.
-                        5. NEVER USE SPECIAL CHARACTERS or currency symbols (like Euro or Dollar), simplify foreign spelling using standard alphabet.
-                        6. If a nation, region, or geographic area is entered, produce the guide for the main city, add a premise before chapter 1 listing other cities urging to make separate guides, also suggest using the "ITINERARY WIZARD" button found on the site.
-                        7. If a word or phrase is entered that is not a geographical place, answer jokingly but synthetically, do not use the guide structure.
+                        5. If a nation, region, or geographic area is entered, produce the guide for the main city, add a premise before chapter 1 listing other cities urging to make separate guides, also suggest using the "ITINERARY WIZARD" button found on the site.
+                        6. If a word or phrase is entered that is not a geographical place, answer jokingly but synthetically, do not use the guide structure.
+                        7. When you suggest a specific excursion, attraction, tour, or museum, ONLY IF YOU ARE REASONABLY SURE IT CAN BE BOOKED VIA GETYOURGUIDE, you MUST enclose the name EXACTLY in this tag: [TOUR: Attraction Name]. Example: I recommend visiting the [TOUR: Colosseum].
                         """
                     
                     full_prompt = f"""
@@ -846,7 +836,7 @@ if 'generated_pdf' in st.session_state:
         on_click=reset_app 
     )
 
-# --- TRAVEL HUB (Rimasto invariato, in fondo pagina) ---
+# --- TRAVEL HUB ---
 st.markdown("---")
 if city_name:
     st.subheader(ui["hub_title"].format(city=city_name))
@@ -872,7 +862,7 @@ with c4:
     partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png") 
 with c5:
     st.caption("🚗 **Rental**")
-    partner_button("Sixt", RENTAL_LINK, "btn_autoe.png")
+    partner_button("AutoEurope", RENTAL_LINK, "btn_autoe.png")
 with c6:
     st.caption("🎒 **Radical**")
     partner_button("Radical", LUGGAGE_LINK, "btn_radical.png")
@@ -913,10 +903,3 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
-
-
-
-
-
-
