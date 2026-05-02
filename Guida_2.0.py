@@ -777,7 +777,7 @@ with st.container():
             
             with st.spinner(ui["spinner"]):
                 try:
-                    model = genai.GenerativeModel("gemini-3-flash-preview")
+                    model = genai.GenerativeModel("gemini-2.5-flash")
                     
                     if lang_code == "IT":
                         sys_instruct = "Sei uno scrittore di viaggi esperto (stile Lonely Planet/National Geographic). Scrivi una guida DETTAGLIATA per:"
