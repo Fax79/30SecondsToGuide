@@ -193,7 +193,7 @@ LANGUAGES = {
         "key_day": "GIORNO",
         # Ad Texts
         "ad_flight": "In {month} i prezzi aumentano? Inizia a monitorare ORA i migliori prezzi su Kiwi.com",
-        "ad_esim": "eSim Saily: Internet immediato all'arrivo senza acquisto di SIM locali",
+        "ad_esim": "eSim Saily: Internet immediato all'arrivo senza acquisto di SIM locali. 5$ di sconto con codice FABIOI3455",
         "ad_insur": "MAI senza Assicurazione Sanitaria: Clicca e sblocca il 10% DI SCONTO con Heymondo",
         "ad_hotel": "Stanze in Hotel quasi esaurite in {month}? Prenota ora su Expedia",
         "ad_transfer": "Transfer privati ad un prezzo WOW! da e per l'aeroporto",
