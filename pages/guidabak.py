@@ -350,18 +350,7 @@ def partner_button(label, link, image_file):
 # --- FUNZIONE PDF ---
 def create_pdf(text, city, lang_code="IT"):
     
-    def clean_text_for_pdf(text_input):
-        if not text_input: return ""
-        replacements = {
-            "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
-            "€": "EUR", "$": "USD", "£": "GBP"
-        }
-        for char, replacement in replacements.items():
-            text_input = text_input.replace(char, replacement)
-        return text_input
-
-    city_clean = clean_text_for_pdf(city)
-    text = clean_text_for_pdf(text)
+    city_clean = city
 
     city_upper = city_clean.strip().upper()
     if len(city_upper) > 24:
