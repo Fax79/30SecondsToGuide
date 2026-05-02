@@ -295,13 +295,7 @@ def create_complex_pdf(text, destination, meta_data, lang_code):
 
     def clean_text_for_pdf(text_input):
         if not text_input: return ""
-        replacements = {
-            "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "...",
-            "€": "EUR", "$": "USD", "£": "GBP"
-        }
-        for char, replacement in replacements.items():
-            text_input = text_input.replace(char, replacement)
-            
+                    
         # Sostituisce il grassetto markdown con tag HTML
         text_input = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text_input)
         return text_input
