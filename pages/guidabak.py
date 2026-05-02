@@ -787,10 +787,9 @@ with st.container():
                         2. Se devi fare un confronto, usa elenchi puntati descrittivi.
                         3. Usa ESATTAMENTE la struttura seguente.
                         4. Scrivi paragrafi ricchi e lunghi.
-                        5. NON USARE MAI CARATTERI SPECIALI, simboli delle valute (come Euro o Dollaro), semplifica la grafia delle parole straniere utilizzando l'alfabeto standard, ammesse SOLO lettere accentate comunemente usate in italiano.
-                        6. Se viene inserita una nazione, una regione, un'area geografica produci la guida per la città principale, aggiungi una premessa prima del capitolo 1 in cui elenchi eventuali altre città esortando a fare guide separate, suggerisci anche di utilizzare il bottone dell'"ITINERARY WIZARD" che trovano nel sito.
-                        7. Se viene inserita un parola o una frase che non sono luoghi geografici rispondi in modo scherzoso ma sintetico, non usare la struttura della guida.
-                        8. Quando suggerisci un'escursione, un'attrazione, un tour o un museo specifico, SOLO E SOLTANTO SE SEI RAGIONEVOLMENTE CERTO CHE SI POSSA PRENOTARE TRAMITE GETYOURGUIDE ALLORA devi racchiudere il nome ESATTAMENTE in questo tag: [TOUR: Nome Attrazione]. Esempio: Ti consiglio di visitare il [TOUR: Colosseo].
+                        5. Se viene inserita una nazione, una regione, un'area geografica produci la guida per la città principale, aggiungi una premessa prima del capitolo 1 in cui elenchi eventuali altre città esortando a fare guide separate, suggerisci anche di utilizzare il bottone dell'"ITINERARY WIZARD" che trovano nel sito.
+                        6. Se viene inserita un parola o una frase che non sono luoghi geografici rispondi in modo scherzoso ma sintetico, non usare la struttura della guida.
+                        7. Quando suggerisci un'escursione, un'attrazione, un tour o un museo specifico, SOLO E SOLTANTO SE SEI RAGIONEVOLMENTE CERTO CHE SI POSSA PRENOTARE TRAMITE GETYOURGUIDE ALLORA devi racchiudere il nome ESATTAMENTE in questo tag: [TOUR: Nome Attrazione]. Esempio: Ti consiglio di visitare il [TOUR: Colosseo].
                         """
                     else:
                         sys_instruct = "You are an expert travel writer (Lonely Planet/National Geographic style). Write a DETAILED guide for:"
@@ -800,10 +799,9 @@ with st.container():
                         2. If you need to make a comparison, use descriptive bullet points.
                         3. Use EXACTLY the following structure.
                         4. Write rich and long paragraphs.
-                        5. NEVER USE SPECIAL CHARACTERS or currency symbols (like Euro or Dollar), simplify foreign spelling using standard alphabet.
-                        6. If a nation, region, or geographic area is entered, produce the guide for the main city, add a premise before chapter 1 listing other cities urging to make separate guides, also suggest using the "ITINERARY WIZARD" button found on the site.
-                        7. If a word or phrase is entered that is not a geographical place, answer jokingly but synthetically, do not use the guide structure.
-                        8. When you suggest a specific excursion, attraction, tour, or museum, ONLY IF YOU ARE REASONABLY SURE IT CAN BE BOOKED VIA GETYOURGUIDE, you MUST enclose the name EXACTLY in this tag: [TOUR: Attraction Name]. Example: I recommend visiting the [TOUR: Colosseum].
+                        5. If a nation, region, or geographic area is entered, produce the guide for the main city, add a premise before chapter 1 listing other cities urging to make separate guides, also suggest using the "ITINERARY WIZARD" button found on the site.
+                        6. If a word or phrase is entered that is not a geographical place, answer jokingly but synthetically, do not use the guide structure.
+                        7. When you suggest a specific excursion, attraction, tour, or museum, ONLY IF YOU ARE REASONABLY SURE IT CAN BE BOOKED VIA GETYOURGUIDE, you MUST enclose the name EXACTLY in this tag: [TOUR: Attraction Name]. Example: I recommend visiting the [TOUR: Colosseum].
                         """
                     
                     full_prompt = f"""
