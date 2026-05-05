@@ -344,11 +344,6 @@ def create_complex_pdf(text, destination, meta_data, lang_code):
         heymondo_html = f"<a href='{heymondo_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>Heymondo</a>"
         clean_line = re.sub(r'\bHeymondo\b', heymondo_html, clean_line, flags=re.IGNORECASE)
 
-        # --- SOSTITUZIONE DIRETTA PER KIWI ---
-        kiwi_link = "https://kiwi.tpx.lt/k6iWGXOK"
-        kiwi_html = f"<a href='{kiwi_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>Kiwi</a>"
-        clean_line = re.sub(r'\bKiwi\b', Kiwi_html, clean_line, flags=re.IGNORECASE)
-        
         # --- SOSTITUZIONE DIRETTA PER SAILY ---
         saily_link = "https://go.saily.site/aff_c?offer_id=101&aff_id=13541&source=WIZARDTEXT"
         saily_html = f"<a href='{saily_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>Saily</a>"
