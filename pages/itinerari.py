@@ -344,6 +344,11 @@ def create_complex_pdf(text, destination, meta_data, lang_code):
         heymondo_html = f"<a href='{heymondo_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>Heymondo</a>"
         clean_line = re.sub(r'\bHeymondo\b', heymondo_html, clean_line, flags=re.IGNORECASE)
 
+        # --- SOSTITUZIONE DIRETTA PER KIWI ---
+        kiwi_link = "https://kiwi.tpx.lt/k6iWGXOK"
+        kiwi_html = f"<a href='{kiwi_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>Kiwi</a>"
+        clean_line = re.sub(r'\bKiwi\b', Kiwi_html, clean_line, flags=re.IGNORECASE)
+        
         # --- SOSTITUZIONE DIRETTA PER SAILY ---
         saily_link = "https://go.saily.site/aff_c?offer_id=101&aff_id=13541&source=WIZARDTEXT"
         saily_html = f"<a href='{saily_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>Saily</a>"
@@ -704,7 +709,7 @@ with st.container():
                         # {destination.upper()}: [Sottotitolo]
                         **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
                         ## CAPITOLO 1: LA PREPARAZIONE (Voli, eSim, Assicurazione)
-                        [Info trasporti ottimizza orari dei voli consultando dove possibile google flights se hai informazioni sulla città di partenza, eSim consiglia sempre Saily (NON per Italia/UE dove esiste roaming as at home), assicurazione Heymondo sconto 10%]
+                        [Info trasporti ottimizza orari dei voli consultando dove possibile google flights se hai informazioni sulla città di partenza, reperisci gli ultimi prezzi da google flight se hai date precise e suggerisci Kiwi per la prenotazione sfruttando i travel hack. Come eSim consiglia sempre Saily (NON per Italia/UE dove esiste roaming as at home), per l'assicurazione Heymondo con sconto 10%]
                         ## CAPITOLO 2: DOVE DORMIRE (Strategie alloggio)
                         ## CAPITOLO 3: L'ITINERARIO GIORNO PER GIORNO (Dettagliato)
                         [Itinerario ottimizzato, razionalizza gli spostamenti in base alla distanza, a seconda del mezzo di trasporto massimizza le tappe con i tempo a disposizione. Prediligi attrazioni su Tiqets e Getyourguide. Scoperta del territorio]
