@@ -198,7 +198,7 @@ LANGUAGES = {
         "ad_hotel": "Stanze in Hotel quasi esaurite in {month}? Prenota ora su Expedia",
         "ad_transfer": "Transfer privati ad un prezzo WOW! da e per l'aeroporto",
         "ad_tiqets": "Non rischiare il tutto esaurito a {dest}. Assicurati il posto e le migliori offerte su Tiqets",
-        "ad_car": "Viaggia in libertà e noleggia un auto: Tariffe esclusive con Auto Europe",
+        "ad_car": "Viaggia in libertà e noleggia un auto: Tariffe esclusive con Sixt",
         "ad_train": "Treni e Bus: Prenota su Omio",
         "ad_rest": "Esplora al miglior prezzo! Prenota su GetYourGuide",
         # Sidebar
@@ -252,7 +252,7 @@ LANGUAGES = {
         "ad_hotel": "Hotel rooms almost sold out in {month}? Book now on Expedia",
         "ad_transfer": "Private transfers at WOW prices! to and from the airport",
         "ad_tiqets": "Don't risk sold out in {dest}. Secure spots and best deals on Tiqets",
-        "ad_car": "Travel freely and rent a car: Exclusive rates with Auto Europe",
+        "ad_car": "Travel freely and rent a car: Exclusive rates with Sixt",
         "ad_train": "Trains and Buses: Book on Omio",
         "ad_rest": "Discover at the best rate! Book on GetYourGuide",
         # Sidebar
@@ -564,7 +564,7 @@ with st.sidebar:
     partner_button("Kiwi", FLIGHT_LINK, "btn_kiwi.png")
     partner_button("Expedia", HOTEL_LINK, "btn_booking.png")
     partner_button("Welcome", TRANSF_LINK, "btn_wp.png")
-    partner_button("AutoEurope", RENTAL_LINK, "btn_autoe.png")
+    partner_button("Sixt", RENTAL_LINK, "btn_sixt.png")
     partner_button("Omio", TRAIN_LINK, "btn_omio.png")
     partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
     st.caption(ui_sb["sb_exp"])
@@ -780,7 +780,7 @@ with c3: partner_button("Transfer", TRANSF_LINK, "btn_wp.png")
 st.write("")
 c4, c5, c6 = st.columns(3)
 with c4: partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png")
-with c5: partner_button("AutoEurope", RENTAL_LINK, "btn_autoe.png")
+with c5: partner_button("Sixt", RENTAL_LINK, "btn_sixt.png")
 with c6: partner_button("Radical", LUGGAGE_LINK, "btn_radical.png")
 st.write("")
 c7, c8, c9 = st.columns(3)
