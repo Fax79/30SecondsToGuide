@@ -117,7 +117,7 @@ FLIGHT_LINK = "https://kiwi.tpx.lt/k6iWGXOK"
 LUGGAGE_LINK = "https://radicalstorage.tpx.lt/fpjMovNW"
 REIMB_LINK = "https://airhelp.tpx.lt/YS9ciIsW"
 ESIM_LINK = "https://go.saily.site/aff_ad?campaign_id=2&aff_id=13541&hostNameId=23945&source=GUIDA"
-RENTAL_LINK = "https://autoeurope.tpx.lt/73PS7HAR"
+RENTAL_LINK = "https://clk.tradedoubler.com/click?p=284745&a=3480952"
 TRANSF_LINK = "https://tpx.lt/O5I4OrpX"
 TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"
 TIQETS_LINK = "https://tiqets.tpx.lt/abHnK4vL"
@@ -862,7 +862,7 @@ with c4:
     partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png") 
 with c5:
     st.caption("🚗 **Rental**")
-    partner_button("AutoEurope", RENTAL_LINK, "btn_autoe.png")
+    partner_button("Sixt", RENTAL_LINK, "btn_sixt.png")
 with c6:
     st.caption("🎒 **Radical**")
     partner_button("Radical", LUGGAGE_LINK, "btn_radical.png")
