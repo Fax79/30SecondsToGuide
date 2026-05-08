@@ -709,7 +709,7 @@ with st.container():
                         # {destination.upper()}: [Sottotitolo]
                         **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
                         ## CAPITOLO 1: LA PREPARAZIONE (Voli, eSim, Assicurazione)
-                        [Info trasporti ottimizza orari dei voli consultando dove possibile google flights se hai informazioni sulla città di partenza, reperisci gli ultimi prezzi da google flight se hai date precise e suggerisci Kiwi per la prenotazione sfruttando i travel hack. Come eSim consiglia sempre Saily (NON per Italia/UE dove esiste roaming as at home), per l'assicurazione Heymondo con sconto 10%]
+                        [Info trasporti ottimizza orari dei voli consultando dove possibile google flights se hai informazioni sulla città di partenza, reperisci gli ultimi prezzi da google flight se hai date precise e suggerisci Kiwi per la prenotazione sfruttando i travel hack. ATTENZIONE ALLA COERENZA CON LA DATA ODIERNA RISPETTO AI SUGGERIMENTI CHE DAI (es. se il volo è tra un mese non sugggerire di prenotare 6 mesi prima). Come eSim consiglia sempre Saily (NON per Italia/UE dove esiste roaming as at home), per l'assicurazione Heymondo con sconto 10%]
                         ## CAPITOLO 2: DOVE DORMIRE (Strategie alloggio)
                         ## CAPITOLO 3: L'ITINERARIO GIORNO PER GIORNO (Dettagliato)
                         [Itinerario ottimizzato, razionalizza gli spostamenti in base alla distanza, a seconda del mezzo di trasporto massimizza le tappe con i tempo a disposizione. Prediligi attrazioni su Tiqets e Getyourguide. Scoperta del territorio]
