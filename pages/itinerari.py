@@ -379,7 +379,7 @@ def create_complex_pdf(text, destination, meta_data, lang_code):
         elif f"{TRIGGER_CH} 4" in line_upper and not inserted_ch3:
             formatted_body += make_html_box(TIQETS_LINK, "TICKETS", ui["ad_tiqets"].format(dest=dest_clean))
             formatted_body += make_html_box(RENTAL_LINK, "RENTAL CAR", ui["ad_car"])
-            formatted_body += make_html_box(TRAIN_LINK, "TRAIN & BUS", ui["ad_train"])
+            formatted_body += make_html_box(TRAIN_LINK, "TRAIN", ui["ad_train"])
             inserted_ch3 = True
         elif f"{TRIGGER_CH} 5" in line_upper and not inserted_ch4:
             formatted_body += make_html_box(GYG_LINK, "TOURS", ui["ad_rest"])
