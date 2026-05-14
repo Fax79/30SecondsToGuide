@@ -124,7 +124,7 @@ TIQETS_LINK = "https://tiqets.tpx.lt/abHnK4vL"
 INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=GUIDA&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
 
 # LINK GENERICI
-TRAIN_LINK = "https://www.omio.com"
+TRAIN_LINK = "https://clk.tradedoubler.com/click?a(3480952)p(376991)ttid(13)url(https://www.thetrainline.com/it/porta-un-amico?situation=td-it&utm_source=td-it)"
 GYG_LINK = "https://gyg.me/YAGbtbpK"
 HOTEL_LINK = "https://www.expedia.com" 
 PROMO_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=PASQUA15&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL" 
@@ -616,15 +616,15 @@ def create_pdf(text, city, lang_code="IT"):
 
             <div class="partner-block">
                 <div class="design-accent-l" style="top: -10px; left: -15px; width: 40px; height: 50px; border-width: 8px;"></div>
-                <a href="{ESIM_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">INTERNE<span class="last-letter-dot">T</span></a>
-                <div class="offer-description">Con Saily sei connesso da subito - Nuovo cliente? 5USD di sconto con codice FABIOI3455.</div>
+                <a href="{TRAIN_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">TREN<span class="last-letter-dot">O</span></a>
+                <div class="offer-description">Viaggi in treno? Approfitta del 10% di sconto riservato ai nostri lettori.</div>
             </div>
-            
+
             <div class="partner-block">
                 <div class="design-accent-l" style="top: -10px; left: -15px; width: 40px; height: 50px; border-width: 8px;"></div>
-                <a href="{INSURANCE_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">INSURANC<span class="last-letter-dot">E</span></a>
-                <div class="offer-description">Assicurazione viaggio con il 10% di sconto riservato ai nostri lettori.</div>
-            </div>
+                <a href="{ESIM_LINK}" class="service-cta" style="font-size: 40px; display: inline-block;">INTERNE<span class="last-letter-dot">T</span></a>
+                <div class="offer-description">Con Saily sei connesso da subito - Nuovo cliente? 5USD di sconto con codice FABIOI3455.</div>
+            </div>           
 
             <div style="margin-top: 40px; font-size: 13px; color: #1a1a1a; font-style: italic; max-width: 350px; line-height: 1.6;">
                 {strings['footer_msg']}
@@ -884,8 +884,8 @@ st.write("")
 
 c10, c11, c12 = st.columns(3)
 with c10:
-    st.caption("🚆 **Omio**")
-    partner_button("Omio", TRAIN_LINK, "btn_omio.png")
+    st.caption("🚆 **Trainline**")
+    partner_button("Trainline", TRAIN_LINK, "btn_omio.png")
 with c11:
     st.caption("🍴 **GYG**")
     partner_button("GetYourGuide", GYG_LINK, "btn_gyg.png")
