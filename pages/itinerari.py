@@ -121,7 +121,7 @@ TRANSF_LINK = "https://tpx.lt/O5I4OrpX"
 TAXI_LINK = "https://kiwitaxi.tpx.lt/KCeVs32Q"
 TIQETS_LINK = "https://www.tiqets.com/?partner=30secondstoguide.it-185728"
 INSURANCE_LINK = "https://heymondo.it/?utm_medium=Afiliado&utm_source=30SECONDSTOGUIDE&utm_campaign=PRINCIPAL&cod_descuento=30SECONDSTOGUIDE&ag_campaign=WIZARD&agencia=JzPWeAXXi7s0b94oPYh2FmTwaWKFpiCp1a8PkqOn&redirect=TEMPORAL"
-TRAIN_LINK = "https://www.omio.com"
+TRAIN_LINK = "https://clk.tradedoubler.com/click?a(3480952)p(376991)ttid(13)url(https://www.thetrainline.com/it/porta-un-amico?situation=td-it&utm_source=td-it)"
 GYG_LINK = "https://gyg.me/YAGbtbpK"
 HOTEL_LINK = "https://www.expedia.com"
 TOUR_LINK = "https://www.getyourguide.com"
@@ -199,7 +199,7 @@ LANGUAGES = {
         "ad_transfer": "Transfer privati ad un prezzo WOW! da e per l'aeroporto",
         "ad_tiqets": "Non rischiare il tutto esaurito a {dest}. Assicurati il posto e le migliori offerte su Tiqets",
         "ad_car": "Viaggia in libertà e noleggia un auto: Tariffe esclusive con Sixt",
-        "ad_train": "Treni e Bus: Prenota su Omio",
+        "ad_train": "Treni: Prenota su Trainline",
         "ad_rest": "Esplora al miglior prezzo! Prenota su GetYourGuide",
         # Sidebar
         "sb_book": "✈️ PRENOTAZIONI",
@@ -253,7 +253,7 @@ LANGUAGES = {
         "ad_transfer": "Private transfers at WOW prices! to and from the airport",
         "ad_tiqets": "Don't risk sold out in {dest}. Secure spots and best deals on Tiqets",
         "ad_car": "Travel freely and rent a car: Exclusive rates with Sixt",
-        "ad_train": "Trains and Buses: Book on Omio",
+        "ad_train": "Trains: Book on Trainline",
         "ad_rest": "Discover at the best rate! Book on GetYourGuide",
         # Sidebar
         "sb_book": "✈️ BOOKINGS",
@@ -565,7 +565,7 @@ with st.sidebar:
     partner_button("Expedia", HOTEL_LINK, "btn_booking.png")
     partner_button("Welcome", TRANSF_LINK, "btn_wp.png")
     partner_button("Sixt", RENTAL_LINK, "btn_sixt.png")
-    partner_button("Omio", TRAIN_LINK, "btn_omio.png")
+    partner_button("Trainline", TRAIN_LINK, "btn_omio.png")
     partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
     st.caption(ui_sb["sb_exp"])
     partner_button("Tiqets", TIQETS_LINK, "btn_tiqets.png")
@@ -709,10 +709,10 @@ with st.container():
                         # {destination.upper()}: [Sottotitolo]
                         **IL VERDETTO SUL BUDGET: € {budget}** (Stato: Lusso/Più che adeguato/Sufficiente/Stretto/Impossibile)
                         ## CAPITOLO 1: LA PREPARAZIONE (Voli, eSim, Assicurazione)
-                        [Info trasporti ottimizza orari dei voli consultando dove possibile google flights se hai informazioni sulla città di partenza, reperisci gli ultimi prezzi da google flight se hai date precise e suggerisci Kiwi per la prenotazione sfruttando i travel hack. ATTENZIONE ALLA COERENZA CON LA DATA ODIERNA RISPETTO AI SUGGERIMENTI CHE DAI (es. se il volo è tra un mese non sugggerire di prenotare 6 mesi prima). Come eSim consiglia sempre Saily (NON per Italia/UE dove esiste roaming as at home), per l'assicurazione Heymondo con sconto 10%]
+                        [Info trasporti ottimizza orari dei voli consultando dove possibile google flights se hai informazioni sulla città di partenza, reperisci gli ultimi prezzi da google flight se hai date precise e suggerisci Kiwi per la prenotazione sfruttando i travel hack. ATTENZIONE ALLA COERENZA CON LA DATA ODIERNA RISPETTO AI SUGGERIMENTI CHE DAI (es. se il volo è tra un mese non sugggerire di prenotare 6 mesi prima). Utilizza il mezzo di trasporto più razionale in linea con la durata del viaggio, il budget e se ci sono possiblità concrete di utilizzare mezzi alternativi all'aereo. Come eSim consiglia sempre Saily (NON per Italia/UE dove esiste roaming as at home), per l'assicurazione Heymondo con sconto 10%]
                         ## CAPITOLO 2: DOVE DORMIRE (Strategie alloggio)
                         ## CAPITOLO 3: L'ITINERARIO GIORNO PER GIORNO (Dettagliato)
-                        [Itinerario ottimizzato, razionalizza gli spostamenti in base alla distanza, a seconda del mezzo di trasporto massimizza le tappe con i tempo a disposizione. Prediligi attrazioni su Tiqets e Getyourguide. Scoperta del territorio]
+                        [Itinerario ottimizzato, razionalizza gli spostamenti in base alla distanza, a seconda del mezzo di trasporto massimizza le tappe con il tempo a disposizione. Prediligi attrazioni su Tiqets e Getyourguide. Scoperta del territorio]
                         ## CAPITOLO 4: COSA MANGIARE
                         [Piatti tipici, ristoranti (verifica su Tripadvisor i migliori per la fascia di prezzo compatibile con il budget e dai riferimenti puntuali), suggerisci i posti migliori per lo street food]
                         ## CAPITOLO 5: CALENDARIO CULTURALE
@@ -789,7 +789,7 @@ with c8: partner_button("Heymondo", INSURANCE_LINK, "btn_heymondo.png")
 with c9: partner_button("AirHelp", REIMB_LINK, "btn_airhelp.png")
 st.write("")
 c10, c11, c12 = st.columns(3)
-with c10: partner_button("Omio", TRAIN_LINK, "btn_omio.png")
+with c10: partner_button("Trainline", TRAIN_LINK, "btn_omio.png")
 with c11: partner_button("GetYourGuide", GYG_LINK, "btn_gyg.png")
 with c12: partner_button("Kiwitaxi", TAXI_LINK, "btn_taxi.png")
 
