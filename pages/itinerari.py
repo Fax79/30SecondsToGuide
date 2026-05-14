@@ -353,6 +353,11 @@ def create_complex_pdf(text, destination, meta_data, lang_code):
         saily_link = "https://go.saily.site/aff_c?offer_id=101&aff_id=13541&source=WIZARDTEXT"
         saily_html = f"<a href='{saily_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>Saily</a>"
         clean_line = re.sub(r'\bSaily\b', saily_html, clean_line, flags=re.IGNORECASE)
+
+        # --- SOSTITUZIONE DIRETTA PER TRENO ---
+        treno_link = "https://clk.tradedoubler.com/click?a(3480952)p(376991)ttid(13)url(https://www.thetrainline.com/it/porta-un-amico?situation=td-it&utm_source=td-it)"
+        treno_html = f"<a href='{treno_link}' style='color:#e67e22; font-weight:bold; text-decoration:underline;'>treno</a>"
+        clean_line = re.sub(r'\btreno\b', treno_html, clean_line, flags=re.IGNORECASE)
         
         # --- ESECUZIONE DELLA FUNZIONE GYG SULLA RIGA CORRENTE ---
         clean_line = inject_gyg_links(clean_line, destination)
